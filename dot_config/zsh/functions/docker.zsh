@@ -5,7 +5,7 @@ function dc-rebuild() {
   local color_red=$(tput setaf 1)
   local color_green=$(tput setaf 2)
   local color_reset=$(tput sgr0)
-  
+
   if [[ $1 != "" ]]; then
     docker compose up -d --force-recreate --no-deps --build "$1"
   else
@@ -26,7 +26,7 @@ function docker-exec() {
   fi
 
   local container_id=$(docker ps -f name=$container --quiet | head -n 1)
-  
+
   if [[ -z $container_id ]]; then
     print "${color_red}ERROR!${color_reset} No running container found with name: ${color_green}$container${color_reset}"
     return 1
