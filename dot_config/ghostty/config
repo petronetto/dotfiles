@@ -1,0 +1,11 @@
+theme = Monokai Pro Ristretto
+font-family = JetBrainsMono NFM Light
+font-size = 18
+mouse-hide-while-typing = true
+keybind = global:cmd+shift+space=toggle_quick_terminal
+macos-option-as-alt = true
+background-opacity = 0.8
+background-blur-radius = 30
+keybind = shift+enter=text:\n
+window-inherit-working-directory = true
+working-directory = /opt/code

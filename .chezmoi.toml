@@ -1,0 +1,16 @@
+# Chezmoi configuration file
+# https://www.chezmoi.io/reference/configuration-file/
+
+[data]
+    email = "juliano.petronetto@gmail.com"
+    name = "Juliano Petronetto"
+
+[git]
+    autoCommit = false
+    autoPush = false
+
+[diff]
+    pager = "delta"
+
+[merge]
+    command = "nvim"

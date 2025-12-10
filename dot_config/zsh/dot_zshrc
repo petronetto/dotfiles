@@ -1,0 +1,48 @@
+#!/usr/bin/env zsh
+
+##############################################################################################
+#     888~-_               d8                                        d8     d8               #
+#     888   \   e88~~8e  _d88__ 888-~\  e88~-_  888-~88e  e88~~8e  _d88__ _d88__  e88~-_     #
+#     888    | d888  88b  888   888    d888   i 888  888 d888  88b  888    888   d888   i    #
+#     888   /  8888__888  888   888    8888   | 888  888 8888__888  888    888   8888   |    #
+#     888_-~   Y888    ,  888   888    Y888   ' 888  888 Y888    ,  888    888   Y888   '    #
+#     888       "88___/   "88_/ 888     "88_-~  888  888  "88___/   "88_/  "88_/  "88_-~     #
+##############################################################################################
+
+# Helper function to source files if they exist
+source_if_exists() {
+  local file="$1"
+  [[ ! -f "$file" ]] || source "$file"
+}
+
+# Source all .zsh files in a directory
+source_dir() {
+  local dir="$1"
+  if [[ -d "$dir" ]]; then
+    for file in "$dir"/*.zsh(N); do
+      source "$file"
+    done
+  fi
+}
+
+# Load configuration in order of dependency
+# Core configuration (needs to be loaded first)
+source_dir "$ZDOTDIR/config"
+
+# Tool configurations
+source_dir "$ZDOTDIR/tools"
+
+# Plugin system
+source_dir "$ZDOTDIR/plugins"
+
+# Completions
+source_dir "$ZDOTDIR/completions"
+
+# Aliases
+source_dir "$ZDOTDIR/aliases"
+
+# Functions
+source_dir "$ZDOTDIR/functions"
+
+# Work configurations
+source_dir "$ZDOTDIR/work"
