@@ -48,7 +48,3 @@ zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f
 
 # Docker completions
 fpath=(/Users/juliano/.docker/completions $fpath)
-
-# Initialize completion system
-autoload -Uz compinit
-compinit
