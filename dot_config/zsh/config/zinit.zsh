@@ -38,9 +38,11 @@ zinit load junegunn/fzf
 # Zsh Plugins
 # ================================================================================================
 
-# Extra zsh completions
-zinit ice lucid wait='0' atinit='zpcompinit'
+# Extra zsh completions - load with turbo mode
+zinit ice lucid wait='0'
 zinit light zsh-users/zsh-completions
+
+# Docker completion
 zinit ice as"completion"
 zinit snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
 
@@ -56,3 +58,15 @@ zinit light zsh-users/zsh-history-substring-search
 
 # You should use plugin
 zinit light MichaelAquilina/zsh-you-should-use
+
+# ================================================================================================
+# Initialize completions AFTER all plugins are loaded
+# ================================================================================================
+
+# Only regenerate compdump once a day
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
