@@ -2,7 +2,21 @@
 
 # Use fzf to navigate git branches
 function gch() {
-  git checkout "$(git branch --all | fzf | tr -d '[:space:]')"
+  local branches branch
+
+  if [[ "$1" == "--all" ]]; then
+    # Include remote branches
+    branches=$(git branch -a | grep -v HEAD | sed 's/remotes\/origin\///')
+  else
+    # Local branches only
+    branches=$(git branch)
+  fi
+
+  branch=$(echo "$branches" | fzf | tr -d ' *')
+
+  if [[ -n "$branch" ]]; then
+    git checkout "$branch"
+  fi
 }
 
 # Undo git commits
