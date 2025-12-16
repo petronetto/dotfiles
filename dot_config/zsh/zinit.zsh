@@ -34,6 +34,12 @@ zinit load ajeetdsouza/zoxide
 zinit ice from"gh-r" as"command"
 zinit load junegunn/fzf
 
+# Atuin (Enhanced Shell History)
+zinit ice as"command" from"gh-r" bpick"atuin-*.tar.gz" mv"atuin*/atuin -> atuin" \
+    atclone"./atuin init zsh --disable-up-arrow > init.zsh; ./atuin gen-completions --shell zsh > _atuin" \
+    atpull"%atclone" src"init.zsh"
+zinit light atuinsh/atuin
+
 # ================================================================================================
 # Zsh Plugins
 # ================================================================================================
@@ -41,10 +47,6 @@ zinit load junegunn/fzf
 # Extra zsh completions - load with turbo mode
 zinit ice lucid wait='0'
 zinit light zsh-users/zsh-completions
-
-# Docker completion
-zinit ice as"completion"
-zinit snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
 
 # Syntax highlighting
 zinit light zsh-users/zsh-syntax-highlighting
