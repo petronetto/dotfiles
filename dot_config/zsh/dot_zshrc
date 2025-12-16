@@ -25,12 +25,11 @@ source_dir() {
   fi
 }
 
-# Load configuration in order of dependency
+# Load Zinit plugin manager
+source_if_exists "$ZDOTDIR/zinit.zsh"
+
 # Core configuration (needs to be loaded first)
 source_dir "$ZDOTDIR/config"
-
-# Tool configurations
-source_dir "$ZDOTDIR/tools"
 
 # Plugin system
 source_dir "$ZDOTDIR/plugins"
