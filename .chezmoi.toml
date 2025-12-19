@@ -1,12 +1,6 @@
 # Chezmoi configuration file
 # https://www.chezmoi.io/reference/configuration-file/
 
-encryption = "age"
-
-[age]
-    identity = "~/.config/chezmoi/key.txt"
-    recipient = "age1yg8rtgpacf93xwkzdw2qwq9msp79ak8jak6nnx4apjjj4g83sqps9jxjy6"
-
 [git]
     autoCommit = false
     autoPush = false
