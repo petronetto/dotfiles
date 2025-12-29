@@ -1,6 +1,3 @@
 README.md
 CLAUDE.md
-
-# Private files (managed in dotfiles-private repository)
-.ssh/config.d/hosts
-.config/zsh/private/
+key.txt.age
