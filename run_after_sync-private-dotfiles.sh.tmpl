@@ -1,0 +1,64 @@
+#!/bin/zsh
+# Sync private dotfiles if accessible (fails gracefully if not)
+
+PRIVATE_REPO="git@github.com:petronetto/dotfiles-private.git"
+PRIVATE_DIR="{{ .chezmoi.homeDir }}/.dotfiles-private"
+TARGET_DIR="{{ .chezmoi.homeDir }}"
+
+# Check if we can access the private repo (SSH key available)
+if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+    echo "⚠️  Private dotfiles not accessible (no GitHub SSH access)"
+    exit 0
+fi
+
+# Clone or update private repo
+if [ ! -d "${PRIVATE_DIR}" ]; then
+    echo "📦 Cloning private dotfiles..."
+    git clone --quiet "${PRIVATE_REPO}" "${PRIVATE_DIR}" 2>/dev/null || {
+        echo "⚠️  Could not clone private dotfiles (repository might not exist or no access)"
+        exit 0
+    }
+else
+    echo "🔄 Updating private dotfiles..."
+    (cd "${PRIVATE_DIR}" && git pull --quiet) 2>/dev/null || {
+        echo "⚠️  Could not update private dotfiles"
+        exit 0
+    }
+fi
+
+# Manually process and apply private dotfiles
+echo "🔗 Applying private dotfiles..."
+
+# Process dot_config -> .config
+if [ -d "${PRIVATE_DIR}/dot_config" ]; then
+    for item in "${PRIVATE_DIR}/dot_config"/*; do
+        if [ -e "$item" ]; then
+            item_name=$(basename "$item")
+            target_path="${TARGET_DIR}/.config/${item_name}"
+            mkdir -p "${TARGET_DIR}/.config"
+            # Remove existing symlink or directory first
+            [ -L "$target_path" ] && rm "$target_path"
+            cp -rf "$item" "$target_path"
+        fi
+    done
+fi
+
+# Process private_dot_ssh -> .ssh (with correct permissions)
+if [ -d "${PRIVATE_DIR}/private_dot_ssh" ]; then
+    mkdir -p "${TARGET_DIR}/.ssh"
+    chmod 700 "${TARGET_DIR}/.ssh"
+    for item in "${PRIVATE_DIR}/private_dot_ssh"/*; do
+        if [ -e "$item" ]; then
+            item_name=$(basename "$item")
+            target_path="${TARGET_DIR}/.ssh/${item_name}"
+            # Remove existing symlink or directory first
+            [ -L "$target_path" ] && rm "$target_path"
+            cp -rf "$item" "$target_path"
+        fi
+    done
+    # Set proper SSH permissions
+    find "${TARGET_DIR}/.ssh" -type f -exec chmod 600 {} \;
+    find "${TARGET_DIR}/.ssh" -type d -exec chmod 700 {} \;
+fi
+
+echo "✅ Private dotfiles synced"

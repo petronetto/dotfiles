@@ -43,5 +43,5 @@ source_dir "$ZDOTDIR/aliases"
 # Functions
 source_dir "$ZDOTDIR/functions"
 
-# Work configurations
-source_dir "$ZDOTDIR/work"
+# Private configurations
+source_dir "$ZDOTDIR/private"
