@@ -12,10 +12,3 @@ export XDG_DATA_DIRS="/usr/local/share:/usr/share"
 
 # ZSH configuration
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-
-# Homebrew
-if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -f /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-fi

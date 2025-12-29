@@ -9,6 +9,13 @@
 #     888       "88___/   "88_/ 888     "88_-~  888  888  "88___/   "88_/  "88_/  "88_-~     #
 ##############################################################################################
 
+# Homebrew - Ensure Homebrew is loaded before any plugins that might depend on it
+if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
 # Helper function to source files if they exist
 source_if_exists() {
   local file="$1"
