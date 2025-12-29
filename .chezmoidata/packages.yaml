@@ -10,6 +10,8 @@ packages:
       - 'php'
       - 'go'
       - 'node@24'
+      - 'lua'
+      - 'luarocks'
       - 'gemini-cli'
     casks:
       - 'ghostty'
