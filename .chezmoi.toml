@@ -10,3 +10,13 @@
 
 [merge]
     command = "nvim"
+
+# Age encryption configuration
+encryption = "age"
+[age]
+    identity = "~/.config/chezmoi/key.txt"
+    recipient = "age13lgsn8574vsnvah4va2cnjv896w9nxunlm82lm8gz5zxdk86acsq9kggdz"
+
+# 1Password integration
+[onepassword]
+    prompt = false
