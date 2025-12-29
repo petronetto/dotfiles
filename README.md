@@ -1,10 +1,11 @@
 # Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/).
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/), and uses 1Password for secret management and SSH authentication, via [1Password SSH Agent](https://developer.1password.com/docs/ssh/). This hopefully won't work out of the box for you becasue if it does, it means you have 1Password password, which is highly undesirable from my side 😂
+It relies on my personal 1Password vault structure. However you can use it as a reference for setting up your own dotfiles with chezmoi and 1Password, by just removing the 1Password-specific parts. Search for `onepasswordRead` in the templates and remove or replace them with your own secret management solution.
 
 ## Quick Start
 
-### First Time Setup
+### First Time Setup.
 
 ```bash
 # Initialize and apply dotfiles
