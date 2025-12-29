@@ -23,24 +23,16 @@ chezmoi update
 ### Making Changes
 
 ```bash
-# Edit files normally in your home directory, then add to chezmoi
-vim ~/.config/zsh/.zshrc
-chezmoi add ~/.config/zsh/.zshrc
+# Navigate to chezmoi source directory
+chezmoi cd
 
-# Or edit directly through chezmoi
-chezmoi edit ~/.config/zsh/.zshrc
+# Edit files in the source directory (NOT in your home directory!)
+vim dot_zshrc
 
-# Check what will change
-chezmoi diff
-
-# Apply changes
+# Apply changes to your home directory
 chezmoi apply
-```
 
-### Committing Changes
-
-```bash
-cd ~/.local/share/chezmoi
+# Commit and push changes
 git add .
 git commit -m "Update configuration"
 git push
@@ -50,10 +42,10 @@ git push
 
 ```bash
 # Add a single file
-chezmoi add ~/.config/newapp/config
+chezmoi add ~/.myconfig
 
 # Add a directory recursively
-chezmoi add --recursive ~/.config/newapp/
+chezmoi add --recursive ~/.ssh/
 ```
 
 ## Essential Commands
@@ -64,15 +56,13 @@ chezmoi diff            # Show detailed changes
 chezmoi apply           # Apply changes
 chezmoi update          # Pull from git and apply
 chezmoi cd              # Go to source directory
-chezmoi edit <file>     # Edit file in chezmoi
 chezmoi add <file>      # Add file to chezmoi
 chezmoi forget <file>   # Remove from chezmoi management
 ```
 
 ## Security
 
-Chezmoi uses a **whitelist approach** - only files you explicitly add are managed. Sensitive directories are automatically excluded:
-- `~/.config/1Password/`, `op/`, `configstore/`, `github-copilot/`, etc.
+Chezmoi uses a **whitelist approach** - only files you explicitly add are managed.
 
 Never committed to git, safe by default.
 
