@@ -1,0 +1,3 @@
+# Add my ssh vault to the SSH agent
+[[ssh-keys]]
+vault = "ssh"
