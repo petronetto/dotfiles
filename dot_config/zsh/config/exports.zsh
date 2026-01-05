@@ -4,7 +4,7 @@
 export EDITOR='vim'
 
 # 1Password SSH agent
-export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 # Tool-specific data directories
 export _ZO_DATA_DIR="$XDG_DATA_HOME/zoxide"

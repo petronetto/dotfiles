@@ -1,7 +1,7 @@
 {{ if eq .chezmoi.os "darwin" -}}
 # 1Password SSH Agent configuration
 Host *
-    IdentityAgent "~/.1password/agent.sock"
+    IdentityAgent "{{ .chezmoi.homeDir }}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 # Include encrypted host configurations
 Include config.d/hosts
