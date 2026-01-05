@@ -32,6 +32,6 @@ fi
 
 # Install 1Password CLI
 echo "Installing 1Password CLI via Homebrew..."
-brew install --cask 1password/tap/1password-cli
+brew install --cask 1password-cli
 
 echo "1Password CLI installed successfully"
