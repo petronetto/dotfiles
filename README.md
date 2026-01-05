@@ -25,8 +25,7 @@ Open 1Password and sign in to your account and ensure that CLI access is set up.
 
 **Initialize and apply dotfiles**
 ```bash
-chezmoi init https://github.com/petronetto/dotfiles.git
-chezmoi apply
+chezmoi init --apply https://github.com/petronetto/dotfiles.git
 ```
 
 ### Update Dotfiles
