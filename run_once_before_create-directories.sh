@@ -14,4 +14,14 @@ mkdir -p "$HOME/.cache/run"
 # ZSH configuration directory
 mkdir -p "$HOME/.config/zsh"
 
-echo "✓ XDG directories created successfully"
+# Create /opt/code directory and set ownership to current user
+echo "Creating /opt/code directory..."
+if [[ ! -d /opt/code ]]; then
+  sudo mkdir -p /opt/code
+  sudo chown "$USER" /opt/code
+  echo "/opt/code created and ownership set to $USER"
+else
+  echo "/opt/code already exists"
+fi
+
+echo "XDG directories created successfully"
