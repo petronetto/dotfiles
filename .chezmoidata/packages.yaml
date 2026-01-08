@@ -3,6 +3,7 @@ packages:
     brews:
       - 'git'
       - 'gh'
+      - 'glab'
       - 'neovim'
       - 'rust'
       - 'python'
