@@ -16,7 +16,6 @@ add_newline = true
 # Configures the format
 ###
 format = """
-[╭](fg:current_line)\
 $os\
 $directory\
 $git_branch$git_status\
@@ -38,7 +37,6 @@ $swift\
 $typst\
 $time\
 $line_break\
-[╰─](fg:current_line)\
 $character
 """
 
@@ -138,6 +136,17 @@ Windows          = "󰍲 "
 
 
 ###
+# Configures the directory module
+###
+[directory]
+format            = '(fg:current_line)[  ](fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
+home_symbol       = "󱂵 ~/"
+read_only         = '󰌾 '
+read_only_style   = ''
+truncation_length = 2
+truncation_symbol = '󰝰 '
+
+###
 # Configures the bun module
 ###
 [bun]
@@ -166,16 +175,6 @@ symbol = ''
 format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
-###
-# Configures the directory module
-###
-[directory]
-format            = '[─](fg:current_line)[  ](fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
-home_symbol       = "󱂵 ~/"
-read_only         = '󰌾 '
-read_only_style   = ''
-truncation_length = 2
-truncation_symbol = '󰝰 '
 
 ###
 # Configures the dotnet module
