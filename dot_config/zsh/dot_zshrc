@@ -46,11 +46,11 @@ source_dir "$ZDOTDIR/config"
 # Completions
 source_dir "$ZDOTDIR/completions"
 
-# Aliases
-source_dir "$ZDOTDIR/aliases"
-
 # Functions
 source_dir "$ZDOTDIR/functions"
+
+# Aliases
+source_dir "$ZDOTDIR/aliases"
 
 # Private configurations
 source_dir "$ZDOTDIR/private"
