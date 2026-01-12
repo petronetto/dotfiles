@@ -10,6 +10,9 @@ keybind = shift+enter=text:\n
 window-inherit-working-directory = true
 working-directory = /opt/code
 
+# Disable Ctrl+D from closing the window
+keybind = ctrl+d=ignore
+
 # Tmux keybindings (send Ctrl+b prefix followed by command)
 # cmd+d: Split pane vertically
 keybind = cmd+d=text:\x02%
