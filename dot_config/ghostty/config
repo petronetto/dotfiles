@@ -31,3 +31,7 @@ keybind = cmd+down=text:\x02j
 keybind = cmd+left_bracket=text:\x02p
 # cmd+]: Next window (right)
 keybind = cmd+right_bracket=text:\x02n
+# cmd+p: Open tmux command mode
+keybind = cmd+p=text:\x02:
+# Disable Ghostty's Cmd+Shift+P
+keybind = cmd+shift+p=ignore
