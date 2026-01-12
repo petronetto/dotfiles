@@ -26,6 +26,7 @@ packages:
       - 'fzf'
       - 'atuin'
       - 'antidote'
+      - 'tmux'
     casks:
       - 'ghostty'
       - 'visual-studio-code'

@@ -1,6 +1,6 @@
 theme = Monokai Pro Ristretto
 font-family = JetBrainsMono NFM Light
-font-size = 18
+font-size = 20
 mouse-hide-while-typing = true
 keybind = global:cmd+shift+space=toggle_quick_terminal
 macos-option-as-alt = true
@@ -9,3 +9,18 @@ background-blur-radius = 30
 keybind = shift+enter=text:\n
 window-inherit-working-directory = true
 working-directory = /opt/code
+
+# Tmux keybindings (send Ctrl+b prefix followed by command)
+# cmd+d: Split pane vertically
+keybind = cmd+d=text:\x02%
+# cmd+shift+d: Split pane horizontally
+keybind = cmd+shift+d=text:\x02"
+# cmd+t: New window
+keybind = cmd+t=text:\x02c
+# cmd+w: Close pane
+keybind = cmd+w=text:\x02x
+# cmd+arrow keys: Navigate panes
+keybind = cmd+right=text:\x02l
+keybind = cmd+left=text:\x02h
+keybind = cmd+up=text:\x02k
+keybind = cmd+down=text:\x02j
