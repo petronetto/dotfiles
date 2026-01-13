@@ -1,4 +1,4 @@
-theme = Espresso Libre
+theme = Arthur
 font-family = JetBrainsMono NFM Light
 font-size = 18
 maximize = true
@@ -12,29 +12,3 @@ window-inherit-working-directory = true
 macos-titlebar-style = hidden
 window-padding-y = 5
 working-directory = /opt/code
-
-# Disable Ctrl+D from closing the window
-keybind = ctrl+d=ignore
-
-# Tmux keybindings (send Ctrl+b prefix followed by command)
-# cmd+d: Split pane vertically
-keybind = cmd+d=text:\x02%
-# cmd+shift+d: Split pane horizontally
-keybind = cmd+shift+d=text:\x02"
-# cmd+t: New window
-keybind = cmd+t=text:\x02c
-# cmd+w: Close pane
-keybind = cmd+w=text:\x02x
-# cmd+arrow keys: Navigate panes
-keybind = cmd+right=text:\x02l
-keybind = cmd+left=text:\x02h
-keybind = cmd+up=text:\x02k
-keybind = cmd+down=text:\x02j
-# cmd+[: Previous window (left)
-keybind = cmd+left_bracket=text:\x02p
-# cmd+]: Next window (right)
-keybind = cmd+right_bracket=text:\x02n
-# cmd+p: Open tmux command mode
-keybind = cmd+p=text:\x02:
-# Disable Ghostty's Cmd+Shift+P
-keybind = cmd+shift+p=ignore
