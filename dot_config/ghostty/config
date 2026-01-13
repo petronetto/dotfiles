@@ -4,7 +4,6 @@ font-size = 18
 maximize = true
 mouse-hide-while-typing = true
 keybind = global:cmd+shift+space=toggle_quick_terminal
-macos-option-as-alt = true
 background-opacity = 0.8
 background-blur-radius = 30
 keybind = shift+enter=text:\n
@@ -12,3 +11,6 @@ window-inherit-working-directory = true
 macos-titlebar-style = hidden
 window-padding-y = 5
 working-directory = /opt/code
+# Enable Option key as Alt for keybindings
+# Use 'left' so right Option key can still type special characters
+macos-option-as-alt = left
