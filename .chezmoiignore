@@ -1,3 +1,7 @@
 README.md
 CLAUDE.md
 key.txt.age
+
+# LazyVim auto-generated files
+.config/nvim/lazy-lock.json
+.config/nvim/lazyvim.json
