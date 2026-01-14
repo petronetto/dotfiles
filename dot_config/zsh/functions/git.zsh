@@ -1,7 +1,34 @@
 #!/usr/bin/env zsh
 
-# Use fzf to navigate git branches
+# Easy git checkout with branch creation using fzf
 function gch() {
+  # If a branch name is provided (and it's not --all), try to checkout or create
+  if [[ -n "$1" && "$1" != "--all" ]]; then
+    local branch_name="$1"
+
+    # Try to checkout existing branch first (including remote tracking)
+    if git checkout "$branch_name" 2>/dev/null; then
+      return 0
+    fi
+
+    # If checkout failed, check if it's because branch doesn't exist
+    local git_error
+    git_error=$(git checkout "$branch_name" 2>&1)
+
+    if [[ "$git_error" == *"did not match any file(s) known to git"* ]] || \
+       [[ "$git_error" == *"pathspec"*"did not match"* ]]; then
+      # Branch doesn't exist - create it
+      echo "Branch '$branch_name' doesn't exist. Creating new branch..."
+      git checkout -b "$branch_name"
+      return $?
+    else
+      # Other error (like uncommitted changes) - show the actual error
+      echo "ERROR: $git_error"
+      return 1
+    fi
+  fi
+
+  # Original fzf behavior when no branch name provided
   local branches branch
 
   if [[ "$1" == "--all" ]]; then
