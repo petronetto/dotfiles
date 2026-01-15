@@ -43,27 +43,27 @@ $character
 ###
 # Configures the palette
 ###
-palette = 'terminal'
+palette = 'gruvbox'
+
+[palettes.gruvbox]
+foreground   = '#fbf1c7'
+background   = '#3c3836'
+box          = '#3c3836'
+primary      = '#3c3836'
+current_line = '#665c54'
+error        = '#cc241d'
+success      = '#98971a'
+color1       = '#458588'
+color2       = '#689d6a'
+color3       = '#d79921'
+color4       = '#d65d0e'
+color5       = '#b16286'
+color6       = '#b16286'
+color7       = '#cc241d'
 
 ###
-# Terminal palette - uses ANSI colors to respect terminal theme
+# Configures the OS symbols
 ###
-[palettes.terminal]
-foreground   = 'white'
-background   = 'black'
-box          = 'bright-black'
-primary      = 'black'
-current_line = 'bright-black'
-error        = 'red'
-success      = 'green'
-color1       = 'cyan'
-color2       = 'green'
-color3       = 'yellow'
-color4       = 'blue'
-color5       = 'magenta'
-color6       = 'magenta'
-color7       = 'red'
-
 [os.symbols]
 Alpaquita        = " "
 Alpine           = " "
