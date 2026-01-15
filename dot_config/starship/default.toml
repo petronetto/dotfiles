@@ -103,7 +103,7 @@ color7       = '#cc241d' # Username
 # Configures the OS
 ###
 # [os]
-# format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color1)[ $name ](fg:foreground bg:box)'
+# format = '(fg:current_line)[ $symbol ](fg:primary bg:color1)[ $name ](fg:foreground bg:box)'
 # disabled = false
 
 [os.symbols]
@@ -169,7 +169,7 @@ truncation_symbol = '󰝰 '
 # Configures the bun module
 ###
 [bun]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
@@ -184,14 +184,14 @@ success_symbol = '[λ](bold fg:success)'
 # Configures the dart module
 ###
 [dart]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the deno module
 ###
 [deno]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 
@@ -199,14 +199,14 @@ symbol = ''
 # Configures the dotnet module
 ###
 [dotnet]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the elixir module
 ###
 [elixir]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
@@ -220,7 +220,7 @@ symbol = '─'
 # Configures the git branch module
 ###
 [git_branch]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color3)[ $branch ](fg:foreground bg:box)'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color3)[ $branch ](fg:foreground bg:box)'
 symbol = '󰘬'
 
 ###
@@ -228,7 +228,7 @@ symbol = '󰘬'
 ###
 [git_commit]
 commit_hash_length = 4
-format             = "([─](fg:current_line)[ 󰓹 ](fg:primary bg:color3)[ $tag ](fg:foreground bg:box))([─](fg:current_line)[ 󰜘 ](fg:primary bg:color3)[ $hash ](fg:foreground bg:box))"
+format             = "((fg:current_line)[ 󰓹 ](fg:primary bg:color3)[ $tag ](fg:foreground bg:box))((fg:current_line)[ 󰜘 ](fg:primary bg:color3)[ $hash ](fg:foreground bg:box))"
 only_detached      = false
 tag_disabled       = false
 tag_symbol         = ''
@@ -243,98 +243,98 @@ format = '((fg:primary bg:color3)[\[$all_status$ahead_behind\]](fg:foreground bg
 # Configures the golang module
 ###
 [golang]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the helm module
 ###
 [helm]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the julia module
 ###
 [julia]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the kotlin module
 ###
 [kotlin]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the lua module
 ###
 [lua]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the nodejs module
 ###
 [nodejs]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the php module
 ###
 [php]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the python module
 ###
 [python]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the ruby module
 ###
 [ruby]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the rust module
 ###
 [rust]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the scala module
 ###
 [scala]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the swift module
 ###
 [swift]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = ''
 
 ###
 # Configures the package module
 ###
 [package]
-format = '[─](fg:current_line)[ 󰏖 ](fg:primary bg:color4)[ $version ](fg:foreground bg:box)'
+format = '(fg:current_line)[ 󰏖 ](fg:primary bg:color4)[ $version ](fg:foreground bg:box)'
 
 ###
 # Configures the shell module
 ###
 [shell]
 disabled          = true
-format            = '[─](fg:current_line)[ 󰆍 ](fg:primary bg:color5)[ $indicator ](fg:foreground bg:box)'
+format            = '(fg:current_line)[ 󰆍 ](fg:primary bg:color5)[ $indicator ](fg:foreground bg:box)'
 unknown_indicator = 'shell'
 
 ###
@@ -342,7 +342,7 @@ unknown_indicator = 'shell'
 ###
 [time]
 disabled    = false
-format      = '[─](fg:current_line)[ 󰥔 ](fg:primary bg:color1)[ $time ](fg:foreground bg:box)'
+format      = '(fg:current_line)[ 󰥔 ](fg:primary bg:color1)[ $time ](fg:foreground bg:box)'
 time_format = '%H:%M'
 
 ###
@@ -350,32 +350,32 @@ time_format = '%H:%M'
 ###
 [aws]
 disabled = true
-format   = '[─](fg:current_line)[ ☁︎ ](fg:primary bg:color7)([ $region ](fg:foreground bg:box))'
+format   = '(fg:current_line)[ ☁︎ ](fg:primary bg:color7)([ $region ](fg:foreground bg:box))'
 
 ###
 # Configures the docker context module
 ###
 [docker_context]
 disabled = false
-format   = '[─](fg:current_line)[ 󰡣 ](fg:primary bg:color1)([ $context ](fg:foreground bg:box))'
+format   = '(fg:current_line)[ 󰡣 ](fg:primary bg:color1)([ $context ](fg:foreground bg:box))'
 
 ###
 # Configures the typst module
 ###
 [typst]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = 'TYPST'
 
 ###
 # Configures the username module
 ###
 [username]
-format      = '[─](fg:current_line)[ 󰀄 ](fg:primary bg:color7)[ $user ](fg:foreground bg:box) '
+format      = '(fg:current_line)[ 󰀄 ](fg:primary bg:color7)[ $user ](fg:foreground bg:box) '
 show_always = true
 
 ###
 # Configures the zig module
 ###
 [zig]
-format = '[─](fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
+format = '(fg:current_line)[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:box))'
 symbol = 'ZIG'
