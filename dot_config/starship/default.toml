@@ -147,7 +147,7 @@ symbol = ' '
 # Configures the git branch module
 ###
 [git_branch]
-format = '[ $symbol ](fg:color4 bg:background)[ $branch ](fg:foreground bg:background)'
+format = '[ ](bg:color4)[ $symbol ](fg:color4 bg:background)[ $branch ](fg:foreground bg:background)'
 symbol = '󰘬'
 
 ###
@@ -315,7 +315,7 @@ unknown_indicator = 'shell'
 ###
 [time]
 disabled    = false
-format      = '[](fg:background bg:background)[ 󰥔 ](fg:primary bg:color5)[ $time ](fg:foreground bg:background)'
+format      = '[ ](bg:color5)[ 󰥔 $time ](fg:color6 bg:background)'
 time_format = '%H:%M'
 
 ###
