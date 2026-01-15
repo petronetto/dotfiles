@@ -56,48 +56,13 @@ primary      = 'black'
 current_line = 'bright-black'
 error        = 'red'
 success      = 'green'
-color1       = 'cyan'          # OS, Docker, Time
-color2       = 'green'         # Directory
-color3       = 'yellow'        # Git
-color4       = 'blue'          # Languages
-color5       = 'magenta'       # Shell
-color6       = 'magenta'       # Time (alt)
-color7       = 'red'           # Username
-
-###
-# Configures the rainbow palette (legacy - uses hex)
-###
-[palettes.rainbow]
-background   = '#282A36'
-box          = '#44475A'
-color1       = '#008080'
-color2       = '#3CB44B'
-color3       = '#FFE119'
-color4       = '#0082C8'
-color5       = '#F58231'
-color6       = '#911EB4'
-color7       = '#F032E6'
-current_line = '#44475A'
-error        = '#E6194B'
-foreground   = '#F8F8F2'
-primary      = '#1E1F29'
-success      = '#3CB44B'
-
-[palettes.gruvbox]
-foreground   = '#fbf1c7'
-background   = '#3c3836'
-box          = '#3c3836'
-primary      = '#3c3836'
-current_line = '#665c54'
-error        = '#cc241d'
-success      = '#98971a'
-color1       = '#458588' # OS
-color2       = '#689d6a' # Directory
-color3       = '#d79921' # Git
-color4       = '#d65d0e' # Languages
-color5       = '#b16286' # Shell
-color6       = '#b16286' # Time
-color7       = '#cc241d' # Username
+color1       = 'cyan'
+color2       = 'green'
+color3       = 'yellow'
+color4       = 'blue'
+color5       = 'magenta'
+color6       = 'magenta'
+color7       = 'red'
 
 [os.symbols]
 Alpaquita        = " "
@@ -149,15 +114,15 @@ Windows          = "󰍲 "
 ###
 # Configures the OS
 ###
-# [os]
-# format = '(fg:current_line)[ $symbol ](fg:primary bg:color1)[ $name ](fg:foreground bg:box)'
-# disabled = false
+[os]
+format = '[ $symbol](fg:primary bg:color2)'
+disabled = false
 
 ###
 # Configures the directory module
 ###
 [directory]
-format            = '(fg:current_line)[  ](fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
+format            = '(fg:current_line)(fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
 home_symbol       = "󱂵 ~"
 read_only         = '󰌾 '
 read_only_style   = ''
