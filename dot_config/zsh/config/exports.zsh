@@ -10,6 +10,9 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/
 export _ZO_DATA_DIR="$XDG_DATA_HOME/zoxide"
 export BUN_INSTALL="$HOME/.bun"
 
+# bat - use terminal colors
+export BAT_THEME="ansi"
+
 # PATH additions
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.composer/vendor/bin:$PATH"

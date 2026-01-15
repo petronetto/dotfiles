@@ -1,6 +1,6 @@
 theme = Arthur
 font-family = JetBrainsMono NFM Light
-font-size = 18
+font-size = 20
 maximize = true
 mouse-hide-while-typing = true
 keybind = global:cmd+shift+space=toggle_quick_terminal

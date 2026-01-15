@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-export STARSHIP_THEME="round"
+export STARSHIP_THEME="minimal"
 
 if [[ "$TERM_PROGRAM" == "ghostty" || "$TERM_PROGRAM" == "tmux" ]]; then
   STARSHIP_THEME="default"

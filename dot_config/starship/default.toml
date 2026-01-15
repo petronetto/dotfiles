@@ -43,10 +43,29 @@ $character
 ###
 # Configures the palette
 ###
-palette = 'gruvbox'
+palette = 'terminal'
 
 ###
-# Configures the rainbow palette
+# Terminal palette - uses ANSI colors to respect terminal theme
+###
+[palettes.terminal]
+foreground   = 'white'
+background   = 'black'
+box          = 'bright-black'
+primary      = 'black'
+current_line = 'bright-black'
+error        = 'red'
+success      = 'green'
+color1       = 'cyan'          # OS, Docker, Time
+color2       = 'green'         # Directory
+color3       = 'yellow'        # Git
+color4       = 'blue'          # Languages
+color5       = 'magenta'       # Shell
+color6       = 'magenta'       # Time (alt)
+color7       = 'red'           # Username
+
+###
+# Configures the rainbow palette (legacy - uses hex)
 ###
 [palettes.rainbow]
 background   = '#282A36'
