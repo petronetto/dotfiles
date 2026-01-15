@@ -99,13 +99,6 @@ color5       = '#b16286' # Shell
 color6       = '#b16286' # Time
 color7       = '#cc241d' # Username
 
-###
-# Configures the OS
-###
-# [os]
-# format = '(fg:current_line)[ $symbol ](fg:primary bg:color1)[ $name ](fg:foreground bg:box)'
-# disabled = false
-
 [os.symbols]
 Alpaquita        = " "
 Alpine           = " "
@@ -153,13 +146,19 @@ Unknown          = " "
 Void             = " "
 Windows          = "󰍲 "
 
+###
+# Configures the OS
+###
+# [os]
+# format = '(fg:current_line)[ $symbol ](fg:primary bg:color1)[ $name ](fg:foreground bg:box)'
+# disabled = false
 
 ###
 # Configures the directory module
 ###
 [directory]
 format            = '(fg:current_line)[  ](fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
-home_symbol       = "󱂵 ~/"
+home_symbol       = "󱂵 ~"
 read_only         = '󰌾 '
 read_only_style   = ''
 truncation_length = 2
