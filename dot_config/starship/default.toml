@@ -147,7 +147,7 @@ symbol = ' '
 # Configures the git branch module
 ###
 [git_branch]
-format = '[ ](bg:color4)[ $symbol ](fg:color4 bg:background)[ $branch ](fg:foreground bg:background)'
+format = '[ ](bg:color4)[ $symbol ](fg:color4 bg:background)[$branch ](fg:foreground bg:background)'
 symbol = '󰘬'
 
 ###
@@ -164,17 +164,17 @@ tag_symbol = ''
 # Configures the git status module
 ###
 [git_status]
-format = '$stashed$staged$deleted$renamed$modified$untracked$ahead_behind$conflicted'
-stashed = '[ 󰏫 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
-ahead = '[ 󰁝 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
-behind = '[ 󰁅 ](fg:color4 bg:background)[ $count ](fg:foreground bg:background)'
-diverged = '[ 󰃻 ](fg:color7 bg:background)[ $ahead_count $behind_count ](fg:foreground bg:background)'
-conflicted = '[ 󰅙 ](fg:color7 bg:background)[ $count ](fg:foreground bg:background)'
-deleted = '[ 󰍴 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
-renamed = '[ 󰑕 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
-modified = '[ 󰏫 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
-staged = '[ 󰐕 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
-untracked = '[ 󰐕 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+format = '[ ](fg:color3 bg:background)$stashed$staged$deleted$renamed$modified$untracked$ahead_behind$conflicted'
+stashed = '[󰏫](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+ahead = '[󰁝](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+behind = '[󰁅](fg:color4 bg:background)[ $count ](fg:foreground bg:background)'
+diverged = '[󰃻](fg:color7 bg:background)[ $ahead_count $behind_count ](fg:foreground bg:background)'
+conflicted = '[󰅙](fg:color7 bg:background)[ $count ](fg:foreground bg:background)'
+deleted = '[󰍴](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+renamed = '[󰑕](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+modified = '[󰏫](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+staged = '[󰐕](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+untracked = '[󰐕](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
 
 ###
 # Configures the bun module
