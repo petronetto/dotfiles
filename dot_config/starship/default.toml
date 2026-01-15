@@ -165,16 +165,16 @@ tag_symbol = ''
 ###
 [git_status]
 format = '$stashed$staged$deleted$renamed$modified$untracked$ahead_behind$conflicted'
-stashed = '[ 󰏫 ](fg:color3)[ $count ](fg:foreground)'
-ahead = '[ 󰁝 ](fg:color2)[ $count ](fg:foreground)'
-behind = '[ 󰁅 ](fg:color4)[ $count ](fg:foreground)'
-diverged = '[ 󰃻 ](fg:color7)[ $ahead_count $behind_count ](fg:foreground)'
-conflicted = '[ 󰅙 ](fg:color7)[ $count ](fg:foreground)'
-deleted = '[ 󰍴 ](fg:color3)[ $count ](fg:foreground)'
-renamed = '[ 󰑕 ](fg:color3)[ $count ](fg:foreground)'
-modified = '[ 󰏫 ](fg:color3)[ $count ](fg:foreground)'
-staged = '[ 󰐕 ](fg:color2)[ $count ](fg:foreground)'
-untracked = '[ 󰐕 ](fg:color2)[ $count ](fg:foreground)'
+stashed = '[ 󰏫 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+ahead = '[ 󰁝 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+behind = '[ 󰁅 ](fg:color4 bg:background)[ $count ](fg:foreground bg:background)'
+diverged = '[ 󰃻 ](fg:color7 bg:background)[ $ahead_count $behind_count ](fg:foreground bg:background)'
+conflicted = '[ 󰅙 ](fg:color7 bg:background)[ $count ](fg:foreground bg:background)'
+deleted = '[ 󰍴 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+renamed = '[ 󰑕 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+modified = '[ 󰏫 ](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
+staged = '[ 󰐕 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+untracked = '[ 󰐕 ](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
 
 ###
 # Configures the bun module
