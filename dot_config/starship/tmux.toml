@@ -1,0 +1,63 @@
+###
+# Starship configuration
+###
+
+###
+# Configures the starship schema
+###
+"$schema" = 'https://starship.rs/config-schema.json'
+
+###
+# Configures the add newline
+###
+add_newline = false
+
+###
+# Configures the format
+###
+format = """$directory $character
+"""
+
+###
+# Configures the palette
+###
+palette = 'terminal'
+
+###
+# Terminal palette - uses ANSI colors to respect terminal theme
+###
+[palettes.terminal]
+foreground   = 'white'
+background   = 'black'
+box          = 'bright-black'
+primary      = 'black'
+current_line = 'bright-black'
+error        = 'red'
+success      = 'green'
+color1       = 'cyan'
+color2       = 'green'
+color3       = 'yellow'
+color4       = 'blue'
+color5       = 'magenta'
+color6       = 'magenta'
+color7       = 'red'
+
+
+###
+# Configures the directory module
+###
+[directory]
+format            = '(fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
+home_symbol       = "󱂵 ~"
+read_only         = '󰌾 '
+read_only_style   = ''
+truncation_length = 2
+truncation_symbol = '󰝰 '
+
+###
+# Configures the character module
+###
+[character]
+success_symbol = "[❯](success)"
+error_symbol = "[❯](error)"
+vimcmd_symbol = "[❮](success)"

@@ -2,7 +2,11 @@
 
 export STARSHIP_THEME="pure"
 
-if [[ "$TERM_PROGRAM" == "ghostty" || "$TERM_PROGRAM" == "tmux" ]]; then
+if [[ "$TERM_PROGRAM" == "tmux" ]]; then
+  STARSHIP_THEME="tmux"
+fi
+
+if [[ "$TERM_PROGRAM" == "ghostty" ]]; then
   STARSHIP_THEME="default"
 fi
 
