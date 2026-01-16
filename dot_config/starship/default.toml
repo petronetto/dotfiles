@@ -49,6 +49,7 @@ palette = 'gruvbox'
 foreground   = '#fbf1c7'
 background   = '#1b1b1b'
 box          = '#3c3836'
+line         = '#665c54'
 primary      = '#3c3836'
 error        = '#cc241d'
 success      = '#98971a'
@@ -143,8 +144,8 @@ success_symbol = '[λ](bold fg:success)'
 # Configures the fill module
 ###
 [fill]
-style  = 'bg:background'
-symbol = ' '
+style  = 'fg:line'
+symbol = '─'
 
 ###
 # Configures the git branch module

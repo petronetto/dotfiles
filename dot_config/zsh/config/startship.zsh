@@ -1,14 +1,10 @@
 #!/usr/bin/env zsh
 
-export STARSHIP_THEME="pure"
+export STARSHIP_THEME="jetpack"
 
-if [[ "$TERM_PROGRAM" == "tmux" ]]; then
-  STARSHIP_THEME="tmux"
-fi
-
-if [[ "$TERM_PROGRAM" == "ghostty" ]]; then
-  STARSHIP_THEME="default"
-fi
+# if [[ "$TERM_PROGRAM" == "tmux" ]]; then
+#   STARSHIP_THEME="tmux"
+# fi
 
 export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/$STARSHIP_THEME.toml"
 
