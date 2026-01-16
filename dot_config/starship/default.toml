@@ -128,6 +128,9 @@ read_only_style = ''
 truncation_length = 2
 truncation_symbol = '󰝰 '
 
+[directory.substitutions]
+'/opt/code' = ' code'
+
 ###
 # Configures the character module
 ###
