@@ -18,8 +18,11 @@ $character"""
 [directory]
 style = "blue"
 
+[directory.substitutions]
+'/opt/code' = ' code'
+
 [character]
-success_symbol = "[❯](purple)"
+success_symbol = "[❯](green)"
 error_symbol = "[❯](red)"
 vimcmd_symbol = "[❮](green)"
 

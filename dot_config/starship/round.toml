@@ -45,7 +45,7 @@ rust                      = "#C33C00"
 golang                    = "#00ADD8"
 docker_context            = "#9E2CCD"
 clang                     = "#00599D"
-duration                  = "yellow"
+duration                  = "#3b8b1c"
 text_color                = "#EDF2F4"
 text_light                = "#EDF2F4"
 error                     = '#E6194B'
@@ -53,21 +53,14 @@ success                   = '#3CB44B'
 
 # --- Module Definitions ---
 
-[username]
-style_user                = 'os'
-style_root                = 'os_admin'
-format                    = '[]($style)[ jp](bg:$style fg:text_color)[]($style)'
-disabled                  = false
-show_always               = true
-
 [fill]
 style                     = 'fg:arrow'
 symbol                    = '─'
 
 [character]
-error_symbol              = '[χ](bold fg:error)'
-format                    = '$symbol '
-success_symbol            = '[λ](bold fg:success)'
+success_symbol            = "[❯](green)"
+error_symbol              = "[❯](red)"
+vimcmd_symbol             = "[❮](green)"
 
 [directory]
 format                    = " [](fg:directory)[ $path ]($style)[$read_only]($read_only_style)[](fg:directory)"
@@ -78,6 +71,9 @@ before_repo_root_style    = "fg:text_color bg:directory"
 truncation_symbol         = ""
 truncate_to_repo          = true
 read_only                 ="  "
+
+[directory.substitutions]
+'/opt/code' = ' code'
 
 [time]
 disabled                  = false

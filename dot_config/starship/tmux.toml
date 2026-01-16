@@ -21,17 +21,15 @@ format = """$directory $character
 ###
 # Configures the palette
 ###
-palette = 'terminal'
+palette = 'gruvbox'
 
-###
-# Terminal palette - uses ANSI colors to respect terminal theme
-###
-[palettes.terminal]
+
+[palettes.gruvbox]
 foreground   = '#fbf1c7'
 background   = '#3c3836'
 box          = '#3c3836'
 primary      = '#3c3836'
-current_line = '#665c54'
+line         = '#665c54'
 error        = '#cc241d'
 success      = '#98971a'
 color1       = '#458588'
@@ -46,12 +44,15 @@ color7       = '#cc241d'
 # Configures the directory module
 ###
 [directory]
-format            = '(fg:primary bg:color2)[ $read_only$truncation_symbol$path ](fg:foreground bg:box)'
-home_symbol       = "󱂵 ~"
-read_only         = '󰌾 '
-read_only_style   = ''
+format = '$read_only$truncation_symbol $path'
+home_symbol = "󱂵 ~"
+read_only = '󰌾 '
+read_only_style = ''
 truncation_length = 2
 truncation_symbol = '󰝰 '
+
+[directory.substitutions]
+'/opt/code' = ' code'
 
 ###
 # Configures the character module
