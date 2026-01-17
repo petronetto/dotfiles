@@ -34,7 +34,7 @@ date_and_time="$($SCRIPTS_PATH/datetime-widget.sh)"
 battery_status=""
 
 tmux set -g status-left "\
-#[fg=${THEME[foreground]},bg=${THEME[blue]},bold] \
+#[fg=${THEME[foreground]},bg=${THEME[red]},bold] \
 #{?client_prefix,󰠠 ,󰤂 }\
 #[bold,nodim]#S "
 
