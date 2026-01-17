@@ -43,10 +43,7 @@ $RESET\
 #[fg=${THEME[bgreen]},bg=${THEME[bblack]}] \
 #{?#{==:#{pane_current_command},ssh},󰣀 ,$active_terminal_icon }\
 #[fg=${THEME[bpurple]},bold,nodim]\
-$window_number\
-#W\
-#[nobold]\
-#{?window_zoomed_flag, $zoom_number, $custom_pane}\
+#W \
 #{?window_last_flag, ,}"
 
 tmux set -g window-status-format "\
@@ -54,10 +51,7 @@ $RESET\
 #[fg=${THEME[foreground]}] \
 #{?#{==:#{pane_current_command},ssh},󰣀 ,$terminal_icon }\
 ${RESET}\
-$window_number\
-#W\
-#[nobold,dim]\
-#{?window_zoomed_flag, $zoom_number, $custom_pane}\
+#W \
 #[fg=${THEME[yellow]}]\
 #{?window_last_flag, ,}"
 
