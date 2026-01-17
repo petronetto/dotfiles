@@ -9,7 +9,8 @@ background-blur-radius = 30
 keybind = shift+enter=text:\n
 window-inherit-working-directory = true
 macos-titlebar-style = hidden
-window-padding-y = 5
+window-padding-y = 20
+window-padding-x = 20
 working-directory = /opt/code
 # Enable Option key as Alt for keybindings
 # Use 'left' so right Option key can still type special characters
