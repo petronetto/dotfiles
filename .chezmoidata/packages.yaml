@@ -40,7 +40,7 @@ packages:
       - 'bruno'
       - 'claude'
       - 'claude-code'
-      - 'orbstack'
+      - 'docker'
       - 'font-fira-code-nerd-font'
       - 'font-caskaydia-cove-nerd-font'
       - 'font-jetbrains-mono-nerd-font'
