@@ -132,6 +132,13 @@ version_format = "${raw}"
 symbol = "⨀ "
 style = "bold bright-yellow"
 
+[php]
+format = " [php](italic) [${symbol}${version}]($style)"
+version_format = "${raw}"
+detect_files = ["composer.json"]
+detect_folders = ["vendor"]
+detect_extensions = [ ".php" ]
+
 [nodejs]
 format = " [node](italic) [◫ ($version)](bold bright-green)"
 version_format = "${raw}"
