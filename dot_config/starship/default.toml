@@ -36,7 +36,7 @@ symbol = ' '
 
 [character]
 format = "$symbol "
-success_symbol = "[❯](bold italic bright-yellow)"
+success_symbol = "[❯](bold italic yellow)"
 error_symbol = "[χ](italic purple)"
 vimcmd_symbol = "[❮](italic dimmed green)"
 
@@ -95,8 +95,8 @@ style = "italic dimmed yellow"
 
 [git_branch]
 format = " [$branch(:$remote_branch)]($style)"
-symbol = "[△](bold italic bright-blue)"
-style = "italic bright-blue"
+symbol = "[△](bold italic blue)"
+style = "italic blue"
 truncation_symbol = "⋯"
 truncation_length = 11
 only_attached = true
@@ -109,17 +109,17 @@ ignore_submodules = true
 disabled = false
 
 [git_status]
-style = "bold italic bright-blue"
+style = "bold italic blue"
 format = "([⎪$ahead_behind$staged$modified$untracked$renamed$deleted$conflicted$stashed⎥]($style))"
-conflicted = "[◪◦](italic bright-magenta)"
+conflicted = "[◪◦](italic magenta)"
 ahead = "[▴│[${count}](bold white)│](italic green)"
 behind = "[▿│[${count}](bold white)│](italic red)"
-diverged = "[◇ ▴┤[${ahead_count}](regular white)│▿┤[${behind_count}](regular white)│](italic bright-magenta)"
-untracked = "[◌◦](italic bright-yellow)"
+diverged = "[◇ ▴┤[${ahead_count}](regular white)│▿┤[${behind_count}](regular white)│](italic magenta)"
+untracked = "[◌◦](italic yellow)"
 stashed = "[◃◈](italic white)"
 modified = "[●◦](italic yellow)"
-staged = "[▪┤[$count](bold white)│](italic bright-cyan)"
-renamed = "[◎◦](italic bright-blue)"
+staged = "[▪┤[$count](bold white)│](italic cyan)"
+renamed = "[◎◦](italic blue)"
 deleted = "[✕](italic red)"
 
 [deno]
@@ -130,7 +130,7 @@ version_format = "${raw}"
 format = " [lua](italic) [${symbol}${version}]($style)"
 version_format = "${raw}"
 symbol = "⨀ "
-style = "bold bright-yellow"
+style = "bold yellow"
 
 [php]
 format = " [php](italic) [${symbol}${version}]($style)"
@@ -140,7 +140,7 @@ detect_folders = ["vendor"]
 detect_extensions = [ ".php" ]
 
 [nodejs]
-format = " [node](italic) [◫ ($version)](bold bright-green)"
+format = " [node](italic) [◫ ($version)](bold green)"
 version_format = "${raw}"
 detect_files = ["package-lock.json", "yarn.lock"]
 detect_folders = ["node_modules"]
@@ -148,9 +148,9 @@ detect_extensions = []
 
 [python]
 format = " [py](italic) [${symbol}${version}]($style)"
-symbol = "[⌉](bold bright-blue)⌊ "
+symbol = "[⌉](bold blue)⌊ "
 version_format = "${raw}"
-style = "bold bright-yellow"
+style = "bold yellow"
 
 [ruby]
 format = " [rb](italic) [${symbol}${version}]($style)"
@@ -173,7 +173,7 @@ style = "dimmed yellow italic bold"
 [swift]
 format = " [sw](italic) [${symbol}${version}]($style)"
 symbol = "◁ "
-style = "bold bright-red"
+style = "bold red"
 version_format = "${raw}"
 
 [aws]
