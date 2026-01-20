@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 # Auto-suggestions configuration
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#665c54'
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(
   'bracketed-paste'
   'history-search-forward'
