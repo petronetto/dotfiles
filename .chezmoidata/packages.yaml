@@ -29,6 +29,7 @@ packages:
       - 'gemini-cli'
       - 'dnsmasq'
       - 'mkcert'
+      - 'procs'
     casks:
       - 'ghostty'
       - 'visual-studio-code'
@@ -40,7 +41,7 @@ packages:
       - 'bruno'
       - 'claude'
       - 'claude-code'
-      - 'docker'
+      - 'docker-desktop'
       - 'font-fira-code-nerd-font'
       - 'font-caskaydia-cove-nerd-font'
       - 'font-jetbrains-mono-nerd-font'
