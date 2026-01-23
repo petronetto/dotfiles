@@ -5,6 +5,12 @@ It relies on my personal 1Password vault structure. However you can use it as a 
 
 I also prefer to install Homebrew, chezmoi and 1Password manually, becasue it works better for me that way on a fresh macOS installation.
 
+## Private Dotfiles
+
+Some sensitive configurations (SSH configs, private scripts, extra Zsh configs, etc.) are kept in a separate private repository. During setup, chezmoi automatically attempts to clone and sync files from this private repo via the `run_onchange_sync-private-dotfiles.sh` script. Don't worry though - if the private repo isn't accessible or doesn't exist, the installation will continue gracefully. It's completely optional!
+
+By default, it looks for `git@github.com:petronetto/dotfiles-private.git`, but you can override this by setting the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfiles repository URL before running `chezmoi apply`.
+
 ## Quick Start
 
 ### First Time Setup
