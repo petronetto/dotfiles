@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+
+export COPILOT_CUSTOM_INSTRUCTIONS_DIRS="$XDG_CONFIG_HOME/ai"
