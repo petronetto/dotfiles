@@ -6,4 +6,10 @@
 	autoSetupRemote = true
 
 [pull]
-    rebase = true
+	rebase = true
+
+[core]
+	excludesFile = ~/.config/git/ignore
+
+[includeIf "gitdir:/opt/code/work/"]
+	path = ~/.config/git/config-work
