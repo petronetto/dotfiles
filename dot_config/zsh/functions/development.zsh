@@ -7,11 +7,13 @@ function config() {
 
 # Composer (Docker-based)
 function comp() {
+  $COMPOSER_VERSION=${COMPOSER_VERSION:-"2.9.3"}
+
   docker run --rm --interactive --tty \
     --volume $(pwd):/app \
     --volume ${COMPOSER_HOME:-$HOME/.composer}:/tmp \
     --user $(id -u):$(id -g) \
-    composer:2.7.7 "$@"
+    composer:$COMPOSER_VERSION "$@"
 }
 
 # Composer with ignore platform requirements
