@@ -1,0 +1,21 @@
+{
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
+  "ui": {
+    "theme": "ANSI",
+    "showHomeDirectoryWarning": false
+  },
+  "general": {
+    "previewFeatures": true,
+    "vimMode": true
+  },
+  "tools": {
+    "shell": {
+      "showColor": true
+    },
+    "useRipgrep": true
+  }
+}
