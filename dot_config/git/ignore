@@ -229,4 +229,3 @@ pyrightconfig.json
 
 # Custom ignores
 **/*.local.*
-**/work/**/CLAUDE.md
