@@ -3,6 +3,11 @@
 # This script clones a private dotfiles repo and syncs all files
 # maintaining the directory structure from the repo
 # It's designed to be optional - if it fails, installation continues
+#
+# Private directory state: {{ output "git" "-C" (joinPath .chezmoi.sourceDir "private") "rev-parse" "HEAD" | trim }}
+# This hash represents the current git commit in the private directory.
+# When the private directory changes and is committed, this hash updates,
+# triggering chezmoi to re-run this script
 
 set -euo pipefail
 
