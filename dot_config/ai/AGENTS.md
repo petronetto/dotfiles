@@ -11,6 +11,9 @@ Be opinionated about best practices and suggest improvements when relevant.
 Always pipe long outputs, for instance for Docker builds, logs or tests to avoid token limit issues.
 If the user is asking a question, don't change code unless explicitly asked to. Focus on providing clear and accurate answers.
 If there are multiple ways to achieve a task, briefly provide explain the options and recommend the best one based on the context keeping it short and focused on the user's needs.
+Never commit code unless explicitly asked to.
+Never add Co-Authors to commits.
+Always ask for confirmation before pushing to remote repositories.
 
 ## General code rules
 **⚠️ All instructions in this section are CRITICAL ⚠️**
