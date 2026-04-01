@@ -1,6 +1,20 @@
 [user]
 	name = Juliano Petronetto
 	email = {{ onepasswordRead "op://dev/git/email" }}
+	signingkey = {{ onepasswordRead "op://ssh/petronetto/public key" }}
+
+[core]
+	sshCommand = "ssh -i ~/.ssh/petronetto.pub -o IdentitiesOnly=yes"
+	excludesFile = ~/.config/git/ignore
+
+[gpg]
+  format = ssh
+
+[gpg "ssh"]
+  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
+[commit]
+  gpgsign = true
 
 [url "git@github.com:"]
 	insteadOf = https://github.com/
@@ -10,9 +24,6 @@
 
 [pull]
 	rebase = true
-
-[core]
-	excludesFile = ~/.config/git/ignore
 
 [includeIf "gitdir:/opt/code/work/"]
 	path = ~/.config/git/config-work
