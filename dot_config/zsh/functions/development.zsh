@@ -68,26 +68,35 @@ function install() {
   fi
 }
 
-# Generate a Certificate Signing Request (CSR) and private key in /tmp
+# Generate a CSR and private key, printing both to stdout by default.
 function gencsr() {
-  local domain="${1}"
+  local only_csr=false only_key=false
+  local -a pos_args=()
 
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --only-csr|-c) only_csr=true; shift ;;
+      --only-key|-k) only_key=true; shift ;;
+      --) shift; pos_args+=("$@"); break ;;
+      -*) echo "Unknown option: $1" >&2; return 1 ;;
+      *) pos_args+=("$1"); shift ;;
+    esac
+  done
+
+  local domain="${pos_args[1]}"
   if [[ -z "$domain" ]]; then
-    echo "Usage: gencsr <domain> [country] [state] [city] [org] [org-unit]"
+    echo "Usage: gencsr <domain> [country] [state] [city] [org] [org-unit] [--only-csr|-c] [--only-key|-k]" >&2
     return 1
   fi
 
-  local country="${2:-US}"
-  local state="${3:-}"
-  local city="${4:-}"
-  local org="${5:-}"
-  local org_unit="${6:-}"
+  local country="${pos_args[2]:-US}"
+  local state="${pos_args[3]:-}"
+  local city="${pos_args[4]:-}"
+  local org="${pos_args[5]:-}"
+  local org_unit="${pos_args[6]:-}"
 
-  local outdir="/tmp/csr-${domain}"
-  local key_file="${outdir}/${domain}.key"
-  local csr_file="${outdir}/${domain}.csr"
-
-  mkdir -p "$outdir"
+  local key_file="/tmp/${domain}.key"
+  local csr_file="/tmp/${domain}.csr"
 
   local subj="/CN=${domain}"
   [[ -n "$country"  ]] && subj="/C=${country}${subj}"
@@ -99,50 +108,15 @@ function gencsr() {
   openssl req -new -newkey rsa:2048 -nodes \
     -keyout "$key_file" \
     -out "$csr_file" \
-    -subj "$subj" 2>/dev/null
+    -subj "$subj" 2>/dev/null || { echo "Error: failed to generate CSR" >&2; return 1 }
 
-  if [[ $? -eq 0 ]]; then
-    echo "CSR generated successfully:"
-    echo "  Private key : ${key_file}"
-    echo "  CSR         : ${csr_file}"
-    echo ""
-    echo "CSR details:"
-    openssl req -noout -text -in "$csr_file" | grep -E "Subject:|Public-Key:"
+  if $only_key; then
+    cat "$key_file"
+  elif $only_csr; then
+    cat "$csr_file"
   else
-    echo "Error: failed to generate CSR" >&2
-    return 1
-  fi
-}
-
-# Get system architecture (adapted from rustup-init.sh)
-function get_architecture() {
-  local _ostype _cputype _arch
-  _ostype="$(uname -s)"
-  _cputype="$(uname -m)"
-
-  if [ "$_ostype" = Darwin ] && [ "$_cputype" = i386 ]; then
-    # Darwin `uname -m` lies
-    if sysctl hw.optional.x86_64 | grep -q ': 1'; then
-      _cputype=x86_64
-    fi
+    cat "$key_file" "$csr_file"
   fi
 
-  case "$_ostype" in
-  Linux) _ostype=unknown-linux-gnu ;;
-  Darwin) _ostype=apple-darwin ;;
-  MINGW* | MSYS* | CYGWIN* | Windows_NT) _ostype=pc-windows-gnu ;;
-  *) err "unrecognized OS type: $_ostype" ;;
-  esac
-
-  case "$_cputype" in
-  i386 | i486 | i686 | i786 | x86) _cputype=i686 ;;
-  xscale | arm | armv6l | armv7l | armv8l) _cputype=arm ;;
-  aarch64 | arm64) _cputype=aarch64 ;;
-  x86_64 | x86-64 | x64 | amd64) _cputype=x86_64 ;;
-  *) err "unknown CPU type: $_cputype" ;;
-  esac
-
-  _arch="${_cputype}-${_ostype}"
-  RETVAL="$_arch"
-  echo "$RETVAL"
+  rm -f "$key_file" "$csr_file"
 }
