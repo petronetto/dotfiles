@@ -68,6 +68,52 @@ function install() {
   fi
 }
 
+# Generate a Certificate Signing Request (CSR) and private key in /tmp
+function gencsr() {
+  local domain="${1}"
+
+  if [[ -z "$domain" ]]; then
+    echo "Usage: gencsr <domain> [country] [state] [city] [org] [org-unit]"
+    return 1
+  fi
+
+  local country="${2:-US}"
+  local state="${3:-}"
+  local city="${4:-}"
+  local org="${5:-}"
+  local org_unit="${6:-}"
+
+  local outdir="/tmp/csr-${domain}"
+  local key_file="${outdir}/${domain}.key"
+  local csr_file="${outdir}/${domain}.csr"
+
+  mkdir -p "$outdir"
+
+  local subj="/CN=${domain}"
+  [[ -n "$country"  ]] && subj="/C=${country}${subj}"
+  [[ -n "$state"    ]] && subj="${subj}/ST=${state}"
+  [[ -n "$city"     ]] && subj="${subj}/L=${city}"
+  [[ -n "$org"      ]] && subj="${subj}/O=${org}"
+  [[ -n "$org_unit" ]] && subj="${subj}/OU=${org_unit}"
+
+  openssl req -new -newkey rsa:2048 -nodes \
+    -keyout "$key_file" \
+    -out "$csr_file" \
+    -subj "$subj" 2>/dev/null
+
+  if [[ $? -eq 0 ]]; then
+    echo "CSR generated successfully:"
+    echo "  Private key : ${key_file}"
+    echo "  CSR         : ${csr_file}"
+    echo ""
+    echo "CSR details:"
+    openssl req -noout -text -in "$csr_file" | grep -E "Subject:|Public-Key:"
+  else
+    echo "Error: failed to generate CSR" >&2
+    return 1
+  fi
+}
+
 # Get system architecture (adapted from rustup-init.sh)
 function get_architecture() {
   local _ostype _cputype _arch
