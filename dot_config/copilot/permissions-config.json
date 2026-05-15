@@ -1,0 +1,71 @@
+{
+  "locations": {
+    "/opt/code": {
+      "tool_approvals": [
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "git fetch"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "git log"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "curl"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "xargs"
+          ]
+        },
+        {
+          "kind": "write"
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "task"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "python3"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "docker"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "npx playwright"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "od"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "mkdir"
+          ]
+        }
+      ]
+    }
+  }
+}
