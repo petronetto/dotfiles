@@ -1,0 +1,12 @@
+{
+  "renderMarkdown": true,
+  "theme": "auto",
+  "mergeStrategy": "rebase",
+  "allowedUrls": [
+    "*"
+  ],
+  "experimental": true,
+  "autoUpdate": true,
+  "ide.autoConnect": true,
+  "includeCoAuthoredBy": false
+}
