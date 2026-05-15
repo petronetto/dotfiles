@@ -30,6 +30,7 @@ packages:
       - 'dnsmasq'
       - 'mkcert'
       - 'procs'
+      - 'mole'
     casks:
       - 'ghostty'
       - 'visual-studio-code'
