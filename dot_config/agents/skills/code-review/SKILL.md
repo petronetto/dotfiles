@@ -6,8 +6,6 @@ argument-hint: "<PR URL, diff, or file path>"
 
 # /code-review
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
-
 Review code changes with a structured lens on security, performance, correctness, and maintainability.
 
 ## Usage
@@ -73,6 +71,14 @@ If no specific file or URL is provided, ask what to review.
 - Test coverage
 - Documentation for non-obvious logic
 
+### Test Quality
+- Assert behavior, not implementation
+- No trivial tests (DTOs, getters/setters, framework code)
+- No tautological tests that mirror the code
+- Tests must fail for the right reason
+- Flag coverage-padding tests
+- Clear AAA structure and descriptive names
+
 ## Output
 
 ```markdown
@@ -90,9 +96,6 @@ If no specific file or URL is provided, ask what to review.
 | # | File | Line | Suggestion | Category |
 |---|------|------|------------|----------|
 | 1 | [file] | [line] | [description] | Performance |
-
-### What Looks Good
-- [Positive observations]
 
 ### Verdict
 [Approve / Request Changes / Needs Discussion]
