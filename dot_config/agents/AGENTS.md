@@ -26,6 +26,7 @@ Follow these guidelines **STRICTLY**. After finishing a task review it to ensure
 * Fix **root causes**, not symptoms.
 * Changes must **preserve existing behavior** unless explicitly required.
 * Ensure all changes are **reversible** and backed by evidence.
+* When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
 * Test in **all relevant contexts** (code, API, CLI).
 
 ## Quality & Verification
