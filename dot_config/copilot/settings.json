@@ -19,5 +19,9 @@
     "showCodeChanges": false,
     "showUsername": false,
     "showCustom": true
-  }
+  },
+  "tabs": {
+    "enabled": false
+  },
+  "colorMode": "default"
 }
