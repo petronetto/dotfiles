@@ -1,19 +1,45 @@
 ---
-name: interactive-plan
-description: Plan a feature or fix as small, individually-reviewable steps, then implement them one chunk at a time, stopping after every step for human review and explicit approval before committing and moving on. Use for interactive plan, step-by-step implementation, plan-and-build, or review-gated implementation loops.
-argument-hint: "<feature or fix description>"
+name: spec-and-build
+description: Plan a feature or fix as small, individually-reviewable steps, then implement them one chunk at a time, stopping after every step for human review and explicit approval before committing and moving on. Use for interactive plan, step-by-step implementation, plan-and-build, or review-gated implementation loops. Supports two modes - invoke with "plan only" or "just plan" to run only the planning phase; invoke with "build", "implement", or "resume plan" to run only the implementation phase from an existing plan.
+argument-hint: "[plan|build] <feature or fix description>"
 ---
 
 # Interactive Plan
 
 Use this skill to turn a feature or fix into a sequence of tiny, reviewable steps and then implement them under a strict human-in-the-loop review gate.
 
-Two phases, never blurred together:
+Two phases, never blurred together. Each can be invoked independently via its mode:
 
-1. **Plan phase** — write the plan to disk as one file per step. No code changes.
-2. **Implementation loop** — implement one step at a time in small chunks, stop, wait for review, then commit and advance only with explicit approval.
+1. **Plan mode** — explore the codebase, decompose the work, write one step file per step. No code changes.
+2. **Build mode** — implement one step at a time in small chunks, stop, wait for review, then commit and advance only with explicit approval.
 
-The planning and the implementation must both uphold the standards of the `code-quality-review` skill: be ambitious about structural simplicity, prefer deleting complexity over rearranging it, keep files small and cohesive, avoid spaghetti branching, and program to clear boundaries. Plan for the simplest design that could possibly work, not the first one that comes to mind.
+## Modes
+
+This skill operates in three modes depending on how it is invoked:
+
+**Plan mode** (triggered by: "plan only", "just plan", "create a plan", "plan this") — runs Phase 1 exclusively. Produces step files and stops. No implementation. Use this when you want to review and refine the plan before any code is touched.
+
+**Build mode** (triggered by: "build", "implement", "resume", "resume plan", "start building") — runs Phase 2 exclusively, picking up from an existing plan directory. Use this when a plan already exists and has been approved and you are ready to implement it.
+
+**Plan + Build mode** (default, no mode qualifier) — runs both phases in sequence: plan first, stop for confirmation, then implement. This is the standard flow for new features and fixes.
+
+## Code Quality Standards
+
+These standards apply to both planning and implementation. The goal is a design so simple and direct that it feels inevitable.
+
+**Be ambitious about structural simplification.** Do not settle for "this could be a bit cleaner." Look for opportunities to reframe the problem so that whole branches, helpers, modes, conditionals, or layers disappear entirely. If you see a path to delete complexity rather than rearrange it, take it. Prefer the solution that makes the code feel inevitable in hindsight.
+
+**Keep files small and cohesive.** Treat a file growing past 1,000 lines as a design smell. Prefer extracting helpers, subcomponents, or focused modules over letting a file sprawl. When planning, flag steps that would push a file past this threshold and plan a decomposition step first.
+
+**Avoid spaghetti branching.** Be suspicious of new ad-hoc conditionals, scattered special cases, or one-off branches inserted into unrelated flows. Push logic into a dedicated abstraction, helper, state machine, or separate module rather than tangling an existing path.
+
+**Program to interfaces and boundaries.** Keep logic in the canonical layer. Avoid feature-specific logic leaking into general-purpose modules. Prefer explicit typed models or shared contracts over loosely-shaped ad-hoc objects. If a branch relies on silent fallback to paper over an unclear invariant, make the boundary explicit instead.
+
+**Prefer direct, boring, maintainable code.** Treat brittle, ad-hoc, or "magic" behavior as a design problem. Be skeptical of thin abstractions, identity wrappers, or pass-through helpers that add indirection without buying clarity. Prefer existing canonical utilities over bespoke one-offs.
+
+**Bias toward cleaning the design, not just accepting working code.** If behavior can stay the same while the structure becomes meaningfully cleaner, push for the cleaner version. Strongly prefer simplifications that remove moving pieces altogether over refactors that merely spread the same complexity around.
+
+When planning, ask for every proposed step: is there a "code judo" move that makes this dramatically simpler? Can this be reframed so fewer concepts, branches, or helper layers are needed? If yes, choose that path.
 
 ## Hard Rules (Non-Negotiable)
 
@@ -25,7 +51,7 @@ The planning and the implementation must both uphold the standards of the `code-
 - **Never mark a task done or advance under any uncertainty.** If there is *any* doubt about whether the step is complete, correct, or approved, do not proceed — ask the user, in plain terms, whether you are allowed to move to the next task. When in doubt, stop and ask.
 - **Preserve existing behavior** unless the step explicitly requires changing it.
 
-## Phase 1 — Build the Plan
+## Phase 1 — Plan Mode
 
 ### 1. Establish context
 
@@ -116,7 +142,14 @@ Concrete, checkable conditions that must all hold for the step to be "done".
 
 After writing all step files, give the user a short prose summary of the plan and the list of files created. **Stop and wait** for the user to confirm the plan before any implementation begins. Do not start coding on your own.
 
-## Phase 2 — Implementation Loop
+## Phase 2 — Build Mode (Implementation Loop)
+
+When invoked in Build mode directly (without a preceding plan phase in the same session), first locate the plan:
+
+- Run `git rev-parse --show-toplevel` and `git rev-parse --abbrev-ref HEAD` to derive `<project>` and `<branch>`.
+- List directories under `$HOME/.agents/plans/<project>/<branch>/` and identify the most recent `<task-name>` directory with pending step files.
+- If multiple candidates exist, present them to the user and ask which to resume.
+- Confirm the plan with the user before starting.
 
 Repeat for each step in order, starting from the lowest `NNN` with `Status: pending`:
 
@@ -124,7 +157,7 @@ Repeat for each step in order, starting from the lowest `NNN` with `Status: pend
 State which step file you are about to implement and its goal. Set its `Status` to `in-progress` in the file.
 
 ### 2. Implement in small chunks
-Implement the step strictly as small chunks, in order. Keep each chunk focused and easy to review. Follow the `code-quality-review` standards while coding: no spaghetti branching, no needless abstractions, small cohesive files, explicit boundaries. Add/update tests as described in the step's Verification section and run linters/tests where available, piping long output.
+Implement the step strictly as small chunks, in order. Keep each chunk focused and easy to review. Apply the Code Quality Standards defined above while coding: no spaghetti branching, no needless abstractions, small cohesive files, explicit boundaries. Add/update tests as described in the step's Verification section and run linters/tests where available, piping long output.
 
 ### 3. Stop for review
 When the step's chunks are complete, **stop and hand control to the user**. Clearly say the step is ready for review and that you are waiting. Do not commit. Do not start the next step.
