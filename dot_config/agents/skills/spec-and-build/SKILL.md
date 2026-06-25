@@ -64,7 +64,17 @@ Before writing anything, gather the facts you need and confirm them:
 - Understand the codebase well enough to plan responsibly. If the request is ambiguous, ask one concise clarifying question at a time. Never make assumptions.
 - When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
 
-### 2. Choose the plan directory
+### 2. Interview the user
+
+Before writing any plan files, interview the user relentlessly about every aspect of the work until you reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one by one. For each open question, provide your recommended answer and explain why — then ask the user to confirm, override, or refine it.
+
+If a question can be answered by exploring the codebase, explore the codebase instead of asking.
+
+Do not proceed to step 3 until every significant design decision is resolved and the user has confirmed the overall direction.
+
+Use lavish.
+
+### 3. Choose the plan directory
 
 Each plan gets its own directory, named after the overall task being planned:
 
@@ -74,7 +84,7 @@ $HOME/.agents/plans/<project>/<branch>/YYYYMMDD/<task-name>/
 
 where `<task-name>` is a short git-safe slug for the whole feature/fix. Create the directory if it does not exist. Because every plan lives in its own `<task-name>` folder, distinct plans never collide — even on the same day. If a `<task-name>` directory already exists with unfinished step files, do not delete anything: ask the user whether to resume its implementation or start a new plan (under a different `<task-name>`). Never delete a completed plan; it is a durable record.
 
-### 3. Decompose into ordered steps
+### 4. Decompose into ordered steps
 
 Break the work into the smallest sequence of independently-reviewable, behavior-preserving (where possible) steps. A good step:
 
@@ -85,7 +95,7 @@ Break the work into the smallest sequence of independently-reviewable, behavior-
 
 Be ambitious about simplification while decomposing: if a "code judo" reframing lets whole steps disappear, prefer that plan.
 
-### 4. Write one file per step
+### 5. Write one file per step
 
 Each step is its own file inside the plan's `<task-name>` directory:
 
@@ -138,7 +148,7 @@ Concrete, checkable conditions that must all hold for the step to be "done".
 (Filled in only after approval, with the final commit message used.)
 ```
 
-### 5. Present the plan and wait
+### 6. Present the plan and wait
 
 After writing all step files, give the user a short prose summary of the plan and the list of files created. **Stop and wait** for the user to confirm the plan before any implementation begins. Do not start coding on your own.
 
