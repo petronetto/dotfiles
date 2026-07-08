@@ -93,11 +93,3 @@ alias tn="tmux_new_session"
 alias tl="tmux ls"
 alias tk="tmux kill-session -t"
 alias tks="tmux kill-server"
-
-#------------------------------------------------------------
-# AI Tools
-#------------------------------------------------------------
-alias ge='NODE_OPTIONS="--no-deprecation" gemini'
-alias gy='ge --yolo'
-alias cla='claude'
-alias claa='claude --dangerously-skip-permissions'
