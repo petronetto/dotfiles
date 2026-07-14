@@ -20,6 +20,7 @@ packages:
       - 'ripgrep'
       - 'atuin'
       - 'pi-coding-agent'
+      - 'agent-browser'
       - 'rust'
       - 'python'
       - 'pyenv'
