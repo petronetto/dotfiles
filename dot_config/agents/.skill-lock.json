@@ -78,6 +78,15 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-08T18:43:18.048Z",
       "updatedAt": "2026-07-08T18:43:18.048Z"
+    },
+    "find-docs": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/upstash/context7.git",
+      "skillPath": "skills/find-docs/SKILL.md",
+      "skillFolderHash": "f1f7597c0575b2c138a551a222f56808a86e16b1",
+      "installedAt": "2026-07-13T10:35:49.117Z",
+      "updatedAt": "2026-07-13T10:35:49.117Z"
     }
   },
   "dismissed": {
