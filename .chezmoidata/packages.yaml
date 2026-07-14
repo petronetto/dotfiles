@@ -1,52 +1,103 @@
+# =============================================================================
+# Homebrew package definitions
+# =============================================================================
+#
+# Consumed by: run_onchange_darwin-install-packages.sh.tmpl
+# =============================================================================
+
 packages:
   darwin:
+
+    # --------------------------------------------------------------------------
+    # Formulae (CLI tools, libraries, runtimes) — `brew install`
+    # --------------------------------------------------------------------------
     brews:
+
+      # --- Core shell & system utilities ---
+      - 'bash'         # newer Bash (macOS ships 3.2)
+      - 'curl'         # modern curl (HTTP/2, current SSL)
+      - 'openssl'      # TLS / crypto libraries
+      - 'httpie'       # human-friendly HTTP client
+
+      # --- Version control & hosting CLIs ---
       - 'git'
-      - 'bash'
-      - 'curl'
-      - 'openssl'
-      - 'httpie'
-      - 'gh'
-      - 'glab'
+      - 'gh'           # GitHub CLI
+      - 'glab'         # GitLab CLI
+
+      # --- Editor & terminal multiplexer ---
       - 'neovim'
       - 'tmux'
-      - 'antidote'
-      - 'starship'
-      - 'bat'
-      - 'fd'
-      - 'lsd'
-      - 'zoxide'
-      - 'fzf'
-      - 'ripgrep'
-      - 'atuin'
+
+      # --- Zsh framework & prompt ---
+      - 'antidote'     # fast Zsh plugin manager
+      - 'starship'     # cross-shell prompt
+
+      # --- Modern CLI utilities (coreutils replacements / quality of life) ---
+      - 'bat'          # cat with syntax highlighting
+      - 'fd'           # find replacement
+      - 'lsd'          # ls replacement (nerd-font icons)
+      - 'zoxide'       # cd replacement (frecency-based)
+      - 'fzf'          # fuzzy finder
+      - 'ripgrep'      # grep replacement
+      - 'atuin'        # synced, searchable shell history
+      - 'procs'        # ps replacement
+
+      # --- AI coding agents ---
       - 'pi-coding-agent'
       - 'agent-browser'
+
+      # --- Languages & runtimes ---
       - 'rust'
-      - 'python'
-      - 'pyenv'
-      - 'php'
-      - 'composer'
-      - 'symfony-cli'
       - 'go'
-      - 'node@24'
+      - 'node@24'      # Node.js LTS (linked post-install, see template)
+      - 'python'
+      - 'php'
       - 'lua'
-      - 'luarocks'
-      - 'dnsmasq'
-      - 'mkcert'
-      - 'procs'
-      - 'mole'
-      - 'pipx'
+      - 'luarocks'     # Lua package manager
+
+      # --- Language tooling & package managers ---
+      - 'pyenv'        # Python version manager
+      - 'pipx'         # install Python CLI apps in isolated envs
+      - 'composer'     # PHP dependency manager
+      - 'symfony-cli'  # Symfony project scaffolder / local server
+
+      # --- Networking & local dev infrastructure ---
+      - 'dnsmasq'      # local DNS for dev domains
+      - 'mkcert'       # locally-trusted HTTPS certificates
+      - 'mole'         # SSH tunnel / port forwarding
+
+    # --------------------------------------------------------------------------
+    # Casks (GUI applications) — `brew install --cask`
+    # --------------------------------------------------------------------------
     casks:
+
+      # --- Terminal emulator ---
       - 'ghostty'
+
+      # --- Editors & IDEs ---
       - 'cursor'
-      - '1password'
-      - '1password-cli'
+
+      # --- Browsers ---
       - 'brave-browser'
+
+      # --- Communication ---
       - 'slack'
-      - 'bruno'
+
+      # --- Security & passwords ---
+      - '1password'
+      - '1password-cli'  # `op` CLI for scripting 1Password
+
+      # --- API & dev tools ---
+      - 'bruno'          # open-source API client (Postman alternative)
+
+      # --- AI desktop clients ---
       - 'claude'
       - 'claude-code'
+
+      # --- Containers ---
       - 'docker-desktop'
+
+      # --- Fonts (Nerd Fonts — terminal icons & Powerline glyphs) ---
       - 'font-fira-code-nerd-font'
-      - 'font-caskaydia-cove-nerd-font'
+      - 'font-caskaydia-cove-nerd-font'  # Cascadia Code
       - 'font-jetbrains-mono-nerd-font'
