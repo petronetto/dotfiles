@@ -1,0 +1,16 @@
+{
+  "defaultThinkingLevel": "high",
+  "hideThinkingBlock": false,
+  "quietStartup": true,
+  "enableInstallTelemetry": false,
+  "theme": "dark",
+  "defaultProjectTrust": "always",
+  "packages": [
+    "npm:@netandreus/pi-cursor-provider",
+    "npm:@plannotator/pi-extension",
+    "npm:pi-subagents"
+  ],
+  "warnings": {
+    "anthropicExtraUsage": true
+  }
+}
