@@ -43,6 +43,7 @@ alias cd="z"        # replace cd with Zoxide command - https://github.com/ajeetd
 alias ls="lsd"
 alias la="ls -a"
 alias ll="ls -ll"
+alias lla="ls -lla"
 
 # File operations
 alias tailf="tail -f"
