@@ -41,10 +41,12 @@ packages:
       - 'ripgrep'      # grep replacement
       - 'atuin'        # synced, searchable shell history
       - 'procs'        # ps replacement
+      - 'tldr'         # community-driven, simplified man pages
 
-      # --- AI coding agents ---
+      # --- AI coding agents & LLM tooling ---
       - 'pi-coding-agent'
       - 'agent-browser'
+      - 'rtk'          # LLM token-saving proxy (rtk-ai.app)
 
       # --- Languages & runtimes ---
       - 'rust'
