@@ -6,7 +6,6 @@
   "theme": "dark",
   "defaultProjectTrust": "always",
   "packages": [
-    "npm:@netandreus/pi-cursor-provider",
     "npm:@plannotator/pi-extension",
     "npm:pi-subagents"
   ],
