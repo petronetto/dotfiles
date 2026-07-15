@@ -21,9 +21,8 @@ State lives on disk in the plan directory, not in the conversation. Every run re
 
 ### 1. Establish context
 
-- `git rev-parse --show-toplevel` → absolute repo path as `<project-full-path>`; its basename is `<project>`.
+- `git rev-parse --show-toplevel` → absolute repo path as `<project-full-path>`.
 - `git rev-parse --abbrev-ref HEAD` → `<branch>`; slugify (lowercase, `/` and unsafe chars to `-`, collapse repeats).
-- `date +%Y%m%d` → `YYYYMMDD`.
 - `git log --oneline -20` → learn commit-message style for later reuse.
 - Explore the codebase enough to plan responsibly. Prefer quality, simplicity, and long-term maintainability over development cost.
 
@@ -34,10 +33,10 @@ Interview relentlessly until you reach shared understanding. Walk each branch of
 ### 3. Choose the plan directory
 
 ```
-$HOME/.agents/plans/<project>/<branch>/YYYYMMDD/<task-name>/
+<project-full-path>/.plans/<branch>/<task-name>/
 ```
 
-`<task-name>` is a short git-safe slug for the whole task. Create it if missing. If it already exists with unfinished step files, ask whether to resume (via `spec-build`) or start a new plan under a different `<task-name>`.
+`.plans/` may or may not be in `.gitignore`, so do not use git to search for plans. `<task-name>` is a short git-safe slug for the whole task. Create the directory if missing. If it already exists with unfinished step files, ask whether to resume (via `spec-build`) or start a new plan under a different `<task-name>`.
 
 ### 4. Decompose into ordered steps
 
@@ -46,7 +45,7 @@ Break the work into the smallest sequence of independently-reviewable steps. A g
 ### 5. Write one file per step
 
 ```
-$HOME/.agents/plans/<project>/<branch>/YYYYMMDD/<task-name>/NNN-<step-name>.md
+<project-full-path>/.plans/<branch>/<task-name>/NNN-<step-name>.md
 ```
 
 `NNN` is a zero-padded ordinal from `000`. Fill in the template at `assets/step-file.md` for every step.
