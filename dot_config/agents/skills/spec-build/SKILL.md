@@ -23,9 +23,7 @@ State lives on disk in the step files, not in the conversation. Every run re-der
 
 ### 1. Locate the plan
 
-- `git rev-parse --show-toplevel` → absolute repo path as `<project-full-path>`.
-- `git rev-parse --abbrev-ref HEAD` → `<branch>`; slugify (lowercase, `/` and unsafe chars to `-`, collapse repeats).
-- `.plans/` may or may not be in `.gitignore`, so do not use git to search for plans. List `<project-full-path>/.plans/<branch>/` and find the most recent `<task-name>` directory with `Status: pending` step files.
+- Plans are stored in the `.plans/` directory. List `.plans/<branch>/` and find the most recent `<task-name>` directory with `Status: pending` step files.
 - If multiple candidates exist, present them and ask which to resume. Confirm the plan with the user before starting.
 
 ### 2. Run the loop
