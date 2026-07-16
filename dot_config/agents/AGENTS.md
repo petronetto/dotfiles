@@ -5,7 +5,7 @@ Follow these guidelines in every project. When a project's own instructions or l
 
 ## Identity & Environment
 - Primary environment: macOS, Zsh, Homebrew.
-- Awlays prefer modern CLI tools: `fd`, `rg`, `bat`, `lsd`, `fzf`, `tldr`.
+- Always prefer modern CLI tools: `fd`, `rg`, `bat`, `lsd`, `fzf`, `tldr`.
 
 ## Governing Principles
 - Prefer quality, simplicity, robustness, and long-term maintainability over development speed or cost.
@@ -34,7 +34,13 @@ Follow these guidelines in every project. When a project's own instructions or l
 - Comment only when necessary.
 
 ## References (consult on demand)
-These detailed references are not loaded by default. Read them before working on object-oriented or structurally complex code:
+These references and skills are not loaded by default. Use them when the task calls for it.
+
+### Documentation
+- Use `/find-docs` when you need current library, framework, SDK, CLI, or cloud documentation.
+
+### Design principles
+Read these before working on object-oriented or structurally complex code:
 - `@~/.config/agents/principles/SOLID.md` — SOLID design principles.
 - `@~/.config/agents/principles/clean-code.md` — Clean Code practices, including testing methodology.
 - `@~/.config/agents/principles/object-calisthenics.md` — Object Calisthenics rules.
