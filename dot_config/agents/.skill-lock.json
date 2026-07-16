@@ -114,6 +114,15 @@
       "skillFolderHash": "a6d128e53b4ec0238baee751dde33bf707adb5ec",
       "installedAt": "2026-07-16T08:17:55.703Z",
       "updatedAt": "2026-07-16T08:17:55.703Z"
+    },
+    "systematic-debugging": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/obra/superpowers.git",
+      "skillPath": "skills/systematic-debugging/SKILL.md",
+      "skillFolderHash": "5702624a1f0e5ad478234442ce5cde038a525465",
+      "installedAt": "2026-07-16T12:08:44.354Z",
+      "updatedAt": "2026-07-16T12:08:44.354Z"
     }
   },
   "dismissed": {
