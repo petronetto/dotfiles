@@ -24,11 +24,13 @@ State lives on disk in the plan directory, not in the conversation. Every run re
 - `git rev-parse --show-toplevel` → absolute repo path as `<project-full-path>`.
 - `git rev-parse --abbrev-ref HEAD` → `<branch>`; slugify (lowercase, `/` and unsafe chars to `-`, collapse repeats).
 - `git log --oneline -20` → learn commit-message style for later reuse.
-- Explore the codebase enough to plan responsibly. Prefer quality, simplicity, and long-term maintainability over development cost.
+- Use sub-agents to explore the codebase enough to plan responsibly.
+- Prefer quality, simplicity, and long-term maintainability over development cost.
 
 ### 2. Interview the user
 
 Interview relentlessly until you reach shared understanding. Walk each branch of the design tree, resolving dependencies one decision at a time. For each open question, give your recommended answer with reasoning, then ask the user to confirm, override, or refine. If a question can be answered by reading the codebase, read it instead of asking. Use the `lavish` skill to present options. Do not proceed until every significant decision is resolved.
+Ask the questions one at a time, waiting for feedback on each question before continuing. Asking multiple questions at once is bewildering.
 
 ### 3. Choose the plan directory
 
