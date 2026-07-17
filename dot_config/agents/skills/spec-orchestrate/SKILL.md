@@ -13,7 +13,7 @@ Drive a plan from `spec-plan` to completion. Per step: a fresh-context **builder
 - One step at a time, in order.
 - Builder and reviewer each run in their own fresh sub-agent — never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs — no orchestrator history, no other steps' detail.
-- Every briefing includes: the step file, `references/code-quality.md`, `references/reuse-checklist.md`.
+- Every briefing includes: the plan's `summary.md`, the step file, `references/code-quality.md`, `references/reuse-checklist.md`.
 - Reviewer only judges — runs `code-review`, no `--fix`/`--comment`, never edits files.
 - Max **3** build↔review cycles per step. Still unresolved after 3 → `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
 - Commit only after reviewer `APPROVE`. One commit per step, only that step's files, project's own style. Never write "step N" / "phase N" / "chunk N" in the message — describe the actual change.

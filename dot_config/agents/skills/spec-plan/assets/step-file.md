@@ -1,15 +1,21 @@
 # NNN — <Task Title>
 
-| Field   | Value                            |
-| ------- | -------------------------------- |
-| Status  | pending                          |
-| Date    | YYYY-MM-DD                       |
-| Project | <project-full-path>              |
-| Branch  | <branch>                         |
-| Depends | <previous step file(s), or none> |
+| Field   | Value                             |
+| ------- | ---------------------------------- |
+| Status  | pending                            |
+| Date    | YYYY-MM-DD                         |
+| Project | <project-full-path>                |
+| Branch  | <branch>                           |
+| Summary | summary.md                         |
+| Depends | <previous step file(s), or none>   |
+| Blocked | <reason, only if Status is blocked> |
+
+Status values: `pending` → `in-progress` → `done`, or `blocked` if still unresolved after review cycles.
 
 ## Goal
 One or two sentences describing exactly what this step delivers and why.
+See `summary.md` for how it fits the overall plan — don't restate the
+plan's problem or approach here.
 
 ## Scope
 - In scope: ...
@@ -32,7 +38,7 @@ Test behavior, not implementation. Use AAA and mock external dependencies.
 Concrete, checkable conditions that must all hold for the step to be "done".
 
 ## Review log
-(Appended by spec-build during implementation.)
+(Appended during implementation/review cycles.)
 
 ## Commit
-(Filled in only after approval, with the final commit message used.)
+(Filled in only after approval: commit SHA and final commit message used.)

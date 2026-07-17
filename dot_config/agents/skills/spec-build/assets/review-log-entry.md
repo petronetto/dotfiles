@@ -1,3 +1,4 @@
 ### YYYY-MM-DD HH:MM — Revision N
-- Requested: <what the user asked to change>
+- Verdict: <APPROVE / CHANGES_REQUESTED, if from a review cycle; omit otherwise>
+- Requested: <what the user/reviewer asked to change>
 - Done: <what you changed, which chunks>

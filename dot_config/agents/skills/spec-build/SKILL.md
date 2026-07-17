@@ -23,6 +23,7 @@ Implement a plan from `spec-plan`, one step at a time, under human-in-the-loop r
 
 - Plans are in `.plans/` directory. Find the most recent `<task-name>` with `Status: pending` steps.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
+- Read `summary.md` in that directory for the plan's problem, approach, and key decisions.
 
 ### 2. Run the loop
 

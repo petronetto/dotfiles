@@ -6,6 +6,9 @@ You are implementing exactly one step of an existing plan, in a fresh context wi
 - Path: <repo-full-path>
 - Branch: <branch>
 
+## Plan summary (problem, approach, key decisions — if present)
+<full contents of summary.md>
+
 ## Step to implement
 <full contents of the NNN-<step-name>.md file>
 

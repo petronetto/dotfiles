@@ -35,23 +35,34 @@ Interview until reaching shared understanding, walking each design branch. For e
 
 `<task-name>` is a short git-safe slug. Create the directory if missing. If it exists with unfinished steps, ask whether to resume or start a new plan.
 
-### 4. Decompose into ordered steps
+### 4. Write the plan summary
+
+```
+<project-full-path>/.plans/<branch>/<task-name>/summary.md
+```
+
+Fill in the template at `assets/summary-file.md`: the problem, goals, non-goals,
+approach, and the key decisions resolved during the interview. This is the
+durable context step files link back to instead of restating.
+
+### 5. Decompose into ordered steps
 
 Break work into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Prefer reframings that delete complexity over rearranging it (see `references/code-quality.md`).
 
-### 5. Write one file per step
+### 6. Write one file per step
 
 ```
 <project-full-path>/.plans/<branch>/<task-name>/NNN-<step-name>.md
 ```
 
-Fill in the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000).
+Fill in the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000). Update the summary's "Steps" list to match.
 
-### 6. Present and stop
+### 7. Present and stop
 
 Summarize the plan and list files created. Do not implement. Hand off to `spec-build` only after approval.
 
 ## References
 
 - Design and code-quality standards: `references/code-quality.md`
+- Plan summary template: `assets/summary-file.md`
 - Step file template: `assets/step-file.md`
