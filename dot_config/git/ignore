@@ -317,4 +317,6 @@ pyrightconfig.json
 
 # Custom ignores
 .plans/
+.pi-subagents/
 **/*.local.*
+
