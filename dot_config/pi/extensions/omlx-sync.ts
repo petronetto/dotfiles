@@ -38,7 +38,6 @@ export default async function (pi: any) {
       models,
     });
   } catch (error) {
-    console.error("Failed to sync oMLX models");
     console.error(error);
   }
 }
