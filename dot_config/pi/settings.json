@@ -7,9 +7,12 @@
   "defaultProjectTrust": "always",
   "packages": [
     "npm:@plannotator/pi-extension",
-    "npm:pi-subagents"
+    "npm:pi-subagents",
+    "npm:@ollama/pi-web-search"
   ],
   "warnings": {
     "anthropicExtraUsage": true
-  }
+  },
+  "defaultProvider": "ollama",
+  "defaultModel": "glm-5.2:cloud"
 }
