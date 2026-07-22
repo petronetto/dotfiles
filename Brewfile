@@ -92,6 +92,9 @@ cask "bruno"          # open-source API client (Postman alternative)
 cask "claude"
 cask "claude-code"
 
+# --- Productivity ---
+cask "obsidian"
+
 # --- Containers ---
 cask "docker-desktop"
 
