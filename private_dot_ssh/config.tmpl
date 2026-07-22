@@ -3,6 +3,12 @@
 Host *
     IdentityAgent "{{ .chezmoi.homeDir }}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
+# GitHub configuration
+Host github.com
+    User git
+    IdentityFile ~/.ssh/petronetto.pub
+    IdentitiesOnly yes
+
 # Include host configurations
 Include config.d/hosts
 
