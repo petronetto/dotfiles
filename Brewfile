@@ -58,7 +58,6 @@ brew "luarocks"     # Lua package manager
 brew "pyenv"        # Python version manager
 brew "pipx"         # install Python CLI apps in isolated envs
 brew "composer"     # PHP dependency manager
-brew "symfony-cli"  # Symfony project scaffolder / local server
 
 # --- Networking & local dev infrastructure ---
 brew "dnsmasq"      # local DNS for dev domains
@@ -74,6 +73,7 @@ cask "ghostty"
 
 # --- Editors & IDEs ---
 cask "cursor"
+cask "phpstorm"
 
 # --- Browsers ---
 cask "brave-browser"
