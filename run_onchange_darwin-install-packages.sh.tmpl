@@ -28,6 +28,10 @@ if [[ -n "$NODE_VERSION" ]]; then
     brew link "$NODE_VERSION" --force --overwrite
 fi
 
+# Install/update Ollama
+echo "Installing Ollama..."
+curl -fsSL https://ollama.com/install.sh | sh
+
 echo "All packages installed and configured successfully!"
 
 {{ end -}}
