@@ -26,6 +26,43 @@ defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
 defaults write com.apple.menuextra.clock TimeAnnouncementsEnabled -bool false
 defaults write com.apple.menuextra.clock TimeAnnouncementsIntervalIdentifier -string "EveryHourInterval"
 
+# --- Dock apps ---
+if command -v dockutil >/dev/null 2>&1; then
+  DOCK_APPS=(
+    # Terminal
+    "/Applications/Ghostty.app"
+    # Editors & IDEs
+    "/Applications/Cursor.app"
+    "/Applications/Visual Studio Code.app"
+    "/Applications/PhpStorm.app"
+    # Dev tools
+    "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app"
+    "/Applications/Bruno.app"
+    # Browsers
+    "/Applications/Brave Browser.app"
+    "/Applications/Safari.app"
+    # Communication
+    "/Applications/Slack.app"
+    # AI & notes
+    "/Applications/Claude.app"
+    "/Applications/Obsidian.app"
+    # Apple productivity & media
+    "/System/Applications/Notes.app"
+    "/System/Applications/Reminders.app"
+    "/System/Applications/Calendar.app"
+    "/System/Applications/Music.app"
+    # System utilities
+    "/Applications/1Password.app"
+    "/System/Applications/Apps.app"
+  )
+
+  dockutil --remove all --no-restart >/dev/null
+
+  for app in "${DOCK_APPS[@]}"; do
+    [[ -d "$app" ]] && dockutil --add "$app" --no-restart >/dev/null
+  done
+fi
+
 # Restart affected apps/services so changes take effect immediately
 for app in Dock Finder SystemUIServer; do
   killall "$app" &>/dev/null || true

@@ -64,6 +64,9 @@ brew "dnsmasq"      # local DNS for dev domains
 brew "mkcert"       # locally-trusted HTTPS certificates
 brew "mole"         # SSH tunnel / port forwarding
 
+# --- macOS system configuration tooling ---
+brew "dockutil"     # scriptable Dock management
+
 # --------------------------------------------------------------------------
 # Casks (GUI applications) — brew install --cask
 # --------------------------------------------------------------------------
