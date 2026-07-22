@@ -4,7 +4,7 @@
 # maintaining the directory structure from the repo
 # It's designed to be optional - if it fails, installation continues
 #
-# Private directory state: {{ output "git" "-C" (joinPath .chezmoi.sourceDir "private") "rev-parse" "HEAD" | trim }}
+# Private directory state: {{ output "sh" "-c" (printf "git -C %s rev-parse HEAD 2>/dev/null || echo none" (joinPath .chezmoi.sourceDir "private" | quote)) | trim }}
 # This hash represents the current git commit in the private directory.
 # When the private directory changes and is committed, this hash updates,
 # triggering chezmoi to re-run this script
