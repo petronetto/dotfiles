@@ -4,10 +4,11 @@
 # maintaining the directory structure from the repo
 # It's designed to be optional - if it fails, installation continues
 #
-# Private directory state: {{ output "sh" "-c" (printf "git -C %s rev-parse HEAD 2>/dev/null || echo none" (joinPath .chezmoi.sourceDir "private" | quote)) | trim }}
-# This hash represents the current git commit in the private directory.
-# When the private directory changes and is committed, this hash updates,
-# triggering chezmoi to re-run this script
+# Private dotfiles repo state: {{ output "sh" "-c" `git ls-remote "${PRIVATE_DOTFILES_REPO:-git@github.com:petronetto/dotfiles-private.git}" HEAD 2>/dev/null | cut -f1 || echo none` | trim }}
+# This hash represents the current HEAD of the remote private dotfiles repo
+# (not a local clone, which may not exist on every machine). When new commits
+# are pushed to that repo, this hash updates, triggering chezmoi to re-run
+# this script on any machine.
 
 set -euo pipefail
 
