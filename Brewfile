@@ -15,6 +15,7 @@ brew "bash"         # newer Bash (macOS ships 3.2)
 brew "curl"         # modern curl (HTTP/2, current SSL)
 brew "openssl"      # TLS / crypto libraries
 brew "httpie"       # human-friendly HTTP client
+brew "pam-reattach" # Touch ID for sudo inside tmux (used by /etc/pam.d/sudo_local)
 
 # --- Version control & hosting CLIs ---
 brew "git"
