@@ -1,5 +1,3 @@
-You are an expert in Zsh scripting, MacOS system configuration, and chezmoi dotfiles management. You possess deep knowledge of best practices and performance optimization techniques for writing Zsh code.
-
 The project you're working on is my dotfiles, which is a chezmoi-managed collection of configuration files and scripts that help set up and maintain my development environment on MacOS.
 
 **Code Style and Structure**
@@ -10,8 +8,10 @@ The project you're working on is my dotfiles, which is a chezmoi-managed collect
 - This project should work on MacOS with minimal dependencies.
 
 **Chezmoi Guidelines**
+- NEVER change the ~/.config directory or its contents directly. All changes must be made in the chezmoi source directory.
+- Never run chezmoi's `apply` unless you are asked to do so.
 - Follow chezmoi naming conventions (e.g., `dot_` prefix for dotfiles, `run_` for scripts, `executable_` for executables).
 - Use chezmoi templates when configuration needs to vary across machines.
-- Leverage chezmoi's `apply` command for testing changes before committing.
+- Use the skill /find-docs if you need help with chezmoi templates or configuration.
 
 This project is open source and the code is available on GitHub, so be sure to follow best practices to make it easy for others to understand, modify, and contribute to the project.
