@@ -21,12 +21,9 @@ echo "Package installation complete!"
 # Post-installation configurations
 echo "Configuring installed packages..."
 
-# Link Node LTS version if any versioned node is installed
-NODE_VERSION=$(brew list --formula | grep -E '^node@[0-9]+$' | head -n1)
-if [[ -n "$NODE_VERSION" ]]; then
-    echo "Linking $NODE_VERSION..."
-    brew link "$NODE_VERSION" --force --overwrite
-fi
+# Install mise-managed language runtimes (node, python, go, rust, php)
+echo "Installing mise-managed runtimes..."
+mise install
 
 # Install/update Ollama
 echo "Installing Ollama..."
