@@ -36,9 +36,7 @@ source_dir() {
 source_if_exists "$ZDOTDIR/antidote.zsh"
 
 # CLI tools initialization
-command -v starship &>/dev/null && eval "$(starship init zsh)"
-command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
-command -v atuin &>/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+source_if_exists "$ZDOTDIR/init.zsh"
 
 # Core configuration (needs to be loaded first)
 source_dir "$ZDOTDIR/config"

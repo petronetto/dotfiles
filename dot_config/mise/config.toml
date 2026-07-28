@@ -1,0 +1,9 @@
+[settings]
+system_deps = "auto" # auto-install required build tools (e.g. php's autoconf/bison/re2c/pkg-config) via brew
+
+[tools]
+node = "lts"
+python = "latest"
+go = "latest"
+rust = "latest"
+php = "latest"
