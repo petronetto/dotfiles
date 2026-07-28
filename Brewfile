@@ -39,7 +39,7 @@ brew "fzf"          # fuzzy finder
 brew "ripgrep"      # grep replacement
 brew "atuin"        # synced, searchable shell history
 brew "procs"        # ps replacement
-brew "tldr"         # community-driven, simplified man pages
+brew "tlrc"         # community-driven, simplified man pages
 
 # --- AI coding agents & LLM tooling ---
 brew "pi-coding-agent"
