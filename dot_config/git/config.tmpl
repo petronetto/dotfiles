@@ -1,7 +1,7 @@
 [user]
 	name = Juliano Petronetto
-	email = {{ onepasswordRead "op://dev/git/email" }}
-	signingkey = {{ onepasswordRead "op://ssh/petronetto/public key" }}
+	email = {{ index . "git_email" | default "CHANGE_ME@example.com" }}
+	signingkey = {{ include "private_dot_ssh/private_petronetto.pub" | trim }}
 
 [core]
 	sshCommand = "ssh -i ~/.ssh/petronetto.pub -o IdentitiesOnly=yes"
