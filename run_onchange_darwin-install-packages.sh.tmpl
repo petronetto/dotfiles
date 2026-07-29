@@ -14,6 +14,11 @@ elif [[ -f /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+# curl|sh installs: "name|check|url" — the installer runs only when the check fails.
+CURL_SH_INSTALLS=(
+    "ollama|command -v ollama|https://ollama.com/install.sh"
+)
+
 brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }}
 
 echo "Package installation complete!"
@@ -25,9 +30,19 @@ echo "Configuring installed packages..."
 echo "Installing mise-managed runtimes..."
 mise install
 
-# Install/update Ollama
-echo "Installing Ollama..."
-curl -fsSL https://ollama.com/install.sh | sh
+# Run curl|sh installs (each only when not yet installed)
+if [[ ${#CURL_SH_INSTALLS[@]} -gt 0 ]]; then
+    for entry in "${CURL_SH_INSTALLS[@]}"; do
+        IFS='|' read -r name check url <<< "$entry"
+        # shellcheck disable=SC2294
+        if eval "$check" >/dev/null 2>&1; then
+            echo "$name already installed, skipping"
+        else
+            echo "Installing $name..."
+            curl -fsSL "$url" | sh
+        fi
+    done
+fi
 
 echo "All packages installed and configured successfully!"
 
