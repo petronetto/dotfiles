@@ -4,6 +4,7 @@
 set -eufo pipefail
 
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
+# Brewfile.optional hash: {{ include "Brewfile.optional" | sha256sum }}
 
 echo "Installing packages via Homebrew..."
 
@@ -20,6 +21,13 @@ CURL_SH_INSTALLS=(
 )
 
 brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }}
+
+# Optional casks — install only when INSTALL_OPTIONAL=1
+if [[ "${INSTALL_OPTIONAL:-0}" == "1" ]]; then
+    brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile.optional" | quote }}
+else
+    echo "Skipping optional casks (set INSTALL_OPTIONAL=1 to install)"
+fi
 
 echo "Package installation complete!"
 

@@ -90,10 +90,6 @@ brew "dockutil"     # scriptable Dock management
 # --- Terminal emulator ---
 cask "ghostty"
 
-# --- Editors & IDEs ---
-cask "cursor"
-cask "phpstorm"
-
 # --- Browsers ---
 cask "brave-browser"
 
