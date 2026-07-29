@@ -1,15 +1,20 @@
 # Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/), and uses 1Password for secret management and SSH authentication, via [1Password SSH Agent](https://developer.1password.com/docs/ssh/). This hopefully won't work out of the box for you because if it does, it means you have my 1Password password, which is highly undesirable from my side 😂
-It relies on my personal 1Password vault structure. However you can use it as a reference for setting up your own dotfiles with chezmoi and 1Password, by just removing the 1Password-specific parts. Search for `onepasswordRead` in the templates and remove or replace them with your own secret management solution.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/), tuned to my
+machine but usable as a reference for your own setup — adapt the personal bits
+(SSH keys, git identity, machine-specific paths).
 
-I also prefer to install Homebrew, chezmoi and 1Password manually, because it works better for me that way on a fresh macOS installation.
+`chezmoi apply` needs no secret tool: the SSH public keys are committed directly
+and the git email is a placeholder you can set from 1Password.
+[1Password](https://1password.com/) provides the SSH agent and commit signing via
+the [1Password SSH Agent](https://developer.1password.com/docs/ssh/), and is
+optional.
 
 ## Private Dotfiles
 
 Some sensitive configurations (SSH configs, private scripts, extra Zsh configs, etc.) are kept in a separate private repository. During setup, chezmoi automatically attempts to clone and sync files from this private repo via the `run_onchange_sync-private-dotfiles.sh` script. Don't worry though - if the private repo isn't accessible or doesn't exist, the installation will continue gracefully. It's completely optional!
 
-By default, it looks for `git@github.com:petronetto/dotfiles-private.git`, but you can override this by setting the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfiles repository URL before running `chezmoi apply`.
+Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfiles repository URL before running `chezmoi apply` to sync from it.
 
 ## Quick Start
 
@@ -20,25 +25,54 @@ By default, it looks for `git@github.com:petronetto/dotfiles-private.git`, but y
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-**Install required tools**
+**Install chezmoi**
 ```bash
-brew install chezmoi 1password 1password-cli
+brew install chezmoi
 ```
-
-**Login to 1Password**
-
-Open 1Password and sign in to your account and ensure that CLI access is set up.
 
 **Initialize and apply dotfiles**
 ```bash
 chezmoi init --apply https://github.com/petronetto/dotfiles.git
 ```
 
+This sets up your shell, tools, and SSH keys with no secret tool required. The
+git email is `CHANGE_ME@example.com` by default; see
+[1Password (optional)](#1password-optional) to set it.
+
 ### Update Dotfiles
 
 ```bash
 # Pull latest changes and apply
 chezmoi update
+```
+
+## 1Password (optional)
+
+[1Password](https://1password.com/) is the SSH-agent and commit-signing backend,
+via the [1Password SSH Agent](https://developer.1password.com/docs/ssh/). It is
+optional: `chezmoi apply` does not require it. The `1password` and
+`1password-cli` casks are installed by `brew bundle` when you apply.
+
+The git email is the one value not committed. To set it from 1Password:
+
+1. Open the 1Password app, sign in, and enable CLI access.
+2. Confirm the CLI is signed in, then run:
+
+```bash
+op whoami
+install-op-secrets
+```
+
+`install-op-secrets` reads the git email from 1Password, writes it into your
+chezmoi config, and applies. It is idempotent (safe to re-run). Without it, the
+git email stays `CHANGE_ME@example.com` and everything else applies normally.
+
+### Optional editors
+
+Cursor and PhpStorm are in `Brewfile.optional` and install only on request:
+
+```bash
+INSTALL_OPTIONAL=1 chezmoi apply
 ```
 
 ## Daily Workflow
