@@ -1,0 +1,11 @@
+# =============================================================================
+# Homebrew Bundle file (optional casks)
+# https://github.com/Homebrew/brew/blob/master/docs/Brew-Bundle-and-Brewfile.md
+# =============================================================================
+#
+# Consumed by: run_onchange_darwin-install-packages.sh.tmpl
+# Installed ONLY when INSTALL_OPTIONAL=1 is set in the environment.
+# =============================================================================
+# --- Optional editors & IDEs ---
+cask "cursor"
+cask "phpstorm"
