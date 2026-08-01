@@ -48,6 +48,7 @@ brew "ansible"      # automation & provisioning
 brew "awscli"       # AWS CLI v2
 
 # --- AI coding agents & LLM tooling ---
+brew "ollama"
 brew "pi-coding-agent"
 brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
@@ -55,11 +56,11 @@ brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 # --- Languages & runtimes ---
 brew "rust"
 brew "go"
-brew "node@24"      # Node.js LTS (linked post-install, see template)
+brew "node@24"
 brew "python"
 brew "php"
 brew "lua"
-brew "luarocks"     # Lua package manager
+brew "luarocks"
 
 # --- Language tooling & package managers ---
 brew "pyenv"        # Python version manager
@@ -100,6 +101,7 @@ cask "bruno"          # open-source API client (Postman alternative)
 # --- AI desktop clients ---
 cask "claude"
 cask "claude-code"
+cask "ollama-app"
 
 # --- Productivity ---
 cask "obsidian"
