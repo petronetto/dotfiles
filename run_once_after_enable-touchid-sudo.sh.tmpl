@@ -1,3 +1,4 @@
+{{ if eq .chezmoi.os "darwin" -}}
 #!/usr/bin/env zsh
 
 # Enable Touch ID for sudo, including inside tmux.
@@ -43,3 +44,4 @@ if grep -q "pam_tid.so" /etc/pam.d/sudo; then
 fi
 
 echo "Touch ID for sudo is enabled, inside and outside tmux"
+{{ end -}}
