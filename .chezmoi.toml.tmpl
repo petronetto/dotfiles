@@ -1,6 +1,11 @@
 # Chezmoi configuration file
 # https://www.chezmoi.io/reference/configuration-file/
 
+{{- $gitEmail := promptStringOnce . "git_email" "Git email" }}
+
+[data]
+    git_email = {{ $gitEmail | quote }}
+
 [git]
     autoCommit = false
     autoPush = false
