@@ -117,11 +117,3 @@ cask "docker-desktop"
 cask "font-fira-code-nerd-font"
 cask "font-caskaydia-cove-nerd-font"  # Cascadia Code
 cask "font-jetbrains-mono-nerd-font"
-
-# --------------------------------------------------------------------------
-# Mac App Store apps — mas
-# --------------------------------------------------------------------------
-brew "mas"          # Mac App Store CLI, required for `mas` entries below
-
-mas "Magnet", id: 441258766
-mas "Paste", id: 967805235
