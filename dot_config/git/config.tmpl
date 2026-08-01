@@ -1,6 +1,6 @@
 [user]
 	name = Juliano Petronetto
-	email = {{ index . "git_email" | default "CHANGE_ME@example.com" }}
+	email = {{ .git_email }}
 	signingkey = {{ include "private_dot_ssh/private_petronetto.pub" | trim }}
 
 [core]
