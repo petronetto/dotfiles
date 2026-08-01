@@ -25,6 +25,7 @@ brew "glab"         # GitLab CLI
 # --- Editor & terminal multiplexer ---
 brew "neovim"
 brew "tmux"
+brew "herdr"
 
 # --- Zsh framework & prompt ---
 brew "antidote"     # fast Zsh plugin manager
@@ -47,31 +48,16 @@ brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 
 # --- Languages & runtimes ---
+brew "rust"
+brew "go"
+brew "node@24"      # Node.js LTS (linked post-install, see template)
+brew "python"
+brew "php"
 brew "lua"
 brew "luarocks"     # Lua package manager
 
-# --- Version management ---
-brew "mise"         # polyglot runtime version manager (node, python, go, rust, php — see dot_config/mise/config.toml)
-
-# --- PHP optional build libraries (required by vfox-php mise plugin: github.com/jdx/vfox-php) ---
-# Required build toolchain (autoconf, bison, re2c, pkg-config) is auto-installed
-# by `mise install php` via system_deps = "auto" in dot_config/mise/config.toml.
-brew "libxml2"
-brew "icu4c"
-brew "zlib"
-brew "libzip"
-brew "oniguruma"
-brew "freetype"
-brew "jpeg"
-brew "libpng"
-brew "webp"
-brew "gmp"
-brew "libsodium"
-brew "libiconv"    # PHP's configure requires an explicit iconv prefix once it detects Homebrew on PATH
-brew "readline"
-brew "bzip2"
-
 # --- Language tooling & package managers ---
+brew "pyenv"        # Python version manager
 brew "pipx"         # install Python CLI apps in isolated envs
 brew "composer"     # PHP dependency manager
 
