@@ -20,7 +20,6 @@ brew "pam-reattach" # Touch ID for sudo inside tmux (used by /etc/pam.d/sudo_loc
 # --- Version control & hosting CLIs ---
 brew "git"
 brew "gh"           # GitHub CLI
-brew "glab"         # GitLab CLI
 
 # --- Editor & terminal multiplexer ---
 brew "neovim"
@@ -41,6 +40,12 @@ brew "ripgrep"      # grep replacement
 brew "atuin"        # synced, searchable shell history
 brew "procs"        # ps replacement
 brew "tlrc"         # community-driven, simplified man pages
+brew "jq"           # JSON processor
+brew "gum"          # modern CLI prompts & menus
+
+# --- Cloud & API CLIs ---
+brew "ansible"      # automation & provisioning
+brew "awscli"       # AWS CLI v2
 
 # --- AI coding agents & LLM tooling ---
 brew "pi-coding-agent"
@@ -64,10 +69,10 @@ brew "composer"     # PHP dependency manager
 # --- Networking & local dev infrastructure ---
 brew "dnsmasq"      # local DNS for dev domains
 brew "mkcert"       # locally-trusted HTTPS certificates
-brew "mole"         # SSH tunnel / port forwarding
 
-# --- macOS system configuration tooling ---
+# --- macOS utilities & system management ---
 brew "dockutil"     # scriptable Dock management
+brew "mole"         # deep clean and Mac optimization tool
 
 # --------------------------------------------------------------------------
 # Casks (GUI applications) — brew install --cask
@@ -75,6 +80,9 @@ brew "dockutil"     # scriptable Dock management
 
 # --- Terminal emulator ---
 cask "ghostty"
+
+# --- Editors & IDEs ---
+cask "visual-studio-code"   # VS Code IDE
 
 # --- Browsers ---
 cask "brave-browser"
@@ -95,6 +103,11 @@ cask "claude-code"
 
 # --- Productivity ---
 cask "obsidian"
+cask "todoist-app"
+
+# --- Utilities ---
+cask "rectangle"            # window management & snapping
+cask "paste"                # clipboard manager
 
 # --- Containers ---
 cask "docker-desktop"
