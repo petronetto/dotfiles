@@ -5,7 +5,7 @@ machine but usable as a reference for your own setup — adapt the personal bits
 (SSH keys, git identity, machine-specific paths).
 
 `chezmoi apply` needs no secret tool: the SSH public keys are committed directly
-and the git email is a placeholder you can set from 1Password.
+and the git email is prompted once during `chezmoi init`.
 [1Password](https://1password.com/) provides the SSH agent and commit signing via
 the [1Password SSH Agent](https://developer.1password.com/docs/ssh/), and is
 optional.
@@ -20,24 +20,13 @@ Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfile
 
 ### First Time Setup
 
-**Install Homebrew**
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-**Install chezmoi**
-```bash
-brew install chezmoi
-```
-
 **Initialize and apply dotfiles**
 ```bash
-chezmoi init --apply https://github.com/petronetto/dotfiles.git
+sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply petronetto
 ```
 
-This sets up your shell, tools, and SSH keys with no secret tool required. The
-git email is `CHANGE_ME@example.com` by default; see
-[1Password (optional)](#1password-optional) to set it.
+This sets up your shell, tools, and SSH keys with no secret tool required.
+You'll be prompted once for your git email during `chezmoi init`.
 
 ### Update Dotfiles
 
@@ -52,28 +41,6 @@ chezmoi update
 via the [1Password SSH Agent](https://developer.1password.com/docs/ssh/). It is
 optional: `chezmoi apply` does not require it. The `1password` and
 `1password-cli` casks are installed by `brew bundle` when you apply.
-
-The git email is the one value not committed. To set it from 1Password:
-
-1. Open the 1Password app, sign in, and enable CLI access.
-2. Confirm the CLI is signed in, then run:
-
-```bash
-op whoami
-install-op-secrets
-```
-
-`install-op-secrets` reads the git email from 1Password, writes it into your
-chezmoi config, and applies. It is idempotent (safe to re-run). Without it, the
-git email stays `CHANGE_ME@example.com` and everything else applies normally.
-
-### Optional editors
-
-Cursor and PhpStorm are in `Brewfile.optional` and install only on request:
-
-```bash
-INSTALL_OPTIONAL=1 chezmoi apply
-```
 
 ## Daily Workflow
 
