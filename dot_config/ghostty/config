@@ -6,6 +6,7 @@ mouse-hide-while-typing = true
 keybind = global:cmd+shift+space=toggle_quick_terminal
 background-opacity = 0.8
 background-blur-radius = 30
+background-opacity-cells = true
 keybind = shift+enter=text:\n
 window-inherit-working-directory = true
 macos-titlebar-style = hidden
