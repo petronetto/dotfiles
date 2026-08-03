@@ -10,7 +10,7 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_RUNTIME_DIR="$HOME/.cache/run"
 export XDG_CONFIG_DIRS="/etc/xdg"
-export XDG_DATA_DIRS="/usr/local/share:/usr/share"
+export XDG_DATA_DIRS="/opt/homebrew/share:/usr/local/share:/usr/share"
 
 # ZSH configuration
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
