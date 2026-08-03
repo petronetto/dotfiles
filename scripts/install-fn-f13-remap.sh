@@ -9,7 +9,9 @@
 # across logout/reboot with no manual step.
 #
 # Invoked by run_once_after_remap-fn-to-f13.sh.tmpl on `chezmoi apply`; can
-# also be run directly for local debugging.
+# also be run directly for local debugging. Idempotent: if the HID mapping,
+# LaunchAgent plist, and LaunchAgent load state are all already correct, it
+# skips straight to a no-op.
 
 set -euo pipefail
 
@@ -17,14 +19,18 @@ FN_TO_F13_MAPPING='{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0xFF00000
 LAUNCH_AGENT_LABEL="com.petronetto.fn2f13remap"
 LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/${LAUNCH_AGENT_LABEL}.plist"
 
-echo "Configuring fn -> F13 remap..."
+hid_mapping_applied() {
+  hidutil property --get UserKeyMapping 2>/dev/null \
+    | grep -qE 'HIDKeyboardModifierMappingDst[[:space:]]*=[[:space:]]*30064771176'
+}
 
-if hidutil property --get UserKeyMapping 2>/dev/null | grep -q '"HIDKeyboardModifierMappingDst":30064771176'; then
-  echo "fn -> F13 remap is already applied for this session"
-else
-  echo "Applying fn -> F13 remap..."
-  hidutil property --set "$FN_TO_F13_MAPPING" >/dev/null
-fi
+plist_up_to_date() {
+  [[ -f "$LAUNCH_AGENT_PLIST" ]] && diff -q <(echo "$NEW_PLIST_CONTENT") "$LAUNCH_AGENT_PLIST" &>/dev/null
+}
+
+launch_agent_loaded() {
+  launchctl print "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" &>/dev/null
+}
 
 NEW_PLIST_CONTENT=$(cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -47,7 +53,21 @@ NEW_PLIST_CONTENT=$(cat <<EOF
 EOF
 )
 
-if [[ -f "$LAUNCH_AGENT_PLIST" ]] && diff -q <(echo "$NEW_PLIST_CONTENT") "$LAUNCH_AGENT_PLIST" &>/dev/null; then
+echo "Configuring fn -> F13 remap..."
+
+if hid_mapping_applied && plist_up_to_date && launch_agent_loaded; then
+  echo "fn -> F13 remap is already installed, skipping"
+  exit 0
+fi
+
+if hid_mapping_applied; then
+  echo "fn -> F13 remap is already applied for this session"
+else
+  echo "Applying fn -> F13 remap..."
+  hidutil property --set "$FN_TO_F13_MAPPING" >/dev/null
+fi
+
+if plist_up_to_date; then
   echo "LaunchAgent plist is already up to date"
 else
   echo "Writing $LAUNCH_AGENT_PLIST..."
@@ -59,7 +79,7 @@ else
   launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
 fi
 
-if ! launchctl print "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" &>/dev/null; then
+if ! launch_agent_loaded; then
   echo "Loading LaunchAgent..."
   launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
 fi
