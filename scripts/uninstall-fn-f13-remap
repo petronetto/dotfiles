@@ -6,7 +6,7 @@
 # Unloads and removes the LaunchAgent, then clears the HID UserKeyMapping so
 # fn goes back to its default behavior (idempotent: safe to re-run).
 #
-# Usage: scripts/uninstall-fn-f13-remap.sh
+# Usage: scripts/uninstall-fn-f13-remap
 
 set -uo pipefail
 

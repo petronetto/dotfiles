@@ -1,11 +1,11 @@
 {{ if eq .chezmoi.os "darwin" -}}
 #!/usr/bin/env zsh
 
-# Applies the fn -> F13 HID remap. Logic lives in scripts/install-fn-f13-remap.sh
+# Applies the fn -> F13 HID remap. Logic lives in scripts/install-fn-f13-remap
 # (a plain, chezmoi-ignored script) so it can also be re-run manually for
 # local debugging without going through `chezmoi apply`.
 
 set -euo pipefail
 
-"{{ .chezmoi.sourceDir }}/scripts/install-fn-f13-remap.sh"
+"{{ .chezmoi.sourceDir }}/scripts/install-fn-f13-remap"
 {{ end -}}

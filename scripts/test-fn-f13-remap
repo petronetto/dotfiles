@@ -11,7 +11,7 @@
 // actually receive input through), and checks for macOS virtual keycode
 // kVK_F13 (0x69).
 //
-// Usage: scripts/test-fn-f13-remap.swift
+// Usage: scripts/test-fn-f13-remap
 //   Run it, press the fn key once when prompted, read the pass/fail result.
 // Requires the "Accessibility" and/or "Input Monitoring" privacy
 // permission for the app running this script (Terminal.app, Ghostty,
