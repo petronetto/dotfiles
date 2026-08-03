@@ -1,6 +1,6 @@
 #!/usr/bin/env swift
 
-// Manual, local debug script: verify that fn is currently emitting F13.
+// Manual, local debug script: verify that fn is currently emitting F4.
 //
 // `hidutil monitor` is unavailable on this macOS version. A terminal
 // escape-sequence check is unreliable (depends on the terminal's own
@@ -9,20 +9,26 @@
 // remapped key either. This instead uses a CGEventTap, which reads events
 // *after* the HID remap (the same layer apps like Terminal/Ghostty
 // actually receive input through), and checks for macOS virtual keycode
-// kVK_F13 (0x69).
+// kVK_F4 (0x76).
 //
-// Usage: scripts/test-fn-f13-remap
+// Usage: scripts/test-fn-f4-remap
 //   Run it, press the fn key once when prompted, read the pass/fail result.
 // Requires the "Accessibility" and/or "Input Monitoring" privacy
 // permission for the app running this script (Terminal.app, Ghostty,
 // etc.) — grant both in System Settings > Privacy & Security if the event
 // tap fails to create.
 // Reverts nothing; read-only check.
+//
+// Note: F4 defaults to Launchpad on most Mac keyboards, a real macOS
+// global Keyboard Shortcut. If this reports a timeout even though fn is
+// physically pressed, check System Settings > Keyboard > Keyboard
+// Shortcuts > Launchpad & Dock and disable/reassign the F4 binding there
+// — it may be intercepting the key before it reaches this process.
 
 import CoreGraphics
 import Foundation
 
-let kVK_F13: Int64 = 0x69
+let kVK_F4: Int64 = 0x76
 
 let callback: CGEventTapCallBack = { _, type, event, _ in
   guard type == .keyDown else {
@@ -31,8 +37,8 @@ let callback: CGEventTapCallBack = { _, type, event, _ in
 
   let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-  if keyCode == kVK_F13 {
-    print("✅ fn is correctly mapped to F13 (keyCode 0x69 detected)")
+  if keyCode == kVK_F4 {
+    print("✅ fn is correctly mapped to F4 (keyCode 0x76 detected)")
     exit(0)
   }
 
