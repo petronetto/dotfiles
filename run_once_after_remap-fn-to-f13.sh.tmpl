@@ -1,66 +1,11 @@
 {{ if eq .chezmoi.os "darwin" -}}
 #!/usr/bin/env zsh
 
-# Remap fn -> F13 at the HID level so it can be used as a tmux prefix.
-#
-# fn cannot be bound directly by tmux, Ghostty, or most GUI toolkits (it is
-# not exposed as a modifier), so it is first remapped to the F13 keycode via
-# `hidutil`. That remap only lasts for the current login session, so a
-# LaunchAgent re-applies it on every login (RunAtLoad), making it persist
-# across logout/reboot with no manual step.
+# Applies the fn -> F13 HID remap. Logic lives in scripts/install-fn-f13-remap.sh
+# (a plain, chezmoi-ignored script) so it can also be re-run manually for
+# local debugging without going through `chezmoi apply`.
 
 set -euo pipefail
 
-FN_TO_F13_MAPPING='{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0xFF00000003,"HIDKeyboardModifierMappingDst":0x700000068}]}'
-LAUNCH_AGENT_LABEL="com.petronetto.fn2f13remap"
-LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/${LAUNCH_AGENT_LABEL}.plist"
-
-echo "Configuring fn -> F13 remap..."
-
-if hidutil property --get UserKeyMapping 2>/dev/null | grep -q '"HIDKeyboardModifierMappingDst":30064771176'; then
-  echo "fn -> F13 remap is already applied for this session"
-else
-  echo "Applying fn -> F13 remap..."
-  hidutil property --set "$FN_TO_F13_MAPPING" >/dev/null
-fi
-
-NEW_PLIST_CONTENT=$(cat <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>Label</key>
-	<string>${LAUNCH_AGENT_LABEL}</string>
-	<key>ProgramArguments</key>
-	<array>
-		<string>/usr/bin/hidutil</string>
-		<string>property</string>
-		<string>--set</string>
-		<string>${FN_TO_F13_MAPPING}</string>
-	</array>
-	<key>RunAtLoad</key>
-	<true/>
-</dict>
-</plist>
-EOF
-)
-
-if [[ -f "$LAUNCH_AGENT_PLIST" ]] && diff -q <(echo "$NEW_PLIST_CONTENT") "$LAUNCH_AGENT_PLIST" &>/dev/null; then
-  echo "LaunchAgent plist is already up to date"
-else
-  echo "Writing $LAUNCH_AGENT_PLIST..."
-  mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")"
-  echo "$NEW_PLIST_CONTENT" > "$LAUNCH_AGENT_PLIST"
-
-  echo "Reloading LaunchAgent..."
-  launchctl bootout "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" 2>/dev/null || true
-  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
-fi
-
-if ! launchctl print "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" &>/dev/null; then
-  echo "Loading LaunchAgent..."
-  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
-fi
-
-echo "fn -> F13 remap is configured and will persist across logout/reboot"
+"{{ .chezmoi.sourceDir }}/scripts/install-fn-f13-remap.sh"
 {{ end -}}
