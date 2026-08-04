@@ -1,0 +1,49 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/zsh
+
+set -euo pipefail
+
+# Watched files: re-run when their contents change.
+# dot_config/vscode/settings.json hash:    {{ include "dot_config/vscode/settings.json" | sha256sum }}
+# dot_config/vscode/keybindings.json hash: {{ include "dot_config/vscode/keybindings.json" | sha256sum }}
+
+# Chezmoi owns the real files here (source of truth).
+SOURCE_DIR="${HOME}/.config/vscode"
+# VS Code reads its config here; entries become symlinks into SOURCE_DIR.
+TARGET_DIR="${HOME}/Library/Application Support/Code/User"
+
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo "VS Code user directory not found at \"$TARGET_DIR\", skipping."
+    exit 0
+fi
+if [[ ! -d "$SOURCE_DIR" ]]; then
+    echo "Source directory not found at \"$SOURCE_DIR\", skipping."
+    exit 0
+fi
+
+setopt nullglob
+created=0
+for src in "$SOURCE_DIR"/*.json; do
+    [[ -f "$src" ]] || continue
+    name="${src##*/}"
+    tgt="${TARGET_DIR}/${name}"
+
+    # Idempotent: already a symlink pointing at the source file.
+    if [[ -L "$tgt" ]] && [[ "$(readlink "$tgt")" == "$src" ]]; then
+        continue
+    fi
+
+    # Back up any pre-existing regular file or stray symlink before replacing.
+    if [[ -e "$tgt" || -L "$tgt" ]]; then
+        backup="${tgt}.$(date +%Y%m%d%H%M%S).bak"
+        mv "$tgt" "$backup"
+        echo "Backed up existing $name -> ${backup##*/}"
+    fi
+
+    ln -s "$src" "$tgt"
+    echo "Linked \"$tgt\" -> \"$src\""
+    created=$((created + 1))
+done
+
+echo "VS Code user config symlinks ready ($created created/updated)."
+{{ end -}}
