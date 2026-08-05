@@ -1,11 +1,6 @@
-{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/zsh
 
 set -euo pipefail
-
-# Watched files: re-run when their contents change.
-# dot_config/vscode/settings.json hash:    {{ include "dot_config/vscode/settings.json" | sha256sum }}
-# dot_config/vscode/keybindings.json hash: {{ include "dot_config/vscode/keybindings.json" | sha256sum }}
 
 # Chezmoi owns the real files here (source of truth).
 SOURCE_DIR="${HOME}/.config/vscode"
@@ -38,4 +33,3 @@ for src in "$SOURCE_DIR"/*.json; do
 done
 
 echo "VS Code user config symlinks ready ($created created/updated)."
-{{ end -}}

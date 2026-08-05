@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+"{{ .chezmoi.sourceDir }}/scripts/enable-touchid-sudo"
+"{{ .chezmoi.sourceDir }}/scripts/install-fn-f4-remap"
+{{ end -}}

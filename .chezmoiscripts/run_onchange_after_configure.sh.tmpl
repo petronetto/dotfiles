@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+BREWFILE={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }} "{{ .chezmoi.sourceDir }}/scripts/install-packages"
+
+"{{ .chezmoi.sourceDir }}/scripts/macos-defaults"
+
+# vscode-extensions.txt hash: {{ include "vscode-extensions.txt" | sha256sum }}
+VSCODE_EXTENSIONS_FILE={{ joinPath .chezmoi.sourceDir "vscode-extensions.txt" | quote }} "{{ .chezmoi.sourceDir }}/scripts/vscode-extensions"
+
+# dot_config/vscode/settings.json hash:    {{ include "dot_config/vscode/settings.json" | sha256sum }}
+# dot_config/vscode/keybindings.json hash: {{ include "dot_config/vscode/keybindings.json" | sha256sum }}
+"{{ .chezmoi.sourceDir }}/scripts/vscode-user-symlinks"
+{{ end -}}

@@ -12,7 +12,7 @@ optional.
 
 ## Private Dotfiles
 
-Some sensitive configurations (SSH configs, private scripts, extra Zsh configs, etc.) are kept in a separate private repository. During setup, chezmoi automatically attempts to clone and sync files from this private repo via the `run_onchange_sync-private-dotfiles.sh` script. Don't worry though - if the private repo isn't accessible or doesn't exist, the installation will continue gracefully. It's completely optional!
+Some sensitive configurations (SSH configs, private scripts, extra Zsh configs, etc.) are kept in a separate private repository. During setup, chezmoi automatically attempts to clone and sync files from this private repo via the `run_onchange_before_sync.sh.tmpl` script (`scripts/sync-private-dotfiles`). Don't worry though - if the private repo isn't accessible or doesn't exist, the installation will continue gracefully. It's completely optional!
 
 Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfiles repository URL before running `chezmoi apply` to sync from it.
 
