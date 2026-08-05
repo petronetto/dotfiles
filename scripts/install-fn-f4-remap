@@ -12,6 +12,8 @@
 # also be run directly for local debugging. Idempotent: if the HID mapping,
 # LaunchAgent plist, and LaunchAgent load state are all already correct, it
 # skips straight to a no-op.
+#
+# Best-effort: failures here shouldn't block the rest of chezmoi apply.
 
 set -euo pipefail
 
@@ -53,35 +55,39 @@ NEW_PLIST_CONTENT=$(cat <<EOF
 EOF
 )
 
-echo "Configuring fn -> F4 remap..."
+main() {
+  echo "Configuring fn -> F4 remap..."
 
-if hid_mapping_applied && plist_up_to_date && launch_agent_loaded; then
-  echo "fn -> F4 remap is already installed, skipping"
-  exit 0
-fi
+  if hid_mapping_applied && plist_up_to_date && launch_agent_loaded; then
+    echo "fn -> F4 remap is already installed, skipping"
+    return 0
+  fi
 
-if hid_mapping_applied; then
-  echo "fn -> F4 remap is already applied for this session"
-else
-  echo "Applying fn -> F4 remap..."
-  hidutil property --set "$FN_TO_F4_MAPPING" >/dev/null
-fi
+  if hid_mapping_applied; then
+    echo "fn -> F4 remap is already applied for this session"
+  else
+    echo "Applying fn -> F4 remap..."
+    hidutil property --set "$FN_TO_F4_MAPPING" >/dev/null
+  fi
 
-if plist_up_to_date; then
-  echo "LaunchAgent plist is already up to date"
-else
-  echo "Writing $LAUNCH_AGENT_PLIST..."
-  mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")"
-  echo "$NEW_PLIST_CONTENT" > "$LAUNCH_AGENT_PLIST"
+  if plist_up_to_date; then
+    echo "LaunchAgent plist is already up to date"
+  else
+    echo "Writing $LAUNCH_AGENT_PLIST..."
+    mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")"
+    echo "$NEW_PLIST_CONTENT" > "$LAUNCH_AGENT_PLIST"
 
-  echo "Reloading LaunchAgent..."
-  launchctl bootout "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" 2>/dev/null || true
-  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
-fi
+    echo "Reloading LaunchAgent..."
+    launchctl bootout "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
+  fi
 
-if ! launch_agent_loaded; then
-  echo "Loading LaunchAgent..."
-  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
-fi
+  if ! launch_agent_loaded; then
+    echo "Loading LaunchAgent..."
+    launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
+  fi
 
-echo "fn -> F4 remap is configured and will persist across logout/reboot"
+  echo "fn -> F4 remap is configured and will persist across logout/reboot"
+}
+
+main || echo "⚠️  Warning: install-fn-f4-remap failed, continuing..." >&2

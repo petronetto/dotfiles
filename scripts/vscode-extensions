@@ -2,16 +2,20 @@
 
 set -eufo pipefail
 
-echo "Installing VS Code extensions..."
+main() {
+    echo "Installing VS Code extensions..."
 
-if ! command -v code >/dev/null 2>&1; then
-    echo "'code' command not found, skipping VS Code extension installation"
-    exit 0
-fi
+    if ! command -v code >/dev/null 2>&1; then
+        echo "'code' command not found, skipping VS Code extension installation"
+        return 0
+    fi
 
-while IFS= read -r extension; do
-    [[ -z "$extension" ]] && continue
-    code --install-extension "$extension" >/dev/null || echo "Warning: failed to install $extension" >&2
-done < "$VSCODE_EXTENSIONS_FILE"
+    while IFS= read -r extension; do
+        [[ -z "$extension" ]] && continue
+        code --install-extension "$extension" >/dev/null || echo "Warning: failed to install $extension" >&2
+    done < "$VSCODE_EXTENSIONS_FILE"
 
-echo "VS Code extensions installed successfully!"
+    echo "VS Code extensions installed successfully!"
+}
+
+main || echo "⚠️  Warning: vscode-extensions failed, continuing..." >&2

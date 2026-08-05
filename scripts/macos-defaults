@@ -2,70 +2,74 @@
 
 set -eufo pipefail
 
-echo "Configuring macOS defaults..."
+main() {
+  echo "Configuring macOS defaults..."
 
-# --- Dock ---
-defaults write com.apple.dock tilesize -int 47
-defaults write com.apple.dock show-recents -bool false
-defaults write com.apple.dock mru-spaces -bool false
-defaults write com.apple.dock wvous-br-corner -int 14   # bottom-right hot corner: Quick Note
+  # --- Dock ---
+  defaults write com.apple.dock tilesize -int 47
+  defaults write com.apple.dock show-recents -bool false
+  defaults write com.apple.dock mru-spaces -bool false
+  defaults write com.apple.dock wvous-br-corner -int 14   # bottom-right hot corner: Quick Note
 
-# --- Finder ---
-defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"   # List view
+  # --- Finder ---
+  defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"   # List view
 
-# --- Trackpad ---
-defaults write com.apple.AppleMultitouchTrackpad Clicking -bool false
-defaults write com.apple.AppleMultitouchTrackpad TrackpadRightClick -bool true
-defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool false
-defaults write com.apple.AppleMultitouchTrackpad Dragging -bool false
+  # --- Trackpad ---
+  defaults write com.apple.AppleMultitouchTrackpad Clicking -bool false
+  defaults write com.apple.AppleMultitouchTrackpad TrackpadRightClick -bool true
+  defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool false
+  defaults write com.apple.AppleMultitouchTrackpad Dragging -bool false
 
-# --- Menu bar clock ---
-defaults write com.apple.menuextra.clock ShowDate -int 0
-defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
-defaults write com.apple.menuextra.clock TimeAnnouncementsEnabled -bool false
-defaults write com.apple.menuextra.clock TimeAnnouncementsIntervalIdentifier -string "EveryHourInterval"
+  # --- Menu bar clock ---
+  defaults write com.apple.menuextra.clock ShowDate -int 0
+  defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
+  defaults write com.apple.menuextra.clock TimeAnnouncementsEnabled -bool false
+  defaults write com.apple.menuextra.clock TimeAnnouncementsIntervalIdentifier -string "EveryHourInterval"
 
-# --- Dock apps ---
-if command -v dockutil >/dev/null 2>&1; then
-  DOCK_APPS=(
-    # Terminal
-    "/Applications/Ghostty.app"
-    # Editors & IDEs
-    "/Applications/Cursor.app"
-    "/Applications/Visual Studio Code.app"
-    "/Applications/PhpStorm.app"
-    # Dev tools
-    "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app"
-    "/Applications/Bruno.app"
-    # Browsers
-    "/Applications/Brave Browser.app"
-    "/Applications/Safari.app"
-    # Communication
-    "/Applications/Slack.app"
-    # AI & notes
-    "/Applications/Claude.app"
-    "/Applications/Obsidian.app"
-    "/Applications/Todoist.app"
-    # Apple productivity & media
-    "/System/Applications/Notes.app"
-    "/System/Applications/Reminders.app"
-    "/System/Applications/Calendar.app"
-    "/System/Applications/Music.app"
-    # System utilities
-    "/Applications/1Password.app"
-    "/System/Applications/Apps.app"
-  )
+  # --- Dock apps ---
+  if command -v dockutil >/dev/null 2>&1; then
+    DOCK_APPS=(
+      # Terminal
+      "/Applications/Ghostty.app"
+      # Editors & IDEs
+      "/Applications/Cursor.app"
+      "/Applications/Visual Studio Code.app"
+      "/Applications/PhpStorm.app"
+      # Dev tools
+      "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app"
+      "/Applications/Bruno.app"
+      # Browsers
+      "/Applications/Brave Browser.app"
+      "/Applications/Safari.app"
+      # Communication
+      "/Applications/Slack.app"
+      # AI & notes
+      "/Applications/Claude.app"
+      "/Applications/Obsidian.app"
+      "/Applications/Todoist.app"
+      # Apple productivity & media
+      "/System/Applications/Notes.app"
+      "/System/Applications/Reminders.app"
+      "/System/Applications/Calendar.app"
+      "/System/Applications/Music.app"
+      # System utilities
+      "/Applications/1Password.app"
+      "/System/Applications/Apps.app"
+    )
 
-  dockutil --remove all --no-restart >/dev/null
+    dockutil --remove all --no-restart >/dev/null
 
-  for app in "${DOCK_APPS[@]}"; do
-    [[ -d "$app" ]] && dockutil --add "$app" --no-restart >/dev/null
+    for app in "${DOCK_APPS[@]}"; do
+      [[ -d "$app" ]] && dockutil --add "$app" --no-restart >/dev/null
+    done
+  fi
+
+  # Restart affected apps/services so changes take effect immediately
+  for app in Dock Finder SystemUIServer; do
+    killall "$app" &>/dev/null || true
   done
-fi
 
-# Restart affected apps/services so changes take effect immediately
-for app in Dock Finder SystemUIServer; do
-  killall "$app" &>/dev/null || true
-done
+  echo "macOS defaults configured!"
+}
 
-echo "macOS defaults configured!"
+main || echo "⚠️  Warning: macos-defaults failed, continuing..." >&2
