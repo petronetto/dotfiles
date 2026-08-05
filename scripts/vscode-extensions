@@ -1,9 +1,6 @@
-{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/zsh
 
 set -eufo pipefail
-
-# vscode-extensions.txt hash: {{ include "vscode-extensions.txt" | sha256sum }}
 
 echo "Installing VS Code extensions..."
 
@@ -15,8 +12,6 @@ fi
 while IFS= read -r extension; do
     [[ -z "$extension" ]] && continue
     code --install-extension "$extension" >/dev/null || echo "Warning: failed to install $extension" >&2
-done < {{ joinPath .chezmoi.sourceDir "vscode-extensions.txt" | quote }}
+done < "$VSCODE_EXTENSIONS_FILE"
 
 echo "VS Code extensions installed successfully!"
-
-{{ end -}}

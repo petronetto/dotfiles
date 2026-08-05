@@ -8,7 +8,7 @@
 # LaunchAgent re-applies it on every login (RunAtLoad), making it persist
 # across logout/reboot with no manual step.
 #
-# Invoked by run_once_after_remap-fn-to-f4.sh.tmpl on `chezmoi apply`; can
+# Invoked by run_once_after_provision.sh.tmpl on `chezmoi apply`; can
 # also be run directly for local debugging. Idempotent: if the HID mapping,
 # LaunchAgent plist, and LaunchAgent load state are all already correct, it
 # skips straight to a no-op.

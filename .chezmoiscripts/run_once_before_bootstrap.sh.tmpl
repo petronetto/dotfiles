@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+"{{ .chezmoi.sourceDir }}/scripts/create-directories"
+
+{{ if eq .chezmoi.os "darwin" -}}
+"{{ .chezmoi.sourceDir }}/scripts/install-homebrew"
+{{ end -}}

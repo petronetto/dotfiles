@@ -1,9 +1,6 @@
-{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 
 set -eufo pipefail
-
-# Brewfile hash: {{ include "Brewfile" | sha256sum }}
 
 echo "Installing packages via Homebrew..."
 
@@ -14,7 +11,7 @@ elif [[ -f /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }}
+brew bundle --file="$BREWFILE"
 
 echo "Package installation complete!"
 
@@ -29,5 +26,3 @@ if [[ -n "$NODE_VERSION" ]]; then
 fi
 
 echo "All packages installed and configured successfully!"
-
-{{ end -}}
