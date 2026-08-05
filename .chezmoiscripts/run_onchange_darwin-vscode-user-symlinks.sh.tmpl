@@ -12,10 +12,7 @@ SOURCE_DIR="${HOME}/.config/vscode"
 # VS Code reads its config here; entries become symlinks into SOURCE_DIR.
 TARGET_DIR="${HOME}/Library/Application Support/Code/User"
 
-if [[ ! -d "$TARGET_DIR" ]]; then
-    echo "VS Code user directory not found at \"$TARGET_DIR\", skipping."
-    exit 0
-fi
+mkdir -p "$TARGET_DIR"
 if [[ ! -d "$SOURCE_DIR" ]]; then
     echo "Source directory not found at \"$SOURCE_DIR\", skipping."
     exit 0
@@ -33,12 +30,7 @@ for src in "$SOURCE_DIR"/*.json; do
         continue
     fi
 
-    # Back up any pre-existing regular file or stray symlink before replacing.
-    if [[ -e "$tgt" || -L "$tgt" ]]; then
-        backup="${tgt}.$(date +%Y%m%d%H%M%S).bak"
-        mv "$tgt" "$backup"
-        echo "Backed up existing $name -> ${backup##*/}"
-    fi
+    [[ -e "$tgt" || -L "$tgt" ]] && rm -f "$tgt"
 
     ln -s "$src" "$tgt"
     echo "Linked \"$tgt\" -> \"$src\""
