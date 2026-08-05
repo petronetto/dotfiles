@@ -18,10 +18,10 @@
 set -euo pipefail
 
 main() {
-  echo "Configuring Touch ID for sudo (with tmux support)..."
+  echo "ℹ️ Configuring Touch ID for sudo (with tmux support)..."
 
   if ! brew list pam-reattach &>/dev/null; then
-    echo "Installing pam-reattach..."
+    echo "ℹ️ Installing pam-reattach..."
     brew install pam-reattach
   fi
 
@@ -30,9 +30,9 @@ main() {
   SUDO_LOCAL="/etc/pam.d/sudo_local"
 
   if grep -q "pam_reattach.so" "$SUDO_LOCAL" 2>/dev/null; then
-    echo "Touch ID with tmux support is already configured"
+    echo "✅ Touch ID with tmux support is already configured"
   else
-    echo "Writing $SUDO_LOCAL..."
+    echo "ℹ️ Writing $SUDO_LOCAL..."
     sudo tee "$SUDO_LOCAL" >/dev/null <<EOF
 # sudo_local: local sudo PAM config, survives macOS updates
 auth       optional       $PAM_REATTACH ignore_ssh
@@ -41,11 +41,11 @@ EOF
   fi
 
   if grep -q "pam_tid.so" /etc/pam.d/sudo; then
-    echo "Removing redundant pam_tid line from /etc/pam.d/sudo..."
+    echo "ℹ️ Removing redundant pam_tid line from /etc/pam.d/sudo..."
     sudo sed -i '' '/pam_tid\.so/d' /etc/pam.d/sudo
   fi
 
-  echo "Touch ID for sudo is enabled, inside and outside tmux"
+  echo "✅ Touch ID for sudo is enabled, inside and outside tmux"
 }
 
-main || echo "⚠️  Warning: enable-touchid-sudo failed, continuing..." >&2
+main || echo "❌ enable-touchid-sudo failed, continuing..." >&2
