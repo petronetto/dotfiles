@@ -16,7 +16,6 @@ add_newline = false
 # Configures the format
 ###
 format = """
-$os\
 $directory\
 $docker_context\
 $aws\
@@ -41,83 +40,27 @@ $character
 palette = 'gruvbox'
 
 [palettes.gruvbox]
-foreground   = '#fbf1c7'
-background   = '#1b1b1b'
-box          = '#3c3836'
-line         = '#665c54'
-primary      = '#3c3836'
-error        = '#cc241d'
-success      = '#98971a'
-color1       = '#458588'
-color2       = '#689d6a'
-color3       = '#d79921'
-color4       = '#d65d0e'
-color5       = '#b16286'
-color6       = '#b16286'
-color7       = '#cc241d'
+foreground = '#fbf1c7'
+background = '#282828'
+box = '#3c3836'
+line = '#665c54'
+primary = '#3c3836'
+error = '#cc241d'
+success = '#98971a'
+color1 = '#458588'
+color2 = '#689d6a'
+color3 = '#d79921'
+color4 = '#d65d0e'
+color5 = '#b16286'
+color6 = '#b16286'
+color7 = '#cc241d'
 
-###
-# Configures the OS symbols
-###
-[os.symbols]
-Alpaquita        = " "
-Alpine           = " "
-AlmaLinux        = " "
-Amazon           = " "
-Android          = " "
-Arch             = " "
-Artix            = " "
-CachyOS          = " "
-CentOS           = " "
-Debian           = " "
-DragonFly        = " "
-Emscripten       = " "
-EndeavourOS      = " "
-Fedora           = " "
-FreeBSD          = " "
-Garuda           = "󰛓 "
-Gentoo           = " "
-HardenedBSD      = "󰞌 "
-Illumos          = "󰈸 "
-Kali             = " "
-Linux            = " "
-Mabox            = " "
-Macos            = " "
-Manjaro          = " "
-Mariner          = " "
-MidnightBSD      = " "
-Mint             = " "
-NetBSD           = " "
-NixOS            = " "
-Nobara           = " "
-OpenBSD          = "󰈺 "
-openSUSE         = " "
-OracleLinux      = "󰌷 "
-Pop              = " "
-Raspbian         = " "
-Redhat           = " "
-RedHatEnterprise = " "
-RockyLinux       = " "
-Redox            = "󰀘 "
-Solus            = "󰠳 "
-SUSE             = " "
-Ubuntu           = " "
-Unknown          = " "
-Void             = " "
-Windows          = "󰍲 "
-
-###
-# Configures the OS
-###
-[os]
-format = '[ $symbol](fg:primary bg:color3)'
-disabled = false
 
 ###
 # Configures the directory module
 ###
 [directory]
-format = '[$read_only$truncation_symbol](fg:foreground bg:color4)[ $path ](fg:foreground bg:box)'
+format = '[$read_only$truncation_symbol](fg:foreground bg:color2)[ $path ](fg:foreground bg:background)'
 home_symbol = "󱂵 ~"
 read_only = '󰌾 '
 read_only_style = ''
@@ -139,14 +82,14 @@ success_symbol = '[λ](bold fg:success)'
 # Configures the fill module
 ###
 [fill]
-style  = 'fg:line'
-symbol = '-'
+style = 'bg:background'
+symbol = ' '
 
 ###
 # Configures the git branch module
 ###
 [git_branch]
-format = '[ ](bg:color4)[ $symbol ](fg:color4 bg:background)[$branch ](fg:foreground bg:background)'
+format = '[ $symbol ](bg:color4 fg:primary)[ $branch ](fg:color6 bg:background)'
 symbol = '󰘬'
 
 ###
@@ -155,7 +98,7 @@ symbol = '󰘬'
 [git_commit]
 commit_hash_length = 4
 format = "([ 󰓹 ](fg:primary bg:color3)[ $tag ](fg:foreground bg:background))([ 󰜘 ](fg:primary bg:color3)[ $hash ](fg:foreground bg:background))"
-only_detached  = false
+only_detached = false
 tag_disabled = false
 tag_symbol = ''
 
@@ -174,6 +117,28 @@ renamed = '[󰑕](fg:color3 bg:background)[ $count ](fg:foreground bg:background
 modified = '[󰏫](fg:color3 bg:background)[ $count ](fg:foreground bg:background)'
 staged = '[󰐕](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
 untracked = '[󰐕](fg:color2 bg:background)[ $count ](fg:foreground bg:background)'
+
+###
+# Configures the time module
+###
+[time]
+disabled = false
+format = '[ 󰥔 ](bg:color5 fg:primary)[ $time ](fg:color6 bg:background)'
+time_format = '%H:%M'
+
+###
+# Configures the aws module
+###
+[aws]
+disabled = true
+format = '[ ☁︎ ](fg:primary bg:color7)([ $region ](fg:foreground bg:background))'
+
+###
+# Configures the docker context module
+###
+[docker_context]
+disabled = false
+format = '[ 󰡣 ](fg:primary bg:color1)([ $context ](fg:foreground bg:background))'
 
 ###
 # Configures the golang module
@@ -230,46 +195,3 @@ symbol = ''
 [rust]
 format = '[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:background))'
 symbol = ''
-
-###
-# Configures the swift module
-###
-[swift]
-format = '[ $symbol ](fg:primary bg:color4)([ $version ](fg:foreground bg:background))'
-symbol = ''
-
-###
-# Configures the package module
-###
-[package]
-format = '[ 󰏖 ](fg:primary bg:color4)[ $version ](fg:foreground bg:background)'
-
-###
-# Configures the shell module
-###
-[shell]
-disabled = true
-format = '[ 󰆍 ](fg:primary bg:color5)[ $indicator ](fg:foreground bg:background)'
-unknown_indicator = 'shell'
-
-###
-# Configures the time module
-###
-[time]
-disabled    = false
-format      = '[ ](bg:color5)[ 󰥔 $time ](fg:color6 bg:background)'
-time_format = '%H:%M'
-
-###
-# Configures the aws module
-###
-[aws]
-disabled = true
-format = '[ ☁︎ ](fg:primary bg:color7)([ $region ](fg:foreground bg:background))'
-
-###
-# Configures the docker context module
-###
-[docker_context]
-disabled = false
-format = '[ 󰡣 ](fg:primary bg:color1)([ $context ](fg:foreground bg:background))'
