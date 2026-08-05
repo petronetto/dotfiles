@@ -3,7 +3,7 @@
 set -eufo pipefail
 
 main() {
-  echo "Configuring macOS defaults..."
+  echo "ℹ️ Configuring macOS defaults..."
 
   # --- Dock ---
   defaults write com.apple.dock tilesize -int 47
@@ -69,7 +69,7 @@ main() {
     killall "$app" &>/dev/null || true
   done
 
-  echo "macOS defaults configured!"
+  echo "✅ macOS defaults configured"
 }
 
-main || echo "⚠️  Warning: macos-defaults failed, continuing..." >&2
+main || echo "❌ macos-defaults failed, continuing..." >&2

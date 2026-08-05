@@ -13,23 +13,23 @@ set -uo pipefail
 LAUNCH_AGENT_LABEL="com.petronetto.fn2f4remap"
 LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/${LAUNCH_AGENT_LABEL}.plist"
 
-echo "Reverting fn -> F4 remap..."
+echo "ℹ️ Reverting fn -> F4 remap..."
 
 if launchctl print "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" &>/dev/null; then
-  echo "Unloading LaunchAgent..."
+  echo "ℹ️ Unloading LaunchAgent..."
   launchctl bootout "gui/$(id -u)/${LAUNCH_AGENT_LABEL}"
 else
-  echo "LaunchAgent is not loaded"
+  echo "ℹ️ LaunchAgent is not loaded"
 fi
 
 if [[ -f "$LAUNCH_AGENT_PLIST" ]]; then
-  echo "Removing $LAUNCH_AGENT_PLIST..."
+  echo "ℹ️ Removing $LAUNCH_AGENT_PLIST..."
   rm -f "$LAUNCH_AGENT_PLIST"
 else
-  echo "LaunchAgent plist already removed"
+  echo "ℹ️ LaunchAgent plist already removed"
 fi
 
-echo "Clearing HID key mapping..."
+echo "ℹ️ Clearing HID key mapping..."
 hidutil property --set '{"UserKeyMapping":[]}' >/dev/null
 
-echo "fn -> F4 remap fully reverted for this session (no LaunchAgent left to re-apply it on next login)"
+echo "✅ fn -> F4 remap fully reverted for this session (no LaunchAgent left to re-apply it on next login)"

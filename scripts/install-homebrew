@@ -2,10 +2,10 @@
 
 set -eufo pipefail
 
-echo "==> Checking Homebrew installation..."
+echo "ℹ️ Checking Homebrew installation..."
 
 if ! command -v brew &> /dev/null; then
-    echo "Installing Homebrew..."
+    echo "ℹ️ Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Add Homebrew to PATH for Apple Silicon Macs
@@ -13,7 +13,7 @@ if ! command -v brew &> /dev/null; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 
-    echo "✓ Homebrew installed"
+    echo "✅ Homebrew installed"
 else
-    echo "✓ Homebrew already installed"
+    echo "✅ Homebrew already installed"
 fi

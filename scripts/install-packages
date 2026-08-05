@@ -3,7 +3,7 @@
 set -eufo pipefail
 
 main() {
-    echo "Installing packages via Homebrew..."
+    echo "ℹ️ Installing packages via Homebrew..."
 
     # Ensure Homebrew is in PATH
     if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
@@ -15,12 +15,12 @@ main() {
     # brew needs the Xcode Command Line Tools to build/link most formulae;
     # install them here so brew bundle doesn't stall waiting on the GUI installer.
     if ! xcode-select -p &>/dev/null; then
-        echo "Installing Xcode Command Line Tools..."
+        echo "ℹ️ Installing Xcode Command Line Tools..."
         xcode-select --install
         until xcode-select -p &>/dev/null; do
             sleep 5
         done
-        echo "✓ Xcode Command Line Tools installed"
+        echo "✅ Xcode Command Line Tools installed"
     fi
 
     export HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -28,12 +28,12 @@ main() {
     export NONINTERACTIVE=1
     export HOMEBREW_CASK_OPTS="--no-quarantine"
 
-    brew bundle --file="$BREWFILE" || echo "⚠️  Warning: one or more packages failed to install" >&2
+    brew bundle --file="$BREWFILE" || echo "⚠️ one or more packages failed to install" >&2
 
-    echo "Cleaning up Homebrew cache..."
-    brew cleanup || echo "⚠️  Warning: brew cleanup failed" >&2
+    echo "ℹ️ Cleaning up Homebrew cache..."
+    brew cleanup || echo "⚠️ brew cleanup failed" >&2
 
-    echo "Package installation complete!"
+    echo "✅ Package installation complete"
 }
 
-main || echo "⚠️  Warning: install-packages failed, continuing..." >&2
+main || echo "❌ install-packages failed, continuing..." >&2

@@ -10,7 +10,7 @@ main() {
 
     mkdir -p "$TARGET_DIR"
     if [[ ! -d "$SOURCE_DIR" ]]; then
-        echo "Source directory not found at \"$SOURCE_DIR\", skipping."
+        echo "ℹ️ Source directory not found at \"$SOURCE_DIR\", skipping."
         return 0
     fi
 
@@ -29,11 +29,11 @@ main() {
         [[ -e "$tgt" || -L "$tgt" ]] && rm -f "$tgt"
 
         ln -s "$src" "$tgt"
-        echo "Linked \"$tgt\" -> \"$src\""
+        echo "ℹ️ Linked \"$tgt\" -> \"$src\""
         created=$((created + 1))
     done
 
-    echo "VS Code user config symlinks ready ($created created/updated)."
+    echo "✅ VS Code user config symlinks ready ($created created/updated)"
 }
 
-main || echo "⚠️  Warning: vscode-user-symlinks failed, continuing..." >&2
+main || echo "❌ vscode-user-symlinks failed, continuing..." >&2
