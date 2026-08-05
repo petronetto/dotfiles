@@ -12,15 +12,36 @@ main() {
         eval "$(/usr/local/bin/brew shellenv)"
     fi
 
-    # brew needs the Xcode Command Line Tools to build/link most formulae;
-    # install them here so brew bundle doesn't stall waiting on the GUI installer.
+    # brew needs the Xcode Command Line Tools to build/link most formulae.
+    # Installed via softwareupdate instead of `xcode-select --install` so this
+    # never pops up Apple's GUI installer, which has been unreliable on some
+    # older Macs and can hang the whole chezmoi apply run waiting on a click.
     if ! xcode-select -p &>/dev/null; then
         echo "ℹ️ Installing Xcode Command Line Tools..."
-        xcode-select --install
-        until xcode-select -p &>/dev/null; do
+
+        CLT_PLACEHOLDER="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+        touch "$CLT_PLACEHOLDER"
+        CLT_PACKAGE=$(softwareupdate -l 2>/dev/null | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //' || true)
+        rm -f "$CLT_PLACEHOLDER"
+
+        if [[ -n "$CLT_PACKAGE" ]]; then
+            sudo softwareupdate -i "$CLT_PACKAGE" --verbose
+        else
+            echo "⚠️ softwareupdate couldn't find Command Line Tools, falling back to the GUI installer" >&2
+            xcode-select --install
+        fi
+
+        elapsed=0
+        until xcode-select -p &>/dev/null || (( elapsed >= 600 )); do
             sleep 5
+            elapsed=$(( elapsed + 5 ))
         done
-        echo "✅ Xcode Command Line Tools installed"
+
+        if xcode-select -p &>/dev/null; then
+            echo "✅ Xcode Command Line Tools installed"
+        else
+            echo "⚠️ Xcode Command Line Tools still not installed after 10 minutes; brew bundle may fail to build some formulae" >&2
+        fi
     fi
 
     export HOMEBREW_NO_INSTALL_CLEANUP=1
