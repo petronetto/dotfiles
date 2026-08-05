@@ -2,27 +2,38 @@
 
 set -eufo pipefail
 
-echo "Installing packages via Homebrew..."
+main() {
+    echo "Installing packages via Homebrew..."
 
-# Ensure Homebrew is in PATH
-if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -f /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-fi
+    # Ensure Homebrew is in PATH
+    if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -f /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
 
-brew bundle --file="$BREWFILE"
+    # brew needs the Xcode Command Line Tools to build/link most formulae;
+    # install them here so brew bundle doesn't stall waiting on the GUI installer.
+    if ! xcode-select -p &>/dev/null; then
+        echo "Installing Xcode Command Line Tools..."
+        xcode-select --install
+        until xcode-select -p &>/dev/null; do
+            sleep 5
+        done
+        echo "✓ Xcode Command Line Tools installed"
+    fi
 
-echo "Package installation complete!"
+    export HOMEBREW_NO_INSTALL_CLEANUP=1
+    export HOMEBREW_NO_ASK=1
+    export NONINTERACTIVE=1
+    export HOMEBREW_CASK_OPTS="--no-quarantine"
 
-# Post-installation configurations
-echo "Configuring installed packages..."
+    brew bundle --file="$BREWFILE" || echo "⚠️  Warning: one or more packages failed to install" >&2
 
-# Link Node LTS version if any versioned node is installed
-NODE_VERSION=$(brew list --formula | grep -E '^node@[0-9]+$' | head -n1)
-if [[ -n "$NODE_VERSION" ]]; then
-    echo "Linking $NODE_VERSION..."
-    brew link "$NODE_VERSION" --force --overwrite
-fi
+    echo "Cleaning up Homebrew cache..."
+    brew cleanup || echo "⚠️  Warning: brew cleanup failed" >&2
 
-echo "All packages installed and configured successfully!"
+    echo "Package installation complete!"
+}
+
+main || echo "⚠️  Warning: install-packages failed, continuing..." >&2

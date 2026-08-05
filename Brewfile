@@ -16,6 +16,7 @@ brew "curl"         # modern curl (HTTP/2, current SSL)
 brew "openssl"      # TLS / crypto libraries
 brew "httpie"       # human-friendly HTTP client
 brew "pam-reattach" # Touch ID for sudo inside tmux (used by /etc/pam.d/sudo_local)
+brew "chezmoi"      # manage your dotfiles across multiple machines
 
 # --- Version control & hosting CLIs ---
 brew "git"
@@ -56,7 +57,7 @@ brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 # --- Languages & runtimes ---
 brew "rust"
 brew "go"
-brew "node@24"
+brew "node"
 brew "python"
 brew "php"
 brew "lua"

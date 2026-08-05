@@ -2,34 +2,38 @@
 
 set -euo pipefail
 
-# Chezmoi owns the real files here (source of truth).
-SOURCE_DIR="${HOME}/.config/vscode"
-# VS Code reads its config here; entries become symlinks into SOURCE_DIR.
-TARGET_DIR="${HOME}/Library/Application Support/Code/User"
+main() {
+    # Chezmoi owns the real files here (source of truth).
+    SOURCE_DIR="${HOME}/.config/vscode"
+    # VS Code reads its config here; entries become symlinks into SOURCE_DIR.
+    TARGET_DIR="${HOME}/Library/Application Support/Code/User"
 
-mkdir -p "$TARGET_DIR"
-if [[ ! -d "$SOURCE_DIR" ]]; then
-    echo "Source directory not found at \"$SOURCE_DIR\", skipping."
-    exit 0
-fi
-
-setopt nullglob
-created=0
-for src in "$SOURCE_DIR"/*.json; do
-    [[ -f "$src" ]] || continue
-    name="${src##*/}"
-    tgt="${TARGET_DIR}/${name}"
-
-    # Idempotent: already a symlink pointing at the source file.
-    if [[ -L "$tgt" ]] && [[ "$(readlink "$tgt")" == "$src" ]]; then
-        continue
+    mkdir -p "$TARGET_DIR"
+    if [[ ! -d "$SOURCE_DIR" ]]; then
+        echo "Source directory not found at \"$SOURCE_DIR\", skipping."
+        return 0
     fi
 
-    [[ -e "$tgt" || -L "$tgt" ]] && rm -f "$tgt"
+    setopt nullglob
+    created=0
+    for src in "$SOURCE_DIR"/*.json; do
+        [[ -f "$src" ]] || continue
+        name="${src##*/}"
+        tgt="${TARGET_DIR}/${name}"
 
-    ln -s "$src" "$tgt"
-    echo "Linked \"$tgt\" -> \"$src\""
-    created=$((created + 1))
-done
+        # Idempotent: already a symlink pointing at the source file.
+        if [[ -L "$tgt" ]] && [[ "$(readlink "$tgt")" == "$src" ]]; then
+            continue
+        fi
 
-echo "VS Code user config symlinks ready ($created created/updated)."
+        [[ -e "$tgt" || -L "$tgt" ]] && rm -f "$tgt"
+
+        ln -s "$src" "$tgt"
+        echo "Linked \"$tgt\" -> \"$src\""
+        created=$((created + 1))
+    done
+
+    echo "VS Code user config symlinks ready ($created created/updated)."
+}
+
+main || echo "⚠️  Warning: vscode-user-symlinks failed, continuing..." >&2
