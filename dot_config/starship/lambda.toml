@@ -3,11 +3,15 @@
 add_newline = false
 
 format = """
+$sudo\
 $directory\
 $docker_context\
 $aws\
+$git_branch\
 $fill\
-$git_branch$git_status\
+$git_status\
+$git_commit\
+$git_state\
 $php\
 $python\
 $golang\
@@ -21,11 +25,15 @@ $line_break\
 $character
 """
 
+[sudo]
+format = '[  ](fg:black bg:bright-red) '
+disabled = false
+
 [directory]
-format = '[  ](fg:black bg:green) [$path]($style)[$read_only]($read_only_style)'
+format = '[  ](fg:black bg:green) [$path ]($style)[$read_only]($read_only_style)'
 home_symbol = " ~"
 read_only = '󰌾 '
-read_only_style = ''
+read_only_style = 'fg:bright-red'
 truncation_length = 2
 truncation_symbol = ''
 
@@ -38,8 +46,8 @@ format = '$symbol '
 success_symbol = '[λ](bold fg:green)'
 
 [fill]
-style = ''
-symbol = ' '
+style  = 'fg:bright-black'
+symbol = '─'
 
 [git_branch]
 format = '[ $symbol ](bg:bright-red fg:black)[ $branch ](fg:purple)'
@@ -47,7 +55,7 @@ symbol = '󰘬'
 
 [git_commit]
 commit_hash_length = 4
-format = "([ 󰓹 ](fg:black bg:yellow)[ $tag ](fg:white))([ 󰜘 ](fg:black bg:yellow)[ $hash ](fg:white))"
+format = " ([ 󰓹 ](fg:black bg:yellow)[ $tag ](fg:white))([ 󰜘 ](fg:black bg:yellow)[ $hash ](fg:white))"
 only_detached = false
 tag_disabled = false
 tag_symbol = ''
