@@ -1,20 +1,7 @@
-###
-# Starship configuration
-###
-
-###
-# Configures the starship schema
-###
 "$schema" = 'https://starship.rs/config-schema.json'
 
-###
-# Configures the add newline
-###
 add_newline = false
 
-###
-# Configures the format
-###
 format = """
 $directory\
 $docker_context\
@@ -34,187 +21,91 @@ $line_break\
 $character
 """
 
-###
-# Configures the palette
-###
-palette = 'gruvbox'
-
-[palettes.gruvbox]
-# Background
-bg0_hard = '#1d2021'
-bg0 = '#282828'
-bg0_soft = '#32302f'
-bg1 = '#3c3836'
-bg2 = '#504945'
-bg3 = '#665c54'
-bg4 = '#7c6f64'
-# Foreground
-fg0 = '#fbf1c7'
-fg1 = '#ebdbb2'
-fg2 = '#d5c4a1'
-fg3 = '#bdae93'
-fg4 = '#a89984'
-gray = '#928374'
-# Normal
-red = '#cc241d'
-green = '#98971a'
-yellow = '#d79921'
-blue = '#458588'
-purple = '#b16286'
-aqua = '#689d6a'
-orange = '#d65d0e'
-# Bright
-bright_red = '#fb4934'
-bright_green = '#b8bb26'
-bright_yellow = '#fabd2f'
-bright_blue = '#83a598'
-bright_purple = '#d3869b'
-bright_aqua = '#8ec07c'
-bright_orange = '#fe8019'
-# Semantic aliases
-foreground = '#a89984'
-background = '#282828'
-primary = '#3c3836'
-error = '#cc241d'
-success = '#98971a'
-
-
-###
-# Configures the directory module
-###
 [directory]
-format = '[$read_only$truncation_symbol](fg:foreground bg:aqua)[ $path ](fg:foreground)'
-home_symbol = "󱂵 ~"
+format = '[  ](fg:black bg:green) [$path]($style)[$read_only]($read_only_style)'
+home_symbol = " ~"
 read_only = '󰌾 '
 read_only_style = ''
 truncation_length = 2
-truncation_symbol = '󰝰 '
+truncation_symbol = ''
 
 [directory.substitutions]
 '/opt/code' = ' code'
 
-###
-# Configures the character module
-###
 [character]
-error_symbol = '[χ](bold fg:error)'
+error_symbol = '[χ](bold fg:red)'
 format = '$symbol '
-success_symbol = '[λ](bold fg:success)'
+success_symbol = '[λ](bold fg:green)'
 
-###
-# Configures the fill module
-###
 [fill]
 style = ''
 symbol = ' '
 
-###
-# Configures the git branch module
-###
 [git_branch]
-format = '[ $symbol ](bg:orange fg:primary)[ $branch ](fg:purple)'
+format = '[ $symbol ](bg:bright-red fg:black)[ $branch ](fg:purple)'
 symbol = '󰘬'
 
-###
-# Configures the git commit module
-###
 [git_commit]
 commit_hash_length = 4
-format = "([ 󰓹 ](fg:primary bg:yellow)[ $tag ](fg:foreground))([ 󰜘 ](fg:primary bg:yellow)[ $hash ](fg:foreground))"
+format = "([ 󰓹 ](fg:black bg:yellow)[ $tag ](fg:white))([ 󰜘 ](fg:black bg:yellow)[ $hash ](fg:white))"
 only_detached = false
 tag_disabled = false
 tag_symbol = ''
 
-###
-# Configures the git status module
-###
 [git_status]
 format = '[ ](fg:yellow)$stashed$staged$deleted$renamed$modified$untracked$ahead_behind$conflicted'
-stashed = '[](fg:yellow)[ $count ](fg:foreground)'
-ahead = '[󰁝](fg:aqua)[ $count ](fg:foreground)'
-behind = '[󰁅](fg:orange)[ $count ](fg:foreground)'
-diverged = '[󰃻](fg:red)[ $ahead_count $behind_count ](fg:foreground)'
-conflicted = '[󰅙](fg:red)[ $count ](fg:foreground)'
-deleted = '[󰍴](fg:yellow)[ $count ](fg:foreground)'
-renamed = '[󰑕](fg:yellow)[ $count ](fg:foreground)'
-modified = '[󰏫](fg:yellow)[ $count ](fg:foreground)'
-staged = '[󰐕](fg:aqua)[ $count ](fg:foreground)'
-untracked = '[󰐕](fg:aqua)[ $count ](fg:foreground)'
+stashed = '[](fg:yellow)[ $count ](fg:white)'
+ahead = '[󰁝](fg:cyan)[ $count ](fg:white)'
+behind = '[󰁅](fg:bright-red)[ $count ](fg:white)'
+diverged = '[󰃻](fg:red)[ $ahead_count $behind_count ](fg:white)'
+conflicted = '[󰅙](fg:red)[ $count ](fg:white)'
+deleted = '[󰍴](fg:yellow)[ $count ](fg:white)'
+renamed = '[󰑕](fg:yellow)[ $count ](fg:white)'
+modified = '[󰏫](fg:yellow)[ $count ](fg:white)'
+staged = '[󰐕](fg:cyan)[ $count ](fg:white)'
+untracked = '[󰐕](fg:cyan)[ $count ](fg:white)'
 
-###
-# Configures the time module
-###
 [time]
 disabled = false
-format = '[ 󰥔 ](bg:bright_blue fg:primary)[ $time ](fg:bright_blue)'
+format = '[ 󰥔 ](bg:bright-blue fg:black)[ $time ](fg:bright-blue)'
 time_format = '%H:%M'
 
-###
-# Configures the aws module
-###
 [aws]
 disabled = true
-format = '[  ](fg:primary bg:red)([ $region ](fg:foreground))'
+format = '[  ](fg:black bg:red)([ $region ](fg:white))'
 
-###
-# Configures the docker context module
-###
 [docker_context]
 disabled = false
-format = '[ 󰡣 ](fg:primary bg:blue)([ $context ](fg:foreground))'
+format = '[ 󰡣 ](fg:black bg:blue)([ $context ](fg:white))'
 
-###
-# Configures the golang module
-###
 [golang]
-format = '[ $symbol ](fg:primary bg:blue)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:blue)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the julia module
-###
 [julia]
-format = '[ $symbol ](fg:primary bg:orange)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:bright-red)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the lua module
-###
 [lua]
-format = '[ $symbol ](fg:primary bg:orange)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:bright-red)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the nodejs module
-###
 [nodejs]
-format = '[ $symbol ](fg:primary bg:green)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:green)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the php module
-###
 [php]
-format = '[ $symbol ](fg:primary bg:blue)([ $version ](fg:bright_blue))'
+format = '[ $symbol ](fg:black bg:blue)([ $version ](fg:bright-blue))'
 symbol = ''
 
-###
-# Configures the python module
-###
 [python]
-format = '[ $symbol ](fg:primary bg:green)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:green)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the ruby module
-###
 [ruby]
-format = '[ $symbol ](fg:primary bg:red)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:red)([ $version ](fg:white))'
 symbol = ''
 
-###
-# Configures the rust module
-###
 [rust]
-format = '[ $symbol ](fg:primary bg:orange)([ $version ](fg:foreground))'
+format = '[ $symbol ](fg:black bg:bright-red)([ $version ](fg:white))'
 symbol = ''
