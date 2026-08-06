@@ -22,7 +22,12 @@ Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfile
 
 **Initialize and apply dotfiles**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/main/install.sh | bash
+curl -fsSL https://tinyurl.com/petronetto | bash
+```
+
+Or, without the short link:
+```bash
+curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/main/bootstrap.sh | bash
 ```
 
 This sets up your shell, tools, and SSH keys with no secret tool required.

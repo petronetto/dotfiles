@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# One-shot bootstrap for a fresh Mac: installs, in order, the Xcode Command
+# Line Tools, Homebrew, and chezmoi, then runs `chezmoi init --apply` to
+# provision the rest of the machine from https://github.com/petronetto/dotfiles.
+#
+# CLT is installed first and non-interactively (via `softwareupdate`, not
+# `xcode-select --install`) because Homebrew's own installer will otherwise
+# trigger its interactive CLT prompt, which hangs a headless/piped run.
+#
+#   curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/main/bootstrap.sh | bash
 
 set -eufo pipefail
 
