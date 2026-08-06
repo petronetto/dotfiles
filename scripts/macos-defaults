@@ -34,7 +34,6 @@ main() {
       # Editors & IDEs
       "/Applications/Cursor.app"
       "/Applications/Visual Studio Code.app"
-      "/Applications/PhpStorm.app"
       # Dev tools
       "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app"
       "/Applications/Bruno.app"
