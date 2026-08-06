@@ -5,14 +5,9 @@ function config() {
   nvim "$ZDOTDIR"
 }
 
-# Open PhpStorm with arguments
-function phpstorm() {
-  open -na "PhpStorm.app" --args "$@"
-}
-
 # Composer (Docker-based)
 function comp() {
-  $COMPOSER_VERSION=${COMPOSER_VERSION:-"2.9.3"}
+  local COMPOSER_VERSION="${COMPOSER_VERSION:-2.9.3}"
 
   docker run --rm --interactive --tty \
     --volume $(pwd):/app \
