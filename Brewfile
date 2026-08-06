@@ -110,7 +110,7 @@ cask "todoist-app"
 
 # --- Utilities ---
 cask "rectangle"            # window management & snapping
-cask "paste"                # clipboard manager
+cask "maccy"                # clipboard manager
 
 # --- Containers ---
 cask "docker-desktop"
