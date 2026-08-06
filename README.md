@@ -22,7 +22,7 @@ Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfile
 
 **Initialize and apply dotfiles**
 ```bash
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply petronetto
+curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/main/install.sh | bash
 ```
 
 This sets up your shell, tools, and SSH keys with no secret tool required.
