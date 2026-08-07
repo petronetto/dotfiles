@@ -9,5 +9,8 @@ vscode-extensions.txt
 .config/nvim/lazy-lock.json
 .config/nvim/lazyvim.json
 
-# Local debug/revert scripts, not deployed to $HOME
+# Local scripts, not deployed to $HOME
 scripts/
+
+# Backups
+private/backups
