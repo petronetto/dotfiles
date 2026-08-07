@@ -1,0 +1,58 @@
+#!/usr/bin/env zsh
+
+# Snapshots the live Maccy clipboard history (including pins) into the local
+# private dotfiles working copy, so it can be committed/pushed manually, and
+# restores a snapshot back into place on a fresh machine.
+#
+# Usage:
+#   backup-maccy-history backup <private_dir>
+#   backup-maccy-history restore <private_dir>
+
+set -euo pipefail
+
+ACTION="${1:?action required: backup or restore}"
+PRIVATE_DIR="${2:?private dotfiles directory required}"
+MACCY_DB="${HOME}/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/Storage.sqlite"
+BACKUP_DIR="${PRIVATE_DIR}/backups/maccy"
+BACKUP_DB="${BACKUP_DIR}/Storage.sqlite"
+
+backup() {
+  if [[ ! -f "${MACCY_DB}" ]]; then
+    echo "ℹ️ No Maccy Storage.sqlite found yet, skipping backup" >&2
+    return 0
+  fi
+
+  if [[ ! -d "${PRIVATE_DIR}/.git" ]]; then
+    echo "⚠️ private dotfiles repo not found at ${PRIVATE_DIR}, skipping" >&2
+    return 0
+  fi
+
+  mkdir -p "${BACKUP_DIR}"
+  sqlite3 "${MACCY_DB}" ".backup '${BACKUP_DB}'"
+  echo "✅ Maccy history backed up to ${BACKUP_DIR}/Storage.sqlite (review & commit manually)"
+}
+
+restore() {
+  if [[ ! -f "${BACKUP_DB}" ]]; then
+    echo "⚠️ No backup found at ${BACKUP_DIR}/Storage.sqlite, nothing to restore" >&2
+    return 0
+  fi
+
+  if pgrep -qx Maccy; then
+    echo "⚠️ Maccy is running, quit it before restoring or it may overwrite this data" >&2
+    return 1
+  fi
+
+  mkdir -p "${MACCY_DB:h}"
+  cp "${BACKUP_DB}" "${MACCY_DB}"
+  echo "✅ Maccy history restored from ${BACKUP_DIR}/Storage.sqlite, you can start Maccy now"
+}
+
+case "${ACTION}" in
+  backup) backup ;;
+  restore) restore ;;
+  *)
+    echo "usage: ${0:t} backup|restore <private_dir>" >&2
+    exit 1
+    ;;
+esac
