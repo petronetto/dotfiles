@@ -40,7 +40,18 @@
     "yaml": true,
     "toml": true,
     "dockerfile": true,
-    "docker-compose": true
+    "docker-compose": true,
+    "blade": true,
+    "env": true,
+    "git-firefly": true,
+    "gruvbox-material-mix": true,
+    "ini": true,
+    "material-icon-theme": true,
+    "nginx": true,
+    "scss": true,
+    "sql": true,
+    "templ": true,
+    "twig": true
   },
   "languages": {
     "PHP": {
