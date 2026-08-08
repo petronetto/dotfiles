@@ -3,7 +3,6 @@ AGENTS.md
 Brewfile
 bootstrap.sh
 key.txt.age
-vscode-extensions.txt
 
 # LazyVim auto-generated files
 .config/nvim/lazy-lock.json

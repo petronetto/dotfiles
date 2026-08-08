@@ -84,7 +84,7 @@ brew "mole"         # deep clean and Mac optimization tool
 cask "ghostty"
 
 # --- Editors & IDEs ---
-cask "visual-studio-code"   # VS Code IDE
+cask "zed"                  # Zed editor
 
 # --- Browsers ---
 cask "brave-browser"
