@@ -38,7 +38,7 @@ truncation_length = 2
 truncation_symbol = ''
 
 [directory.substitutions]
-'/opt/code' = ' code'
+'~/code' = ' code'
 
 [character]
 error_symbol = '[χ](bold fg:red)'
