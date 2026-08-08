@@ -32,8 +32,7 @@ main() {
       # Terminal
       "/Applications/Ghostty.app"
       # Editors & IDEs
-      "/Applications/Cursor.app"
-      "/Applications/Visual Studio Code.app"
+      "/Applications/Zed.app"
       # Dev tools
       "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app"
       "/Applications/Bruno.app"
@@ -47,8 +46,6 @@ main() {
       "/Applications/Obsidian.app"
       "/Applications/Todoist.app"
       # Apple productivity & media
-      "/System/Applications/Notes.app"
-      "/System/Applications/Reminders.app"
       "/System/Applications/Calendar.app"
       "/System/Applications/Music.app"
       # System utilities
