@@ -49,7 +49,6 @@ brew "ansible"      # automation & provisioning
 brew "awscli"       # AWS CLI v2
 
 # --- AI coding agents & LLM tooling ---
-brew "ollama"
 brew "pi-coding-agent"
 brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
@@ -62,6 +61,7 @@ brew "python"
 brew "php"
 brew "lua"
 brew "luarocks"
+brew "sqlite"
 
 # --- Language tooling & package managers ---
 brew "pyenv"        # Python version manager
