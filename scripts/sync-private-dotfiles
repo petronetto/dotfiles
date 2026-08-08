@@ -34,6 +34,7 @@ main() {
   [[ -d "${HOME}/.ssh/config.d" ]] && chmod 700 "${HOME}/.ssh" && chmod 600 "${HOME}/.ssh/config.d"/*
   [[ -d "${HOME}/.local/bin" ]] && chmod +x "${HOME}/.local/bin"/*
   [[ -d "${HOME}/.config/zsh/private" ]] && chmod 644 "${HOME}/.config/zsh/private"/*
+  [[ -d "${HOME}/.config/pi" ]] && chmod 600 "${HOME}/.config/pi/auth.json"
 
   echo "✅ Private dotfiles sync complete"
 }
