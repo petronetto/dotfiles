@@ -20,7 +20,9 @@ brew "chezmoi"      # manage your dotfiles across multiple machines
 
 # --- Version control & hosting CLIs ---
 brew "git"
+brew "git-delta"    # Syntax-highlighting for git and diff output
 brew "gh"           # GitHub CLI
+brew "glab"         # GItlab CLI
 
 # --- Editor & terminal multiplexer ---
 brew "neovim"
