@@ -43,6 +43,7 @@ brew "procs"        # ps replacement
 brew "tlrc"         # community-driven, simplified man pages
 brew "jq"           # JSON processor
 brew "gum"          # modern CLI prompts & menus
+brew "todoist-cli"  # command-line client for Todoist
 
 # --- Cloud & API CLIs ---
 brew "ansible"      # automation & provisioning
