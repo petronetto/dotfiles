@@ -1,0 +1,71 @@
+#!/usr/bin/env zsh
+
+# Thin wrapper ("alias") around the real `skills` CLI that runs it inside a
+# throwaway node container. The chezmoi source tree is bind-mounted at the
+# universal-agent skills path (~/.agents/skills) and its lock file alongside
+# it (~/.agents/.skill-lock.json), so add/update/remove/list write straight
+# into version control — the source of truth. `chezmoi apply` then deploys
+# them to the live ~/.config/agents/skills.
+#
+# The `universal` agent hardcodes its skills dir to ~/.agents/skills (XDG has
+# no effect on it), which is why we mount the source there and force
+# --agent universal for the management commands.
+#
+#   skills add vercel-labs/agent-skills --skill web-design-guidelines
+#   skills list
+#   skills update
+#   skills remove my-skill
+
+set -euo pipefail
+
+SOURCE_DIR="${HOME}/.local/share/chezmoi/dot_config/agents/skills"
+LOCK_FILE="${HOME}/.local/share/chezmoi/dot_config/agents/.skill-lock.json"
+# Full node image (not alpine/slim): `skills add`/`update` `git clone` GitHub
+# repos, and only the full image ships git out of the box.
+DOCKER_IMAGE="node"
+
+# Runs `skills "$@"` inside the container with the source tree and lock file
+# bind-mounted at the universal-agent paths.
+docker_run() {
+	mkdir -p "$SOURCE_DIR"
+	[[ -f "$LOCK_FILE" ]] || : >"$LOCK_FILE"
+
+	local -a tty_flags=()
+	[[ -t 0 && -t 1 ]] && tty_flags=(-it)
+
+	exec docker run --rm "${tty_flags[@]}" \
+		-e DISABLE_TELEMETRY=true \
+		-e npm_config_update_notifier=false \
+		-e npm_config_loglevel=error \
+		-v "${SOURCE_DIR}:/root/.agents/skills" \
+		-v "${LOCK_FILE}:/root/.agents/.skill-lock.json" \
+		"$DOCKER_IMAGE" \
+		npx --yes skills "$@"
+}
+
+main() {
+	if (( $# == 0 )); then
+		docker_run --help
+		return
+	fi
+
+	local subcommand=$1
+	shift
+
+	# Only `add` takes --agent (it picks the install target). update/remove/
+	# list reject --agent and mis-parse its value as a skill name, so they get
+	# --global alone. Everything else is passed straight through.
+	case "$subcommand" in
+	add)
+		docker_run add "$@" --global --agent universal
+		;;
+	update | upgrade | remove | rm | list | ls)
+		docker_run "$subcommand" "$@" --global
+		;;
+	*)
+		docker_run "$subcommand" "$@"
+		;;
+	esac
+}
+
+main "$@"
