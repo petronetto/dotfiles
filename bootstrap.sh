@@ -78,4 +78,4 @@ else
 fi
 
 echo "ℹ️ Running chezmoi init --apply..."
-chezmoi init --apply petronetto
+chezmoi init --apply --keep-going petronetto
