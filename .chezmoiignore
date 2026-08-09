@@ -8,7 +8,8 @@ key.txt.age
 .config/nvim/lazy-lock.json
 .config/nvim/lazyvim.json
 
-# Local scripts, not deployed to $HOME
+# Local assets/scripts, not deployed to $HOME
+images/
 scripts/
 
 # Backups

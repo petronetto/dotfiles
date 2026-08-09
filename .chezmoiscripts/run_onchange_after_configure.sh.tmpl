@@ -7,4 +7,5 @@ set -euo pipefail
 BREWFILE={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }} "{{ .chezmoi.sourceDir }}/scripts/install-packages"
 
 "{{ .chezmoi.sourceDir }}/scripts/macos-defaults"
+"{{ .chezmoi.sourceDir }}/scripts/set-wallpaper"
 {{ end -}}

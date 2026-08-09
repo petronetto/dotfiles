@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -eufo pipefail
+
+# Resolve the chezmoi source root (parent of this script's directory) so the
+# default wallpaper path works regardless of the caller's working directory.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SOURCE_ROOT="$(dirname "$SCRIPT_DIR")"
+DEFAULT_WALLPAPER="$SOURCE_ROOT/images/wallpaper.jpg"
+
+# macOS Sonoma+ (incl. Tahoe / macOS 26) stores wallpaper config here. Each
+# Space and Display keeps its own override, so we clear them to make the chosen
+# image apply everywhere ("Show on all Spaces"). Gated on existence so older
+# macOS falls back to the plain osascript set below.
+WALLPAPER_PLIST="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
+
+set_wallpaper() {
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "❌ set-wallpaper only supports macOS" >&2
+    exit 1
+  fi
+
+  local wallpaper="${1:-$DEFAULT_WALLPAPER}"
+
+  # osascript requires an absolute POSIX path.
+  if [[ "$wallpaper" != /* ]]; then
+    wallpaper="$PWD/$wallpaper"
+  fi
+
+  if [[ ! -f "$wallpaper" ]]; then
+    echo "❌ Wallpaper not found: $wallpaper" >&2
+    exit 1
+  fi
+
+  echo "ℹ️ Setting wallpaper to $wallpaper (all spaces)..."
+
+  # 1) Tell System Events to use the image. This writes the correct config into
+  #    the global SystemDefault slot and updates the active desktop at once.
+  osascript -e "tell application \"System Events\" to tell every desktop to set picture to POSIX file \"$wallpaper\"" >/dev/null
+
+  # 2) Clear the per-Space and per-Display overrides so the global SystemDefault
+  #    (set above) applies to every space and display. Without this, only the
+  #    active space changes.
+  if [[ -f "$WALLPAPER_PLIST" ]]; then
+    # Give WallpaperKit a moment to finish writing before we edit the plist.
+    sleep 1
+    for key in Spaces Displays; do
+      /usr/libexec/PlistBuddy -c "Delete :$key" "$WALLPAPER_PLIST" >/dev/null 2>&1 || true
+      /usr/libexec/PlistBuddy -c "Add :$key dict" "$WALLPAPER_PLIST" >/dev/null 2>&1 || true
+    done
+  fi
+
+  # 3) Restart WallpaperAgent so the cleaned-up plist takes effect everywhere.
+  killall WallpaperAgent >/dev/null 2>&1 || true
+
+  echo "✅ Wallpaper set (all spaces)"
+}
+
+set_wallpaper "$@"
