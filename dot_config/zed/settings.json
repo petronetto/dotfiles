@@ -7,6 +7,30 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "tabs": {
+    "git_status": true
+  },
+  "title_bar": {
+    "show_menus": false,
+    "show_user_menu": false,
+    "show_user_picture": false,
+    "show_sign_in": false
+  },
+  "disable_ai": false,
+  "edit_predictions": {
+    "ollama": {
+      "model": "ornith:35b"
+    },
+    "provider": "ollama"
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "session": {
+    "trust_all_worktrees": true
+  },
   "agent": {
     "default_profile": "ask",
     "default_model": {
@@ -36,6 +60,8 @@
   "cli_default_open_behavior": "new_window",
   "proxy": "",
   "project_panel": {
+    "auto_fold_dirs": false,
+    "folder_icons": true,
     "hide_gitignore": false,
     "dock": "left"
   },
@@ -52,7 +78,7 @@
   "buffer_font_size": 15,
   "theme": {
     "mode": "system",
-    "light": "Gruvbox Material Dark Mix",
+    "light": "Gruvbox Material Light Mix",
     "dark": "Gruvbox Material Dark Mix"
   },
   "auto_install_extensions": {
