@@ -20,6 +20,7 @@ alias docker-rmn='docker network rm -f $(docker network ls -q)'
 alias docker-rmv='docker volume rm -f $(docker volume ls -q)'
 alias docker-clean='docker system prune --all -f'
 alias docker-clean-all='docker-clean && docker-rmv && docker-rmn && docker-rmi'
+alias dps="docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Names}}\t{{.Status}}'"
 alias dcu='docker context use'
 alias dcd='docker context use default'
 
