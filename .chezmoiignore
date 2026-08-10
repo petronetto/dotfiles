@@ -12,5 +12,5 @@ key.txt.age
 images/
 scripts/
 
-# Backups
-private/backups
+# Private folders
+private/
