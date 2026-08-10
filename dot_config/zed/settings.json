@@ -18,8 +18,9 @@
   },
   "disable_ai": false,
   "edit_predictions": {
+    "allow_data_collection": "no",
     "ollama": {
-      "model": "ornith:35b"
+      "model": "qwen2.5-coder:1.5b"
     },
     "provider": "ollama"
   },
@@ -32,6 +33,8 @@
     "trust_all_worktrees": true
   },
   "agent": {
+    "show_turn_stats": true,
+    "enable_feedback": false,
     "default_profile": "ask",
     "default_model": {
       "provider": "ollama",
@@ -47,6 +50,21 @@
       {
         "provider": "ollama",
         "model": "qwen3.6:27b-mlx",
+        "enable_thinking": true
+      },
+      {
+        "provider": "ollama",
+        "model": "qwen3-coder:30b",
+        "enable_thinking": false
+      },
+      {
+        "provider": "ollama",
+        "model": "ornith:35b",
+        "enable_thinking": true
+      },
+      {
+        "provider": "ollama",
+        "model": "gemma4:31b-mlx",
         "enable_thinking": true
       }
     ],
