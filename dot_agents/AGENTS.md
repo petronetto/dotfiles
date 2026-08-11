@@ -5,7 +5,7 @@ Follow these guidelines in every project. The instructions below are not optiona
 
 ## Environment & Tools
 - Primary environment: macOS, Zsh, Homebrew.
-- Always prefer modern CLI tools: `fd`, `rg`, `bat`, `lsd`, `fzf`, `httpie`, `tldr`.
+- Always prefer modern CLI tools: `fd`, `rg`, `bat`, `lsd`, `fzf`, `httpie`, `jq`, `tldr`.
 
 ## Token & Context Efficiency
 - Save tokens and keep the context window clean.
@@ -46,9 +46,9 @@ These references and skills are not loaded by default. Use them when the task ca
 
 ### Design principles
 Read these before working on object-oriented or structurally complex code:
-- `@~/.config/agents/principles/SOLID.md` - SOLID design principles.
-- `@~/.config/agents/principles/clean-code.md` - Clean Code practices, including testing methodology.
-- `@~/.config/agents/principles/object-calisthenics.md` - Object Calisthenics rules.
+- `@~/.agents/principles/SOLID.md` - SOLID design principles.
+- `@~/.agents/principles/clean-code.md` - Clean Code practices, including testing methodology.
+- `@~/.agents/principles/object-calisthenics.md` - Object Calisthenics rules.
 
 ## Communication
 - Be concise. Prefer prose for explanations and reports; use lists only for enumerations, rankings, or steps.
