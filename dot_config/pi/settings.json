@@ -1,5 +1,5 @@
 {
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "max",
   "hideThinkingBlock": false,
   "quietStartup": true,
   "enableInstallTelemetry": false,
@@ -13,6 +13,7 @@
   "warnings": {
     "anthropicExtraUsage": true
   },
-  "defaultProvider": "ollama",
-  "defaultModel": "glm-5.2:cloud"
+  "defaultProvider": "opencode-go",
+  "defaultModel": "kimi-k3",
+  "lastChangelogVersion": "0.84.1"
 }
