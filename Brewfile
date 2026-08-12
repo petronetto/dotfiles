@@ -3,7 +3,7 @@
 # https://github.com/Homebrew/brew/blob/main/docs/Brew-Bundle-and-Brewfile.md
 # =============================================================================
 #
-# Consumed by: run_onchange_after_configure.sh.tmpl (scripts/install-packages)
+# Consumed by: run_onchange_after_install-packages.sh.tmpl (scripts/install-packages)
 # =============================================================================
 
 # --------------------------------------------------------------------------

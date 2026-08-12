@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+# set-wallpaper hash: {{ include "scripts/set-wallpaper" | sha256sum }}
+# wallpaper image hash: {{ include "images/wallpaper.jpg" | sha256sum }}
+"{{ .chezmoi.sourceDir }}/scripts/set-wallpaper"
+{{ end -}}
