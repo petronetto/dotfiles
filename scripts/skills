@@ -29,8 +29,6 @@ MANIFEST="$REPO/dot_agents/.skill-lock.json"
 LIVE_LOCK="$HOME/.agents/.skill-lock.json"
 LIVE_SKILLS="$HOME/.agents/skills"
 
-command -v jq >/dev/null 2>&1 || { echo "skills: jq is required (brew install jq)" >&2; exit 1; }
-
 # Invoke the real skills CLI. Scope/agent flags are added per-subcommand below:
 # the CLI does not accept --agent uniformly (e.g. `update` has no --agent option).
 run() {
@@ -85,7 +83,9 @@ main() {
 	restore)
 		seed_live_lock
 		local skill source installed=0 failed=0
-		while IFS= read -r skill; do
+		local -a keys
+		keys=("${(@f)$(jq -r '.skills | keys[]' "$MANIFEST")}")
+		for skill in $keys; do
 			if [[ -d "$LIVE_SKILLS/$skill" ]]; then
 				continue
 			fi
@@ -97,7 +97,7 @@ main() {
 				echo "skills: WARNING failed to restore $skill" >&2
 				failed=$((failed + 1))
 			fi
-		done < <(jq -r '.skills | keys[]' "$MANIFEST")
+		done
 		sync_manifest
 		echo "skills: restore complete ($installed installed, $failed failed)." >&2
 		if (( failed > 0 )); then
