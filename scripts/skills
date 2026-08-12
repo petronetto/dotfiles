@@ -1,112 +1,235 @@
 #!/usr/bin/env zsh
 #
-# Local wrapper around the `skills` CLI (https://skills.sh).
+# Minimal skill manager. Fetches skill folders straight from GitHub repos
+# into ~/.agents/skills/, tracked in a flat manifest
+# (~/.agents/skills/skills.txt, one "owner/repo/skill" per line).
 #
-# Skills come in two kinds:
-#   - custom (7):    committed under dot_agents/skills/, deployed by chezmoi.
-#   - third-party:   installed by this wrapper into the live ~/.agents/skills/
-#                    and never committed. Their set is recorded in the committed
-#                    manifest dot_agents/.skill-lock.json.
-#
-# Management commands target the global dir of the `zed` agent (~/.agents/skills),
-# the directory pi reads as its user-skill dir. The `universal` agent instead
-# writes to ~/.config/agents/skills, which pi ignores, so it must not be used.
-#
-# Mutating commands (add/update/remove) re-sync the committed manifest from the
-# CLI's live lock (~/.agents/.skill-lock.json) afterwards; commit it when ready.
-# `restore` reinstalls any manifest skill missing on disk (idempotent).
-#
-#   scripts/skills add <owner/repo> [--skill <name>]
-#   scripts/skills update
-#   scripts/skills remove <name>
-#   scripts/skills list [--global --agent zed]
-#   scripts/skills restore
+#   skills add <owner>/<repo>[/<skill>]      # omit <skill> for every skill in the repo
+#   skills remove <owner>/<repo>[/<skill>]   # omit <skill> for every skill from that repo
+#   skills update [<owner>/<repo>/<skill>]   # omit target to update everything tracked
+#   skills list
+#   skills install [--file <path>]           # default path: the manifest itself
 
 set -euo pipefail
 
-REPO=$(cd "$(dirname "$0")/.." && pwd)
-MANIFEST="$REPO/dot_agents/.skill-lock.json"
-LIVE_LOCK="$HOME/.agents/.skill-lock.json"
-LIVE_SKILLS="$HOME/.agents/skills"
+SKILLS_DIR="$HOME/.agents/skills"
+MANIFEST="$SKILLS_DIR/skills.txt"
 
-# Invoke the real skills CLI. Scope/agent flags are added per-subcommand below:
-# the CLI does not accept --agent uniformly (e.g. `update` has no --agent option).
-run() {
-	DISABLE_TELEMETRY=true command npx --yes skills "$@"
+typeset -ga TMP_DIRS=()
+cleanup() { local d; for d in $TMP_DIRS; do rm -rf "$d"; done }
+trap cleanup EXIT
+
+mkdir -p "$SKILLS_DIR"
+[[ -f "$MANIFEST" ]] || : >"$MANIFEST"
+
+manifest_add() {
+	local entry=$1
+	grep -qxF -- "$entry" "$MANIFEST" 2>/dev/null && return
+	print -r -- "$entry" >>"$MANIFEST"
+	sort -uo "$MANIFEST" "$MANIFEST"
 }
 
-# Seed an empty/missing live lock from the committed manifest before a mutation,
-# so a stale empty live lock can never blank a populated manifest on sync.
-seed_live_lock() {
-	local live_len manifest_len
-	live_len=$(jq '.skills | length' "$LIVE_LOCK" 2>/dev/null || echo 0)
-	manifest_len=$(jq '.skills | length' "$MANIFEST" 2>/dev/null || echo 0)
-	if (( live_len == 0 && manifest_len > 0 )); then
-		mkdir -p "$(dirname "$LIVE_LOCK")"
-		cp "$MANIFEST" "$LIVE_LOCK"
+manifest_remove() {
+	local entry=$1
+	grep -vxF -- "$entry" "$MANIFEST" >"$MANIFEST.tmp" 2>/dev/null || true
+	mv "$MANIFEST.tmp" "$MANIFEST"
+}
+
+# Shallow-clone <owner>/<repo> into a temp dir; echo the dir path.
+clone_repo() {
+	local owner_repo=$1 dir
+	dir=$(mktemp -d)
+	TMP_DIRS+=("$dir")
+	GIT_TERMINAL_PROMPT=0 git clone --depth 1 --quiet "https://github.com/${owner_repo}.git" "$dir" >&2 \
+		|| { echo "skills: failed to clone $owner_repo" >&2; return 1; }
+	print -r -- "$dir"
+}
+
+# Every skill folder (dir containing SKILL.md) under $1, one path per line.
+find_all_skill_dirs() {
+	local root=$1
+	local -a files
+	files=("${(@f)$(find "$root" -type f -name SKILL.md 2>/dev/null)}")
+	local f
+	for f in $files; do
+		[[ -n "$f" ]] && print -r -- "${f:h}"
+	done
+}
+
+# Path to the skill folder named $2 under $1, or fail.
+find_skill_dir() {
+	local root=$1 skill=$2
+	local -a dirs
+	dirs=("${(@f)$(find_all_skill_dirs "$root")}")
+	local d
+	for d in $dirs; do
+		[[ "${d:t}" == "$skill" ]] && { print -r -- "$d"; return 0; }
+	done
+	return 1
+}
+
+install_skill_dir() {
+	local src=$1 name=$2
+	rm -rf "$SKILLS_DIR/$name"
+	cp -R "$src" "$SKILLS_DIR/$name"
+	echo "skills: installed $name -> $SKILLS_DIR/$name" >&2
+}
+
+# Refuses to clobber a skill dir that isn't already ours (custom skills, or a
+# different owner/repo that happens to use the same skill name).
+install_guarded() {
+	local src=$1 name=$2 owner_repo=$3
+	if [[ -d "$SKILLS_DIR/$name" ]] && ! grep -qxF -- "$owner_repo/$name" "$MANIFEST" 2>/dev/null; then
+		echo "skills: WARNING '$name' already exists and isn't tracked as $owner_repo/$name — skipping to avoid overwriting it" >&2
+		return 1
+	fi
+	install_skill_dir "$src" "$name"
+	manifest_add "$owner_repo/$name"
+}
+
+# <owner>/<repo>[/<skill>] -> (owner repo skill) via a global array $parts.
+split_target() {
+	local target=$1
+	parts=("${(s:/:)target}")
+	(( ${#parts} >= 2 )) || { echo "skills: expected <owner>/<repo>[/<skill>], got '$target'" >&2; return 1; }
+}
+
+do_add() {
+	local target=${1:?skills: add needs <owner>/<repo>[/<skill>]}
+	local -a parts
+	split_target "$target"
+	local owner=$parts[1] repo=$parts[2] skill=${parts[3]:-}
+	local owner_repo="$owner/$repo"
+	local dir
+	dir=$(clone_repo "$owner_repo") || return 1
+
+	if [[ -n "$skill" ]]; then
+		local src
+		src=$(find_skill_dir "$dir" "$skill" || true)
+		if [[ -z "$src" ]]; then
+			# No folder named exactly $skill: if the repo has exactly one skill,
+			# assume that's the one wanted (upstream folder names don't always
+			# match the local skill name, e.g. renamed at install time).
+			local -a all
+			all=("${(@f)$(find_all_skill_dirs "$dir")}")
+			if (( ${#all} == 1 )); then
+				src=$all[1]
+				echo "skills: '$skill' not found by name; repo has exactly one skill (${src:t}), using it" >&2
+			fi
+		fi
+		[[ -n "$src" ]] || { echo "skills: '$skill' not found in $owner_repo" >&2; return 1; }
+		install_guarded "$src" "$skill" "$owner_repo" || return 1
+	else
+		local -a found
+		found=("${(@f)$(find_all_skill_dirs "$dir")}")
+		(( ${#found} > 0 )) || { echo "skills: no skills found in $owner_repo" >&2; return 1; }
+		local d name failed=0
+		for d in $found; do
+			name=${d:t}
+			install_guarded "$d" "$name" "$owner_repo" || failed=1
+		done
+		(( failed == 0 )) || return 1
 	fi
 }
 
-# Reflect the CLI's live lock back into the committed manifest after a mutation.
-sync_manifest() {
-	[[ -f "$LIVE_LOCK" ]] || { echo "skills: no live lock to sync from" >&2; return 0; }
-	cp "$LIVE_LOCK" "$MANIFEST"
-	echo "skills: manifest synced; commit dot_agents/.skill-lock.json when ready." >&2
+do_remove() {
+	local target=${1:?skills: remove needs <owner>/<repo>[/<skill>]}
+	local -a parts
+	split_target "$target"
+	local owner=$parts[1] repo=$parts[2] skill=${parts[3]:-}
+
+	if [[ -n "$skill" ]]; then
+		rm -rf "$SKILLS_DIR/$skill"
+		manifest_remove "$owner/$repo/$skill"
+		echo "skills: removed $skill" >&2
+	else
+		local -a matches
+		matches=("${(@f)$(grep -- "^${owner}/${repo}/" "$MANIFEST" 2>/dev/null || true)}")
+		local entry name
+		for entry in $matches; do
+			[[ -z "$entry" ]] && continue
+			name=${entry:t}
+			rm -rf "$SKILLS_DIR/$name"
+			manifest_remove "$entry"
+			echo "skills: removed $name" >&2
+		done
+	fi
+}
+
+do_update() {
+	local target=${1:-}
+	if [[ -n "$target" ]]; then
+		do_add "$target"
+		return
+	fi
+	[[ -s "$MANIFEST" ]] || { echo "skills: manifest is empty, nothing to update" >&2; return 0; }
+	local -a entries
+	entries=("${(@f)$(<"$MANIFEST")}")
+	local entry
+	for entry in $entries; do
+		[[ -z "$entry" ]] && continue
+		echo "skills: updating $entry" >&2
+		do_add "$entry" || echo "skills: WARNING failed to update $entry" >&2
+	done
+}
+
+do_list() {
+	[[ -s "$MANIFEST" ]] || return 0
+	local entry
+	while IFS= read -r entry; do
+		[[ -z "$entry" ]] && continue
+		echo " - $entry"
+	done <"$MANIFEST"
+}
+
+do_install() {
+	local file="$MANIFEST"
+	if [[ ${1:-} == "--file" ]]; then
+		file=${2:?skills: install --file needs a path}
+	fi
+	[[ -f "$file" ]] || { echo "skills: manifest file not found: $file" >&2; return 1; }
+
+	local -a entries
+	entries=("${(@f)$(<"$file")}")
+	local entry skill_name
+	for entry in $entries; do
+		[[ -z "$entry" || "$entry" == \#* ]] && continue
+		skill_name=${entry:t}
+		if [[ -d "$SKILLS_DIR/$skill_name" ]]; then
+			echo "skills: $skill_name already installed, skipping" >&2
+			manifest_add "$entry"
+			continue
+		fi
+		echo "skills: installing $entry" >&2
+		do_add "$entry" || echo "skills: WARNING failed to install $entry" >&2
+	done
+}
+
+usage() {
+	cat >&2 <<-'EOF'
+	Usage: skills <command> [args]
+
+	  skills add <owner>/<repo>[/<skill>]      omit <skill> for every skill in the repo
+	  skills remove <owner>/<repo>[/<skill>]   omit <skill> for every skill from that repo
+	  skills update [<owner>/<repo>/<skill>]   omit target to update everything tracked
+	  skills list
+	  skills install [--file <path>]           default path: ~/.agents/skills/skills.txt
+	EOF
 }
 
 main() {
-	if (( $# == 0 )); then
-		run --help
-		return
-	fi
+	local cmd=${1:-}
+	(( $# > 0 )) && shift
 
-	local sub=$1
-	shift
-
-	case "$sub" in
-	add)
-		seed_live_lock
-		run add "$@" --global --agent zed
-		sync_manifest
-		;;
-	update | upgrade)
-		seed_live_lock
-		# `update` has no --agent option; --global scopes it to ~/.agents/skills.
-		run "$sub" "$@" --global
-		sync_manifest
-		;;
-	remove | rm)
-		seed_live_lock
-		run "$sub" "$@" --global --agent zed
-		sync_manifest
-		;;
-	restore)
-		seed_live_lock
-		local skill source installed=0 failed=0
-		local -a keys
-		keys=("${(@f)$(jq -r '.skills | keys[]' "$MANIFEST")}")
-		for skill in $keys; do
-			if [[ -d "$LIVE_SKILLS/$skill" ]]; then
-				continue
-			fi
-			source=$(jq -r --arg s "$skill" '.skills[$s].source' "$MANIFEST")
-			echo "skills: restoring $skill from ${source}" >&2
-			if run add "$source" --skill "$skill" --global --agent zed -y; then
-				installed=$((installed + 1))
-			else
-				echo "skills: WARNING failed to restore $skill" >&2
-				failed=$((failed + 1))
-			fi
-		done
-		sync_manifest
-		echo "skills: restore complete ($installed installed, $failed failed)." >&2
-		if (( failed > 0 )); then
-			return 1
-		fi
-		;;
+	case "$cmd" in
+	add) do_add "$@" ;;
+	remove | rm) do_remove "$@" ;;
+	update | up) do_update "$@" ;;
+	list | ls) do_list ;;
+	install) do_install "$@" ;;
 	*)
-		# Read-only and pass-through commands (list, find, init, use, help, ...).
-		run "$sub" "$@"
+		usage
+		return 1
 		;;
 	esac
 }
