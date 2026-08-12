@@ -1,69 +1,112 @@
 #!/usr/bin/env zsh
-
-# Thin wrapper ("alias") around the real `skills` CLI that runs it inside a
-# throwaway node container. The chezmoi source tree is bind-mounted at the
-# universal-agent skills path (~/.agents/skills) and its lock file alongside
-# it (~/.agents/.skill-lock.json), so add/update/remove/list write straight
-# into version control — the source of truth. `chezmoi apply` then deploys
-# them to the live ~/.config/agents/skills.
 #
-# The `universal` agent hardcodes its skills dir to ~/.agents/skills (XDG has
-# no effect on it), which is why we mount the source there and force
-# --agent universal for the management commands.
+# Local wrapper around the `skills` CLI (https://skills.sh).
 #
-#   skills add vercel-labs/agent-skills --skill web-design-guidelines
-#   skills list
-#   skills update
-#   skills remove my-skill
+# Skills come in two kinds:
+#   - custom (7):    committed under dot_agents/skills/, deployed by chezmoi.
+#   - third-party:   installed by this wrapper into the live ~/.agents/skills/
+#                    and never committed. Their set is recorded in the committed
+#                    manifest dot_agents/.skill-lock.json.
+#
+# Management commands target the global dir of the `zed` agent (~/.agents/skills),
+# the directory pi reads as its user-skill dir. The `universal` agent instead
+# writes to ~/.config/agents/skills, which pi ignores, so it must not be used.
+#
+# Mutating commands (add/update/remove) re-sync the committed manifest from the
+# CLI's live lock (~/.agents/.skill-lock.json) afterwards; commit it when ready.
+# `restore` reinstalls any manifest skill missing on disk (idempotent).
+#
+#   scripts/skills add <owner/repo> [--skill <name>]
+#   scripts/skills update
+#   scripts/skills remove <name>
+#   scripts/skills list [--global --agent zed]
+#   scripts/skills restore
 
 set -euo pipefail
 
-SOURCE_DIR="${HOME}/.local/share/chezmoi/dot_config/agents/skills"
-LOCK_FILE="${HOME}/.local/share/chezmoi/dot_config/agents/.skill-lock.json"
-# Full node image (not alpine/slim): `skills add`/`update` `git clone` GitHub
-# repos, and only the full image ships git out of the box.
-DOCKER_IMAGE="node"
+REPO=$(cd "$(dirname "$0")/.." && pwd)
+MANIFEST="$REPO/dot_agents/.skill-lock.json"
+LIVE_LOCK="$HOME/.agents/.skill-lock.json"
+LIVE_SKILLS="$HOME/.agents/skills"
 
-# Runs `skills "$@"` inside the container with the source tree and lock file
-# bind-mounted at the universal-agent paths.
-docker_run() {
-	mkdir -p "$SOURCE_DIR"
-	[[ -f "$LOCK_FILE" ]] || : >"$LOCK_FILE"
+command -v jq >/dev/null 2>&1 || { echo "skills: jq is required (brew install jq)" >&2; exit 1; }
 
-	local -a tty_flags=()
-	[[ -t 0 && -t 1 ]] && tty_flags=(-it)
+# Invoke the real skills CLI. Scope/agent flags are added per-subcommand below:
+# the CLI does not accept --agent uniformly (e.g. `update` has no --agent option).
+run() {
+	DISABLE_TELEMETRY=true command npx --yes skills "$@"
+}
 
-	exec docker run --rm "${tty_flags[@]}" \
-		-e DISABLE_TELEMETRY=true \
-		-e npm_config_update_notifier=false \
-		-e npm_config_loglevel=error \
-		-v "${SOURCE_DIR}:/root/.agents/skills" \
-		-v "${LOCK_FILE}:/root/.agents/.skill-lock.json" \
-		"$DOCKER_IMAGE" \
-		npx --yes skills "$@"
+# Seed an empty/missing live lock from the committed manifest before a mutation,
+# so a stale empty live lock can never blank a populated manifest on sync.
+seed_live_lock() {
+	local live_len manifest_len
+	live_len=$(jq '.skills | length' "$LIVE_LOCK" 2>/dev/null || echo 0)
+	manifest_len=$(jq '.skills | length' "$MANIFEST" 2>/dev/null || echo 0)
+	if (( live_len == 0 && manifest_len > 0 )); then
+		mkdir -p "$(dirname "$LIVE_LOCK")"
+		cp "$MANIFEST" "$LIVE_LOCK"
+	fi
+}
+
+# Reflect the CLI's live lock back into the committed manifest after a mutation.
+sync_manifest() {
+	[[ -f "$LIVE_LOCK" ]] || { echo "skills: no live lock to sync from" >&2; return 0; }
+	cp "$LIVE_LOCK" "$MANIFEST"
+	echo "skills: manifest synced; commit dot_agents/.skill-lock.json when ready." >&2
 }
 
 main() {
 	if (( $# == 0 )); then
-		docker_run --help
+		run --help
 		return
 	fi
 
-	local subcommand=$1
+	local sub=$1
 	shift
 
-	# Only `add` takes --agent (it picks the install target). update/remove/
-	# list reject --agent and mis-parse its value as a skill name, so they get
-	# --global alone. Everything else is passed straight through.
-	case "$subcommand" in
+	case "$sub" in
 	add)
-		docker_run add "$@" --global --agent universal
+		seed_live_lock
+		run add "$@" --global --agent zed
+		sync_manifest
 		;;
-	update | upgrade | remove | rm | list | ls)
-		docker_run "$subcommand" "$@" --global
+	update | upgrade)
+		seed_live_lock
+		# `update` has no --agent option; --global scopes it to ~/.agents/skills.
+		run "$sub" "$@" --global
+		sync_manifest
+		;;
+	remove | rm)
+		seed_live_lock
+		run "$sub" "$@" --global --agent zed
+		sync_manifest
+		;;
+	restore)
+		seed_live_lock
+		local skill source installed=0 failed=0
+		while IFS= read -r skill; do
+			if [[ -d "$LIVE_SKILLS/$skill" ]]; then
+				continue
+			fi
+			source=$(jq -r --arg s "$skill" '.skills[$s].source' "$MANIFEST")
+			echo "skills: restoring $skill from ${source}" >&2
+			if run add "$source" --skill "$skill" --global --agent zed -y; then
+				installed=$((installed + 1))
+			else
+				echo "skills: WARNING failed to restore $skill" >&2
+				failed=$((failed + 1))
+			fi
+		done < <(jq -r '.skills | keys[]' "$MANIFEST")
+		sync_manifest
+		echo "skills: restore complete ($installed installed, $failed failed)." >&2
+		if (( failed > 0 )); then
+			return 1
+		fi
 		;;
 	*)
-		docker_run "$subcommand" "$@"
+		# Read-only and pass-through commands (list, find, init, use, help, ...).
+		run "$sub" "$@"
 		;;
 	esac
 }
