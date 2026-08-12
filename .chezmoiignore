@@ -8,6 +8,10 @@ key.txt.age
 .config/nvim/lazy-lock.json
 .config/nvim/lazyvim.json
 
+# Skills manifest: committed as source of truth, but NOT deployed.
+# The skills CLI owns the live ~/.agents/.skill-lock.json.
+.agents/.skill-lock.json
+
 # Local assets/scripts, not deployed to $HOME
 images/
 scripts/
