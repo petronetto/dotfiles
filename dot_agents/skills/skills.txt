@@ -1,0 +1,14 @@
+cursor/plugins/thermo-nuclear-code-quality-review
+doist/todoist-cli/todoist-cli
+juliusbrussee/caveman/caveman
+kunchenguid/lavish-axi/lavish
+Leonxlnx/taste-skill/taste-skill
+mattpocock/skills/codebase-design
+mattpocock/skills/domain-modeling
+mattpocock/skills/grill-me
+mattpocock/skills/grill-with-docs
+mattpocock/skills/grilling
+mattpocock/skills/improve-codebase-architecture
+obra/superpowers/systematic-debugging
+upstash/context7/find-docs
+vercel-labs/agent-browser/agent-browser

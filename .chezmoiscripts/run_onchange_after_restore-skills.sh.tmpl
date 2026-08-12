@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-# Reinstalls third-party agent skills recorded in the committed manifest.
-# skill-lock hash: {{ include "dot_agents/.skill-lock.json" | sha256sum }}
-# chezmoi re-runs this script whenever this hash changes (i.e. whenever the
-# committed manifest changes) and once on first apply.
+# Installs any third-party skill listed in the committed manifest that's
+# missing on disk. chezmoi re-runs this whenever the manifest's content
+# changes (and once on first apply).
+# skills.txt hash: {{ include "dot_agents/skills/skills.txt" | sha256sum }}
 
-# Best-effort: never fail `chezmoi apply` if the host is offline. The user can
-# run `scripts/skills restore` manually later.
-"{{ .chezmoi.sourceDir }}/scripts/skills" restore \
-	|| echo "skills restore: skipped/failed, run manually later"
+# Best-effort: never fail `chezmoi apply` over a network hiccup. The user can
+# run `scripts/skills install` manually later.
+"{{ .chezmoi.sourceDir }}/scripts/skills" install \
+	|| echo "skills install: skipped/failed, run manually later"
