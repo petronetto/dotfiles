@@ -8,7 +8,7 @@
       "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
       "skillFolderHash": "d9c8935dd560b3b6f5941247d04a1843f8c7cc35",
       "installedAt": "2026-07-06T17:42:07.630Z",
-      "updatedAt": "2026-07-06T17:42:07.630Z"
+      "updatedAt": "2026-08-12T18:47:32.041Z"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -16,8 +16,9 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
       "skillFolderHash": "c817f6f36acd483294144694a935a76d3e3eb101",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-06T17:43:37.980Z",
-      "updatedAt": "2026-08-09T09:50:49.639Z"
+      "updatedAt": "2026-08-12T18:47:21.819Z"
     },
     "grill-with-docs": {
       "source": "mattpocock/skills",
@@ -25,17 +26,18 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
       "skillFolderHash": "5fdcdeedf2d0c73b3ecb1da0a464dd885590f8d6",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-06T17:44:16.517Z",
-      "updatedAt": "2026-08-09T09:50:51.036Z"
+      "updatedAt": "2026-08-12T18:47:23.054Z"
     },
     "lavish": {
       "source": "kunchenguid/lavish-axi",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kunchenguid/lavish-axi.git",
       "skillPath": "skills/lavish/SKILL.md",
-      "skillFolderHash": "4e99c4d94437f15fed5744cb7633e528611482f0",
+      "skillFolderHash": "17f97414dc67494387dbaa7226bc3956c16ff2e6",
       "installedAt": "2026-07-06T17:46:05.953Z",
-      "updatedAt": "2026-08-09T09:51:00.021Z"
+      "updatedAt": "2026-08-12T18:47:28.122Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
@@ -43,8 +45,9 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "skillFolderHash": "fd99bcbb818f7ef766b83656fb5fac0b58e223ad",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-08T18:38:13.708Z",
-      "updatedAt": "2026-08-09T09:50:52.248Z"
+      "updatedAt": "2026-08-12T18:47:24.258Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
@@ -52,8 +55,9 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
       "skillFolderHash": "959e63161ff78b4b1cd553b2c0e09e0c68418e5f",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-08T18:38:47.836Z",
-      "updatedAt": "2026-08-09T09:50:53.528Z"
+      "updatedAt": "2026-08-12T18:32:31.812Z"
     },
     "codebase-design": {
       "source": "mattpocock/skills",
@@ -61,8 +65,9 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/codebase-design/SKILL.md",
       "skillFolderHash": "20b7cd1dd1fe5b0bd37ba72649f3a29375574b5b",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-08T18:43:10.998Z",
-      "updatedAt": "2026-08-09T09:50:55.054Z"
+      "updatedAt": "2026-08-12T18:23:51.072Z"
     },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
@@ -70,8 +75,9 @@
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "skillFolderHash": "6a971d1f5b109ac817e18c0f0419c2a32d60f26a",
+      "pluginName": "mattpocock-skills",
       "installedAt": "2026-07-08T18:43:18.048Z",
-      "updatedAt": "2026-08-09T09:50:56.180Z"
+      "updatedAt": "2026-08-12T18:47:25.688Z"
     },
     "find-docs": {
       "source": "upstash/context7",
@@ -80,7 +86,7 @@
       "skillPath": "skills/find-docs/SKILL.md",
       "skillFolderHash": "b635cd66f1414befd36d18646561398de2ddab54",
       "installedAt": "2026-07-13T10:35:49.117Z",
-      "updatedAt": "2026-08-09T09:51:03.756Z"
+      "updatedAt": "2026-08-12T18:47:20.435Z"
     },
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
@@ -89,7 +95,7 @@
       "skillPath": "skills/agent-browser/SKILL.md",
       "skillFolderHash": "037e8078db4b20b4aa25c04f21c6de7d335ec449",
       "installedAt": "2026-07-14T13:52:42.073Z",
-      "updatedAt": "2026-08-09T09:51:04.386Z"
+      "updatedAt": "2026-08-12T18:22:54.960Z"
     },
     "caveman": {
       "source": "juliusbrussee/caveman",
@@ -98,7 +104,7 @@
       "skillPath": "skills/caveman/SKILL.md",
       "skillFolderHash": "3e4386ca694c65a65ba84024f0fe2646a8c9076a",
       "installedAt": "2026-07-14T15:25:23.841Z",
-      "updatedAt": "2026-08-09T09:51:05.526Z"
+      "updatedAt": "2026-08-12T18:23:30.601Z"
     },
     "design-taste-frontend": {
       "source": "Leonxlnx/taste-skill",
@@ -107,25 +113,25 @@
       "skillPath": "skills/taste-skill/SKILL.md",
       "skillFolderHash": "a6d128e53b4ec0238baee751dde33bf707adb5ec",
       "installedAt": "2026-07-16T08:17:55.703Z",
-      "updatedAt": "2026-07-16T08:17:55.703Z"
+      "updatedAt": "2026-08-12T18:32:07.244Z"
     },
     "systematic-debugging": {
       "source": "obra/superpowers",
       "sourceType": "github",
       "sourceUrl": "https://github.com/obra/superpowers.git",
       "skillPath": "skills/systematic-debugging/SKILL.md",
-      "skillFolderHash": "a2750dfbaed1690da73b120254892c4f926b4576cb82eb16fc877783941fe39b",
+      "skillFolderHash": "ab83fc82f82582e047d96fc516bac9bc03095ee0",
       "installedAt": "2026-07-16T12:08:44.354Z",
-      "updatedAt": "2026-08-09T09:51:07.307Z"
+      "updatedAt": "2026-08-12T18:47:29.892Z"
     },
     "todoist-cli": {
       "source": "doist/todoist-cli",
       "sourceType": "github",
       "sourceUrl": "https://github.com/doist/todoist-cli.git",
       "skillPath": "skills/todoist-cli/SKILL.md",
-      "skillFolderHash": "73be82f08d5713b5957668493cfcf4ec94dfc876",
+      "skillFolderHash": "992e4f2f046f29872018e9325964bba979eee46c",
       "installedAt": "2026-08-09T19:48:42.131Z",
-      "updatedAt": "2026-08-09T19:48:42.131Z"
+      "updatedAt": "2026-08-12T18:47:34.263Z"
     }
   },
   "dismissed": {

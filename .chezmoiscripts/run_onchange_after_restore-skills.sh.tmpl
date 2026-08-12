@@ -7,11 +7,7 @@ set -euo pipefail
 # chezmoi re-runs this script whenever this hash changes (i.e. whenever the
 # committed manifest changes) and once on first apply.
 
-# Best-effort: never fail `chezmoi apply` if prerequisites are missing or the
-# host is offline. The user can run `scripts/skills restore` manually later.
-command -v jq >/dev/null 2>&1 || { echo "skills restore: jq missing, skipping"; exit 0; }
-command -v node >/dev/null 2>&1 || { echo "skills restore: node missing, skipping"; exit 0; }
-command -v npx >/dev/null 2>&1 || { echo "skills restore: npx missing, skipping"; exit 0; }
-
+# Best-effort: never fail `chezmoi apply` if the host is offline. The user can
+# run `scripts/skills restore` manually later.
 "{{ .chezmoi.sourceDir }}/scripts/skills" restore \
 	|| echo "skills restore: skipped/failed, run manually later"
