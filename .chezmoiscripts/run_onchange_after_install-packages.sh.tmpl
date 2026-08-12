@@ -5,7 +5,4 @@ set -euo pipefail
 {{ if eq .chezmoi.os "darwin" -}}
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 BREWFILE={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }} "{{ .chezmoi.sourceDir }}/scripts/install-packages"
-
-"{{ .chezmoi.sourceDir }}/scripts/macos-defaults"
-"{{ .chezmoi.sourceDir }}/scripts/set-wallpaper"
 {{ end -}}
