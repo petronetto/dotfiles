@@ -1,0 +1,9 @@
+{
+  "artifactDir": "session",
+  "missions": {
+    "directory": "~/.config/pi/subagents/missions"
+  },
+  "scheduledRuns": {
+    "storeRoot": "~/.config/pi/subagents/schedules"
+  }
+}
