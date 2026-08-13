@@ -11,9 +11,10 @@ Implement a plan from `spec-plan`, one step at a time, under human-in-the-loop r
 ## Hard rules
 
 - Implement one step at a time. Never start the next step before approval.
-- Break each step into small, readable chunks (focused diffs reviewable in minutes). Prefer more, smaller chunks.
+- Break each step into small, readable chunks (focused diffs reviewable in minutes). Prefer more, smaller chunks, but every chunk must deliver a working change on its own, no scaffolding-only chunks (e.g. enums nothing consumes yet).
 - Stop after every step. Do not continue on your own.
 - Never commit without explicit, unambiguous approval (per-step).
+- Never reference the plan, steps, or chunks in commit messages or code comments; plans are not committed, so the reference is meaningless.
 - Never mark done or advance under uncertainty. When in doubt, ask (see `references/uncertainty-protocol.md`).
 - Preserve existing behavior unless the step requires changing it.
 

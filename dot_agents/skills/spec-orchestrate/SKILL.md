@@ -10,13 +10,13 @@ Drive a plan from `spec-plan` to completion. Per step: a fresh-context **builder
 
 ## Hard rules
 
-- One step at a time, in order.
+- Work steps in dependency order. Steps with no dependency between them and disjoint files may be built in parallel (one builder per step), each still reviewed and committed on its own.
 - Builder and reviewer each run in their own fresh sub-agent — never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs — no orchestrator history, no other steps' detail.
 - Every briefing includes: the plan's `summary.md`, the step file, `references/code-quality.md`, `references/reuse-checklist.md`.
 - Reviewer only judges — runs `code-review`, no `--fix`/`--comment`, never edits files.
 - Max **3** build↔review cycles per step. Still unresolved after 3 → `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
-- Commit only after reviewer `APPROVE`. One commit per step, only that step's files, project's own style. Never write "step N" / "phase N" / "chunk N" in the message — describe the actual change.
+- Commit only after reviewer `APPROVE`. One commit per step, only that step's files, project's own style. Never reference the plan, step, or chunk in the commit message or in code comments, plans are not committed; describe the actual change.
 - Never expand scope beyond the step file. Preserve existing behavior unless the step requires otherwise.
 
 ## Procedure
@@ -27,7 +27,7 @@ Plans live in `.plans/<branch>/<task-name>/`. Find the most recent `<task-name>`
 
 ### 2. Loop over steps
 
-Repeat until no `pending` steps remain:
+Repeat until no `pending` steps remain (independent steps may run through this loop in parallel):
 
 **a. Announce** — state the step and goal, set `Status: in-progress`.
 

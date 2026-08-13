@@ -47,7 +47,7 @@ durable context step files link back to instead of restating.
 
 ### 5. Decompose into ordered steps
 
-Break work into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Prefer reframings that delete complexity over rearranging it (see `references/code-quality.md`).
+Break work into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every chunk must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet). Prefer reframings that delete complexity over rearranging it (see `references/code-quality.md`).
 
 ### 6. Write one file per step
 
