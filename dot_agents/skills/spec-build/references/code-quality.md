@@ -12,4 +12,6 @@ Apply these while implementing each step.
 
 **Prefer direct, boring, maintainable code.** Be skeptical of thin abstractions and pass-through helpers that add indirection without clarity. Prefer existing canonical utilities over bespoke one-offs.
 
+**The best comment is not a comment at all.** Write clear, concise code instead of verbose comments that obscure intent.
+
 **Test behavior, not implementation.** Use the AAA pattern and mock external dependencies. Run linters and tests where available, piping long output.
