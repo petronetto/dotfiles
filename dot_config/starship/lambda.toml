@@ -57,7 +57,7 @@ symbol = '󰘬'
 commit_hash_length = 4
 format = " ([ 󰓹 ](fg:black bg:yellow)[ $tag ](fg:white))([ 󰜘 ](fg:black bg:yellow)[ $hash ](fg:white))"
 only_detached = false
-tag_disabled = false
+tag_disabled = true
 tag_symbol = ''
 
 [git_status]
