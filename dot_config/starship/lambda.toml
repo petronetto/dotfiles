@@ -52,6 +52,8 @@ symbol = '─'
 [git_branch]
 format = '[ $symbol ](bg:bright-red fg:black)[ $branch ](fg:purple)'
 symbol = '󰘬'
+symbol_style = 'fg:bright-red'
+truncation_length = 30
 
 [git_commit]
 commit_hash_length = 4
