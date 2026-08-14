@@ -1,0 +1,6 @@
+{
+  "workflow": "none",
+  "braveApiKey": "${BRAVE_AO_API_KEY}",
+  "exaApiKey": "${EXA_API_KEY}",
+  "geminiApiKey": "${GEMINI_API_KEY}"
+}
