@@ -56,8 +56,13 @@ brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 
 # --- Media ---
-brew "ffmpeg"       # multimedia processing (transcode, extract, etc.)
-brew "yt-dlp"       # YouTube / streaming video downloader
+brew "ffmpeg"         # multimedia processing (transcode, extract, etc.)
+brew "yt-dlp"         # YouTube / streaming video downloader
+brew "openai-whisper" # speech-to-text transcription (OpenAI Whisper)
+brew "pocket-tts"     # text-to-speech synthesis
+
+# --- System monitoring ---
+brew "btop"           # resource monitor (htop/btop++)
 
 # --- Languages & runtimes ---
 brew "rust"
