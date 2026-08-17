@@ -1,5 +1,5 @@
 {
-  "defaultThinkingLevel": "max",
+  "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,
   "quietStartup": true,
   "enableInstallTelemetry": false,
@@ -14,7 +14,32 @@
   "warnings": {
     "anthropicExtraUsage": true
   },
-  "defaultProvider": "opencode-go",
-  "defaultModel": "kimi-k3",
-  "lastChangelogVersion": "0.84.1"
+  "defaultProvider": "ollama",
+  "defaultModel": "qwen3.8:27b-mlx",
+  "lastChangelogVersion": "0.84.2",
+  "enabledModels": [
+    "github-copilot/claude-haiku-4.5",
+    "github-copilot/claude-opus-5",
+    "github-copilot/claude-sonnet-5",
+    "github-copilot/gpt-5-mini",
+    "github-copilot/gpt-5.3-codex",
+    "github-copilot/gpt-5.6-luna",
+    "github-copilot/gpt-5.6-sol",
+    "github-copilot/gpt-5.6-terra",
+    "opencode-go/glm-5.2",
+    "opencode-go/glm-5.3",
+    "opencode-go/kimi-k3",
+    "opencode-go/qwen3.8-max",
+    "opencode-go/minimax-m3",
+    "opencode-go/deepseek-v4-pro",
+    "openrouter/openrouter/free",
+    "ollama/hf.co/unsloth/Qwen3.8-27B-GGUF:Q8_0",
+    "ollama/qwen3.8:27b-mlx",
+    "ollama/qwen3-coder:30b",
+    "ollama/qwen3-coder-next:latest",
+    "ollama/muse-glimmer:30b-mlx",
+    "ollama/gemma4:31b-mlx",
+    "ollama/glm-4.7-flash:latest",
+    "ollama/ornith:35b"
+  ]
 }
