@@ -55,6 +55,10 @@ brew "pi-coding-agent"
 brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 
+# --- Media ---
+brew "ffmpeg"       # multimedia processing (transcode, extract, etc.)
+brew "yt-dlp"       # YouTube / streaming video downloader
+
 # --- Languages & runtimes ---
 brew "rust"
 brew "go"
