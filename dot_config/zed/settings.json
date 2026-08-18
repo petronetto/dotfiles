@@ -7,6 +7,23 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "agent_servers": {
+    "cursor": {
+      "default_config_options": {
+        "model": "claude-sonnet-5[thinking=true,context=300k,effort=high]"
+      },
+      "type": "custom",
+      "command": "/opt/homebrew/bin/cursor-agent",
+      "args": ["acp"]
+    },
+    "claude-acp": {
+      "default_config_options": {
+        "effort": "high",
+        "model": "sonnet"
+      },
+      "type": "registry"
+    }
+  },
   "tabs": {
     "git_status": true
   },
