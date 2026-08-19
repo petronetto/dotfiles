@@ -16,7 +16,7 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 - Stop after every step. Do not continue on your own.
 - Never commit without explicit, unambiguous approval (per step).
 - Never reference the plan, steps, or chunks in commit messages or code comments; plans are not committed, so the reference is meaningless.
-- Never mark done or advance under uncertainty. When in doubt, ask (see `references/uncertainty-protocol.md`).
+- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`).
 - Preserve existing behavior unless the step requires changing it.
 
 ## Procedure
@@ -31,7 +31,7 @@ For each step (lowest `NNN` with `Status: pending`):
 
 **Announce** — State the step and goal. Set `Status: in-progress`.
 
-**Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `references/code-quality.md`. Run new code through the reuse/YAGNI gate (`references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
+**Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `~/.agents/references/code-quality.md`. Run new code through the reuse/YAGNI gate (`~/.agents/references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
 
 **Stop for review** — Stop when complete. Do not commit. Do not start the next step.
 
@@ -69,8 +69,8 @@ Before a step counts as done:
 
 ## References
 
-- Code-quality standards: `references/code-quality.md`
-- Reuse/YAGNI gate: `references/reuse-checklist.md`
-- Uncertainty protocol: `references/uncertainty-protocol.md`
+- Code-quality standards: `~/.agents/references/code-quality.md`
+- Reuse/YAGNI gate: `~/.agents/references/reuse-checklist.md`
+- Uncertainty protocol: `~/.agents/references/uncertainty-protocol.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill
