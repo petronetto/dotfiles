@@ -13,7 +13,7 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 - Never write or edit code—output is Markdown only.
 - One responsibility per step; each step leaves the codebase working.
 - Read the PRD for problem, approach, and key decisions; link step files back to it instead of restating.
-- Prefer a reframing that deletes complexity over one that rearranges it (see `references/code-quality.md`).
+- Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
 
 ## Procedure
@@ -68,6 +68,6 @@ Before handing off to `build`, confirm:
 
 ## References
 
-- Design and code-quality standards: `references/code-quality.md`
+- Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
 - PRD template (owned by `spec`, updated here): `assets/prd-file.md`
