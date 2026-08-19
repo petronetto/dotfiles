@@ -1,4 +1,4 @@
-# <Task Title> — Plan Summary
+# <Task Title> — PRD
 
 | Field    | Value                 |
 | ------- | -------------------- |

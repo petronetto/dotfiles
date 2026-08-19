@@ -23,7 +23,7 @@ The cycle is universal; the commands are not. Before the first test, find out ho
 - Where tests live, how test files are named, the conventions neighboring tests follow.
 - The commands that actually gate merges (README, CONTRIBUTING, CI).
 
-Never assume a default like `npm test`. Read the `Commands` section of `.plans/.../summary.md` when it exists.
+Never assume a default like `npm test`. Read the `Commands` section of `.plans/.../PRD.md` when it exists.
 
 ## The cycle
 

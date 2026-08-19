@@ -6,7 +6,7 @@
 | Date    | YYYY-MM-DD                         |
 | Project | <project-full-path>                |
 | Branch  | <branch>                           |
-| Summary | summary.md                         |
+| PRD     | PRD.md                             |
 | Depends | <previous step file(s), or none>   |
 | Blocked | <reason, only if Status is blocked> |
 
@@ -14,7 +14,7 @@ Status values: `pending` → `in-progress` → `done`, or `blocked` if still unr
 
 ## Goal
 One or two sentences describing exactly what this step delivers and why.
-See `summary.md` for how it fits the overall plan — don't restate the
+See `PRD.md` for how it fits the overall plan — don't restate the
 plan's problem or approach here.
 
 ## Scope

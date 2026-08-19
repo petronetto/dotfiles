@@ -73,7 +73,7 @@ A messy interim history you can clean up later is infinitely better than lost wo
 
 ## Integration with Other Skills
 
-If you're in the `define`/`plan`/`build` pipeline, the checkpoint happens after `define` approval and before `build`. You don't need to run this skill separately — it's built in.
+If you're in the `spec`/`plan`/`build` pipeline, the checkpoint happens after `spec` approval and before `build`. You don't need to run this skill separately — it's built in.
 
 If you're working outside the pipeline, run this checkpoint manually before starting any code changes.
 

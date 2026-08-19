@@ -1,18 +1,18 @@
 ---
 name: plan
-description: Decompose a spec into small, ordered, reviewable step files before coding. Trigger on "plan", "break down", "decompose the spec". Reads the spec (`summary.md` from `define`) and writes per-step files only, never code.
+description: Decompose a PRD into small, ordered, reviewable step files before coding. Trigger on "plan", "break down", "decompose the spec". Reads the PRD (`PRD.md` from `spec`) and writes per-step files only, never code.
 argument-hint: "[task-name]"
 ---
 
 # Plan
 
-Turn a spec into tiny, reviewable step files. Plans only; implementation is separate (`build`). If there is no spec yet, run `define` first. State lives on disk; every run re-derives context from git and the filesystem.
+Turn a PRD into tiny, reviewable step files. Plans only; implementation is separate (`build`). If there is no PRD yet, run `spec` first. State lives on disk; every run re-derives context from git and the filesystem.
 
 ## Hard rules
 
 - Never write or edit code—output is Markdown only.
 - One responsibility per step; each step leaves the codebase working.
-- Read the spec for problem, approach, and key decisions; link step files back to it instead of restating.
+- Read the PRD for problem, approach, and key decisions; link step files back to it instead of restating.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
 
@@ -27,16 +27,16 @@ Turn a spec into tiny, reviewable step files. Plans only; implementation is sepa
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-`<task-name>` is a short git-safe slug. Read `summary.md` there for the spec. If it is missing, stop and ask the user to run `define` first (or offer to produce a minimal spec inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan.
+`<task-name>` is a short git-safe slug. Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan.
 
 ### 3. Decompose into ordered steps
-Break the spec into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
+Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
 
 ### 4. Write one file per step
 ```
 <project-full-path>/.plans/<branch>/<task-name>/NNN-<step-name>.md
 ```
-Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000). Update the spec's "Steps" index in `summary.md` to match.
+Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000). Update the PRD's "Steps" index in `PRD.md` to match.
 
 ### 5. Present and stop
 Summarize the plan and list the files created. Do not implement. Hand off to `build` only after approval.
@@ -59,7 +59,7 @@ Summarize the plan and list the files created. Do not implement. Hand off to `bu
 ## Verification
 
 Before handing off to `build`, confirm:
-- [ ] The spec (`summary.md`) is approved.
+- [ ] The PRD (`PRD.md`) is approved.
 - [ ] Every step file has a goal, in/out-of-scope, and acceptance criteria.
 - [ ] Every step has a verification step (test, build, or manual check).
 - [ ] Dependencies are recorded; independent steps are marked as parallelizable.
@@ -70,4 +70,4 @@ Before handing off to `build`, confirm:
 
 - Design and code-quality standards: `references/code-quality.md`
 - Step file template: `assets/step-file.md`
-- Spec template (owned by `define`, updated here): `assets/summary-file.md`
+- PRD template (owned by `spec`, updated here): `assets/prd-file.md`
