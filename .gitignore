@@ -1,1 +1,5 @@
 private/
+
+# The `build` skill directory collides with the global ignore's `build/` rule.
+# Keep it committable so future files under it aren't silently ignored.
+!dot_agents/skills/build/
