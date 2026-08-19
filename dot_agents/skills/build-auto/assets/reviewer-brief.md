@@ -22,8 +22,8 @@ You are reviewing exactly one step of an existing plan, in a fresh context with 
 <project standards, linters, conventions and relevant infos>
 
 ## Your task
-1. Invoke the `code-review` skill against the current diff, at medium effort. Do not pass `--fix` or `--comment` — you only judge, you never edit files, and there is no PR to comment on.
-2. In addition to code-review's own findings, check the diff against the reuse/YAGNI gate above and against the step's scope and acceptance criteria — flag scope creep or unmet acceptance criteria even if code-review doesn't surface them. Use the plan summary's non-goals and key decisions to judge borderline cases, not the step file alone.
+1. Invoke the `review` skill against the current diff, at medium effort. Do not pass `--fix` or `--comment` — you only judge, you never edit files, and there is no PR to comment on.
+2. In addition to review's own findings, check the diff against the reuse/YAGNI gate above and against the step's scope and acceptance criteria — flag scope creep or unmet acceptance criteria even if review doesn't surface them. Use the plan summary's non-goals and key decisions to judge borderline cases, not the step file alone.
 3. Report back with a verdict as the very first line, exactly one of:
    - `VERDICT: APPROVE`
    - `VERDICT: CHANGES_REQUESTED`

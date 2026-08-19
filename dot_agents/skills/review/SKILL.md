@@ -1,10 +1,10 @@
 ---
-name: code-review
-description: Run a strict maintainability review of the current diff — abstraction quality, file bloat, spaghetti-condition growth. Use for a code quality review, code judo pass, or maintainability audit.
+name: review
+description: Run a strict maintainability review of the current diff and label findings by severity (Critical / Required / Nit / FYI). Use for a code quality review, code judo pass, or maintainability audit before merge.
 disable-model-invocation: true
 ---
 
-# Code Review
+# Review
 
 Review implementation quality and codebase health, not just correctness. Be **ambitious**: hunt for the "code judo" move that deletes complexity rather than rearranges it. And don't confine yourself to the diff — the best fix is often a file the diff didn't touch: a module to extend, a caller left inconsistent, a layer up that shrinks the whole change. Say so when it does.
 
@@ -45,6 +45,45 @@ Don't settle for "rename this" when the issue is structural.
 
 Direct, not rude. Priority: structural regressions → missed code-judo → spaghetti growth → boundary/type issues → file size → modularity → legibility. Few high-conviction findings beat many nits.
 
+### Severity labels
+
+Label every finding so the author knows what is mandatory versus optional. Lead with what matters: a structural problem *is* the review, not ten cosmetics around it.
+
+| Label | Meaning | Author action |
+| --- | --- | --- |
+| **Critical:** | Blocks merge: data loss, security hole, broken functionality | Must fix before merge |
+| *(no label)* | Required change | Must address before merge |
+| **Nit:** | Minor, optional (style or format) | May ignore |
+| **FYI** | Informational only | No action |
+
 ## Approval Bar
 
 Block on: unjustified structural regression, a visible code-judo path left untaken, files crossing 1000 lines, ad-hoc branching, scattered feature checks, unnecessary wrapper/cast churn, canonical-helper duplication, an obvious decomposition left undone. Don't approve on "behavior seems correct" alone.
+
+## Rationalizations
+
+| Excuse | Reality |
+| --- | --- |
+| "It works, that's good enough." | Working but unreadable, insecure, or structurally wrong code compounds into debt. |
+| "I wrote it, so it's correct." | Authors are blind to their own assumptions; every change benefits from another set of eyes. |
+| "We'll clean it up later." | Later rarely comes. The review is the quality gate; use it. |
+| "The tests pass, so it's good." | Necessary but not sufficient: tests miss structural, security, and readability issues. |
+| "Moving the code makes it cleaner." | Relocating complexity isn't reducing it; find the version where branches disappear. |
+
+## Red flags
+
+- Merging a change that was never reviewed.
+- A review that only checks whether tests pass.
+- An "LGTM" with no evidence of review.
+- A refactor that moves code without shrinking the concepts a reader must hold.
+- A change that grows an already-large file instead of decomposing it.
+- Findings with no severity label, so the author can't tell what's required.
+- Accepting "I'll fix it later" without a tracked follow-up.
+
+## Verification
+
+Before approving, confirm:
+- [ ] All **Critical** and required findings are resolved, or explicitly deferred with a tracked reason.
+- [ ] Where a code-judo path existed, the change reduced rather than relocated complexity.
+- [ ] Tests pass, the build is clean, and the verification story is documented.
+- [ ] No security issue, dead code, or un-scoped change was left in place.
