@@ -46,9 +46,9 @@ These references and skills are not loaded by default. Use them when the task ca
 
 ### Design principles
 Read these before working on object-oriented or structurally complex code:
-- `@~/.agents/principles/SOLID.md` - SOLID design principles.
-- `@~/.agents/principles/clean-code.md` - Clean Code practices, including testing methodology.
-- `@~/.agents/principles/object-calisthenics.md` - Object Calisthenics rules.
+- `@~/.agents/references/SOLID.md` - SOLID design principles.
+- `@~/.agents/references/clean-code.md` - Clean Code practices, including testing methodology.
+- `@~/.agents/references/object-calisthenics.md` - Object Calisthenics rules.
 
 ## Communication
 - Be concise. Prefer prose for explanations and reports; use lists only for enumerations, rankings, or steps.
