@@ -31,7 +31,7 @@ For each step (lowest `NNN` with `Status: pending`):
 
 **Announce** — State the step and goal. Set `Status: in-progress`.
 
-**Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `references/code-quality.md`. Run new code through the reuse/YAGNI gate the reviewer enforces. Add or update tests per Verification, then run linters/tests where available, piping long output.
+**Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `references/code-quality.md`. Run new code through the reuse/YAGNI gate (`references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
 
 **Stop for review** — Stop when complete. Do not commit. Do not start the next step.
 
@@ -70,6 +70,7 @@ Before a step counts as done:
 ## References
 
 - Code-quality standards: `references/code-quality.md`
+- Reuse/YAGNI gate: `references/reuse-checklist.md`
 - Uncertainty protocol: `references/uncertainty-protocol.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill
