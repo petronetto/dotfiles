@@ -77,5 +77,5 @@ For anything that runs in a browser, add runtime verification on top of unit tes
 
 ## References
 
-- Design and code-quality standards: `references/code-quality.md`
-- Uncertainty protocol (a failed or skipped test is uncertainty): `references/uncertainty-protocol.md`
+- Design and code-quality standards: `~/.agents/references/code-quality.md`
+- Uncertainty protocol (a failed or skipped test is uncertainty): `~/.agents/references/uncertainty-protocol.md`
