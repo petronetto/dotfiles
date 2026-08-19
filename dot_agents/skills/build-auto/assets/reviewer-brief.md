@@ -16,7 +16,7 @@ You are reviewing exactly one step of an existing plan, in a fresh context with 
 <summary the builder returned: what changed, files touched, test/lint results>
 
 ## Reuse / YAGNI gate
-<contents of references/reuse-checklist.md>
+<contents of ~/.agents/references/reuse-checklist.md>
 
 ## Project standards
 <project standards, linters, conventions and relevant infos>

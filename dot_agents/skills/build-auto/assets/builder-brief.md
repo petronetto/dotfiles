@@ -13,10 +13,10 @@ You are implementing exactly one step of an existing plan, in a fresh context wi
 <full contents of the NNN-<step-name>.md file>
 
 ## Code-quality standards
-<contents of references/code-quality.md>
+<contents of ~/.agents/references/code-quality.md>
 
 ## Reuse / YAGNI gate
-<contents of references/reuse-checklist.md>
+<contents of ~/.agents/references/reuse-checklist.md>
 
 ## Revision context (only present on retry cycles)
 The previous attempt at this step was reviewed and changes were requested:

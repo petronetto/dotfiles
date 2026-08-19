@@ -13,7 +13,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 - Work steps in dependency order. Steps with no dependency between them and disjoint files may be built in parallel (one builder per step), each still reviewed and committed on its own.
 - Builder and reviewer each run in their own fresh sub-agent—never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs—no orchestrator history, no other steps' detail.
-- Every briefing includes: the plan's `PRD.md`, the step file, `references/code-quality.md`, `references/reuse-checklist.md`.
+- Every briefing includes: the plan's `PRD.md`, the step file, `~/.agents/references/code-quality.md`, `~/.agents/references/reuse-checklist.md`.
 - Reviewer only judges—it runs `review`, no `--fix`/`--comment`, never edits files.
 - Each step's new or changed behavior has a test that failed before and passes after; the reviewer confirms this. Apply the `test` skill's discipline.
 - Max **3** build-to-review cycles per step. Still unresolved after 3 -> `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
@@ -71,8 +71,8 @@ Before a step counts as done:
 
 ## References
 
-- Code-quality standards: `references/code-quality.md`
-- Reuse/YAGNI gate (builder and reviewer both apply it): `references/reuse-checklist.md`
+- Code-quality standards: `~/.agents/references/code-quality.md`
+- Reuse/YAGNI gate (builder and reviewer both apply it): `~/.agents/references/reuse-checklist.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Builder briefing template: `assets/builder-brief.md`
 - Reviewer briefing template: `assets/reviewer-brief.md`
