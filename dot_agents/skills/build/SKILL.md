@@ -24,7 +24,7 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 ### 1. Locate the plan
 - Plans are in the `.plans/` directory. Find the most recent `<task-name>` with `Status: pending` steps.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
-- Read `summary.md` in that directory for the plan's problem, approach, and key decisions.
+- Read `PRD.md` in that directory for the plan's problem, approach, and key decisions.
 
 ### 2. Run the loop
 For each step (lowest `NNN` with `Status: pending`):
