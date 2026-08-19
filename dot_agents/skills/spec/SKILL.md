@@ -14,7 +14,7 @@ Specify what to build and why before any code. Interview the user one question a
 - Interview one question at a time. For each, recommend an answer with reasoning, then ask to confirm or refine. If the codebase answers it, read instead of asking. Use `lavish` to present options.
 - Surface assumptions explicitly and have the user correct them before proceeding.
 - Resolve every open question and design decision with the user. Never proceed on a guess.
-- Prefer a reframing that deletes complexity over one that rearranges it (see `references/code-quality.md`).
+- Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing PRD. Ask before resuming a PRD that already has unfinished work or starting a new one.
 
 ## Procedure
@@ -75,5 +75,5 @@ Before handing off to `plan`, confirm:
 
 ## References
 
-- Design and code-quality standards: `references/code-quality.md`
+- Design and code-quality standards: `~/.agents/references/code-quality.md`
 - PRD template: `assets/prd-file.md`
