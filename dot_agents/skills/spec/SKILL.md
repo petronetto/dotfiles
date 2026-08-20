@@ -28,7 +28,7 @@ Specify what to build and why before any code. Interview the user one question a
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-`<task-name>` is a short git-safe slug. Create it if missing. If it already holds an unfinished PRD, ask whether to resume or start a new one.
+`<task-name>` is a short git-safe slug. Create it if missing. If it already holds an unfinished PRD, ask whether to resume or start a new one. "Start a new one" means picking a different `<task-name>` slug, not overwriting the existing PRD in place — the hard rule against deleting an existing PRD also means never reusing its directory for unrelated work.
 
 ### 3. Surface assumptions
 Before writing anything, list what you are assuming (platform, data model, auth, target environment, dependencies). Ask the user to correct any of them before you proceed. Don't silently fill ambiguous requirements.

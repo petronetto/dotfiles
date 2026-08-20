@@ -27,7 +27,7 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-`<task-name>` is a short git-safe slug. Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan.
+`<task-name>` is a short git-safe slug. Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan. "Start a new plan" means picking a different `<task-name>` slug (and running `spec` for it if no PRD exists yet) — never overwrite an existing plan's step files, per the hard rule against deleting one.
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
@@ -62,6 +62,7 @@ Before handing off to `build`, confirm:
 - [ ] The PRD (`PRD.md`) is approved.
 - [ ] Every step file has a goal, in/out-of-scope, and acceptance criteria.
 - [ ] Every step has a verification step (test, build, or manual check).
+- [ ] Each step's verification confirms the codebase still builds/runs after that step lands alone, not just that its own new behavior works.
 - [ ] Dependencies are recorded; independent steps are marked as parallelizable.
 - [ ] No step is scaffolding-only.
 - [ ] The user reviewed and approved the plan.

@@ -1,7 +1,6 @@
 ---
 name: review
 description: Run a strict maintainability review of the current diff and label findings by severity (Critical / Required / Nit / FYI). Use for a code quality review, code judo pass, or maintainability audit before merge.
-disable-model-invocation: true
 ---
 
 # Review

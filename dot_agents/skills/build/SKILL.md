@@ -22,12 +22,16 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 ## Procedure
 
 ### 1. Locate the plan
-- Plans are in the `.plans/` directory. Find the most recent `<task-name>` with `Status: pending` steps.
+- Plans are in the `.plans/` directory. Find the most recent `<task-name>` with `Status: pending`, `in-progress`, or `blocked` steps — `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
 - Read `PRD.md` in that directory for the plan's problem, approach, and key decisions.
 
 ### 2. Run the loop
-For each step (lowest `NNN` with `Status: pending`):
+For each step (lowest `NNN` not yet `Status: done`):
+
+- If `Status: in-progress`, an earlier session was interrupted mid-step. Show the step file and the current diff, and ask the user whether to resume from where it left off or restart the step from a clean tree — never silently skip it for the next pending step.
+- If `Status: blocked`, a prior `build-auto` run left it unresolved. Show the step file's `Blocked` reason and review log, then work it through the same loop below until it resolves.
+- If `Status: pending`, proceed as normal below.
 
 **Announce** — State the step and goal. Set `Status: in-progress`.
 
