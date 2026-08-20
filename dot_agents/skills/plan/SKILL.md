@@ -63,12 +63,14 @@ Before handing off to `build`, confirm:
 - [ ] Every step file has a goal, in/out-of-scope, and acceptance criteria.
 - [ ] Every step has a verification step (test, build, or manual check).
 - [ ] Each step's verification confirms the codebase still builds/runs after that step lands alone, not just that its own new behavior works.
+- [ ] Step verification criteria account for the Definition of Done (`~/.agents/references/definition-of-done.md`), not just each step's own acceptance criteria.
 - [ ] Dependencies are recorded; independent steps are marked as parallelizable.
 - [ ] No step is scaffolding-only.
 - [ ] The user reviewed and approved the plan.
 
 ## References
 
+- Definition of Done: `~/.agents/references/definition-of-done.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
 - PRD template (owned by `spec`, updated here): `assets/prd-file.md`

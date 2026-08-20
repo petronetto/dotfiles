@@ -15,7 +15,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 - A step whose `Depends` step is `Status: blocked` is not built. Mark it `Status: blocked` too (reason: "blocked by <dependency step>"), log it, and move to the next step.
 - Builder and reviewer each run in their own fresh sub-agent—never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs—no orchestrator history, no other steps' detail.
-- Every briefing includes: the plan's `PRD.md`, the step file, `~/.agents/references/code-quality.md`, `~/.agents/references/reuse-checklist.md`. The reviewer's briefing additionally includes the project standards gathered once in step 1.
+- Every briefing includes: the plan's `PRD.md`, the step file, `~/.agents/references/code-quality.md`, `~/.agents/references/reuse-checklist.md`, `~/.agents/references/definition-of-done.md`. The reviewer's briefing additionally includes the project standards gathered once in step 1.
 - Reviewer only judges—it runs `review`, no `--fix`/`--comment`, never edits files.
 - Each step's new or changed behavior has a test that failed before and passes after; the reviewer confirms this. Apply the `test` skill's discipline.
 - Max **3** build-to-review cycles per step. Still unresolved after 3 -> `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
@@ -71,9 +71,11 @@ Before a step counts as done:
 - [ ] The commit touched only this step's files and carried no plan/step wording.
 - [ ] No `blocked` step was treated as complete, and no step was built while its `Depends` step was `blocked`.
 - [ ] Parallel steps were each built in their own worktree, not the shared working tree.
+- [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied; the reviewer confirmed it, not just the step's acceptance criteria.
 
 ## References
 
+- Definition of Done: `~/.agents/references/definition-of-done.md`
 - Code-quality standards: `~/.agents/references/code-quality.md`
 - Reuse/YAGNI gate (builder and reviewer both apply it): `~/.agents/references/reuse-checklist.md`
 - Review log entry template: `assets/review-log-entry.md`

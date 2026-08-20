@@ -69,10 +69,12 @@ Before a step counts as done:
 - [ ] The step's tests exist and pass; linters pass.
 - [ ] Behavior was verified at runtime, not just compiled or typechecked.
 - [ ] Scope was held to the step file; no unrelated changes.
+- [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied, not just the step's own acceptance criteria.
 - [ ] The user approved the step, and it was committed with only its files staged.
 
 ## References
 
+- Definition of Done: `~/.agents/references/definition-of-done.md`
 - Code-quality standards: `~/.agents/references/code-quality.md`
 - Reuse/YAGNI gate: `~/.agents/references/reuse-checklist.md`
 - Uncertainty protocol: `~/.agents/references/uncertainty-protocol.md`
