@@ -16,6 +16,15 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
 
+## Gotchas
+
+- "Start a new plan" means picking a different `<task-name>` slug (running `spec` for it if no PRD exists yet) — never overwriting an existing plan's step files, per the hard rule against deleting one.
+- A step that only adds scaffolding (a type or enum nothing consumes yet) isn't valid — every step must deliver a working, testable change on its own.
+
+## Available scripts
+
+- **`scripts/plan-dir.sh`** — Computes the plan directory path for the current repo, branch, and task name, so it always matches `spec`'s.
+
 ## Procedure
 
 ### 1. Establish context
@@ -24,10 +33,11 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 - Prefer quality and simplicity over development cost.
 
 ### 2. Locate or create the plan directory
+Run `scripts/plan-dir.sh <task-name>` to compute:
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-`<task-name>` is a short git-safe slug. Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan. "Start a new plan" means picking a different `<task-name>` slug (and running `spec` for it if no PRD exists yet) — never overwrite an existing plan's step files, per the hard rule against deleting one.
+Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas).
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
@@ -74,3 +84,4 @@ Before handing off to `build`, confirm:
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
 - PRD template (owned by `spec`, updated here): `assets/prd-file.md`
+- Plan directory script: `scripts/plan-dir.sh`

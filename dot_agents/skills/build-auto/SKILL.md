@@ -11,7 +11,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 ## Hard rules
 
 - Work steps in dependency order. Steps with no dependency between them and disjoint files may be built in parallel (one builder per step), each still reviewed and committed on its own.
-- Parallel builders each work in their own git worktree (`git worktree add`), never the shared working tree — concurrent uncommitted edits, staging, and commits in one working tree collide and corrupt each other's diffs. A step built alone (no other step running concurrently) may use the main working tree directly.
+- Parallel builders each work in their own git worktree (`scripts/worktree.sh create`), never the shared working tree — concurrent uncommitted edits, staging, and commits in one working tree collide and corrupt each other's diffs. A step built alone (no other step running concurrently) may use the main working tree directly.
 - A step whose `Depends` step is `Status: blocked` is not built. Mark it `Status: blocked` too (reason: "blocked by <dependency step>"), log it, and move to the next step.
 - Builder and reviewer each run in their own fresh sub-agent—never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs—no orchestrator history, no other steps' detail.
@@ -21,6 +21,16 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 - Max **3** build-to-review cycles per step. Still unresolved after 3 -> `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
 - Commit only after the reviewer `APPROVE`. One commit per step, only that step's files, in the project's own style. Never reference the plan, step, or chunk in the commit message or in code comments (plans are not committed); describe the actual change.
 - Never expand scope beyond the step file. Preserve existing behavior unless the step requires otherwise.
+
+## Gotchas
+
+- Two builders sharing the main working tree corrupts both diffs — concurrent uncommitted edits, staging, and commits collide. Parallel steps must each get their own git worktree (`scripts/worktree.sh create`); a step running alone may use the shared tree directly.
+- The reviewer only judges — it never fixes, comments, or edits files. Handing it fix authority collapses the independent audit the whole loop depends on.
+- Commit messages and code comments must never reference the plan, step, or chunk — plans aren't committed, so the reference is meaningless to a later reader.
+
+## Available scripts
+
+- **`scripts/worktree.sh`** — Creates an isolated worktree for a parallel step (`create`) and merges + removes it once the step is approved (`finish`).
 
 ## Procedure
 
@@ -32,7 +42,7 @@ Repeat until no `pending` steps remain (independent steps may run through this l
 
 **a. Announce** — State the step and goal. If any `Depends` step is `Status: blocked`, mark this step `Status: blocked` (reason: "blocked by <dependency step>"), log it via `assets/review-log-entry.md`, and skip to the next step. Otherwise set `Status: in-progress`.
 
-**b. Build** — Spawn a builder sub-agent briefed with `assets/builder-brief.md` filled in (step file, code-quality, reuse gate, repo/branch, and prior findings on retries). If this step is running in parallel with another, first create an isolated git worktree for it (`git worktree add <path> -b <step-branch>` from the plan branch) and brief the builder to work there instead of the shared tree. It implements the chunks, adds or updates tests per the step's Verification, runs the project's tests and linters, doesn't commit, and reports back a summary—or reports itself blocked with a reason.
+**b. Build** — Spawn a builder sub-agent briefed with `assets/builder-brief.md` filled in (step file, code-quality, reuse gate, repo/branch, and prior findings on retries). If this step is running in parallel with another, first run `scripts/worktree.sh create <plan-branch> <step-slug>` to create an isolated worktree for it, and brief the builder to work there instead of the shared tree. It implements the chunks, adds or updates tests per the step's Verification, runs the project's tests and linters, doesn't commit, and reports back a summary—or reports itself blocked with a reason.
 
 **c. Review** — Spawn a reviewer sub-agent briefed with `assets/reviewer-brief.md` filled in (step file, builder's report, reuse gate). It runs `review` at medium effort against the diff, also checks scope and acceptance criteria plus the reuse gate, and confirms the new behavior is covered by a test, returning a first-line verdict: `VERDICT: APPROVE` or `VERDICT: CHANGES_REQUESTED` plus findings.
 
@@ -40,7 +50,7 @@ Repeat until no `pending` steps remain (independent steps may run through this l
 - `APPROVE` → go to (e).
 - `CHANGES_REQUESTED` or builder blocked → under 3 cycles: spawn a new builder with the findings, back to (c). At cycle 3: `Status: blocked`, fill the step file's header `Blocked` field with a one-line reason (in addition to the review log entry), move to the next step.
 
-**e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, merge the step branch into the plan branch and remove the worktree. `Status: done`, record the commit message, move on.
+**e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. `Status: done`, record the commit message, move on.
 
 ### 3. Finish
 Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done.
@@ -81,4 +91,5 @@ Before a step counts as done:
 - Review log entry template: `assets/review-log-entry.md`
 - Builder briefing template: `assets/builder-brief.md`
 - Reviewer briefing template: `assets/reviewer-brief.md`
+- Worktree lifecycle script: `scripts/worktree.sh`
 - The gate itself: `review` skill · test discipline: `test` skill · human-gated variant: `build` skill
