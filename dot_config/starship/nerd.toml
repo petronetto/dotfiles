@@ -308,3 +308,6 @@ symbol = " "
 
 [zig]
 symbol = " "
+
+[profiles]
+transient = " $character "

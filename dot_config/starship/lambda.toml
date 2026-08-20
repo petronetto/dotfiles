@@ -119,3 +119,6 @@ symbol = ''
 [rust]
 format = '[ $symbol ](fg:black bg:bright-red)([ $version ](fg:white))'
 symbol = ''
+
+[profiles]
+transient = " $character "
