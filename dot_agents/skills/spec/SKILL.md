@@ -17,6 +17,14 @@ Specify what to build and why before any code. Interview the user one question a
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing PRD. Ask before resuming a PRD that already has unfinished work or starting a new one.
 
+## Gotchas
+
+- "Start a new one" means picking a different `<task-name>` slug — never overwriting or reusing an existing PRD's directory for unrelated work, even when the user says "start fresh."
+
+## Available scripts
+
+- **`scripts/plan-dir.sh`** — Computes (and optionally creates) the plan directory path for the current repo, branch, and task name, so it always matches `plan`'s.
+
 ## Procedure
 
 ### 1. Establish context
@@ -25,10 +33,11 @@ Specify what to build and why before any code. Interview the user one question a
 - Prefer quality and simplicity over development cost.
 
 ### 2. Decide the plan directory
+Run `scripts/plan-dir.sh <task-name> --create` to compute and create:
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-`<task-name>` is a short git-safe slug. Create it if missing. If it already holds an unfinished PRD, ask whether to resume or start a new one. "Start a new one" means picking a different `<task-name>` slug, not overwriting the existing PRD in place — the hard rule against deleting an existing PRD also means never reusing its directory for unrelated work.
+`<task-name>` is a short git-safe slug; the script validates it. If it already holds an unfinished PRD, ask whether to resume or start a new one (see Gotchas).
 
 ### 3. Surface assumptions
 Before writing anything, list what you are assuming (platform, data model, auth, target environment, dependencies). Ask the user to correct any of them before you proceed. Don't silently fill ambiguous requirements.
@@ -77,3 +86,4 @@ Before handing off to `plan`, confirm:
 
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - PRD template: `assets/prd-file.md`
+- Plan directory script: `scripts/plan-dir.sh`

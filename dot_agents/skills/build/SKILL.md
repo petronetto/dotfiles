@@ -19,6 +19,11 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 - Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`).
 - Preserve existing behavior unless the step requires changing it.
 
+## Gotchas
+
+- Never reference the plan, step, or chunk in a commit message or code comment — plans live in `.plans/`, not the repo, so the reference means nothing to anyone reading the commit later. Describe the actual change instead.
+- A chunk that only adds scaffolding (an enum, a type, a stub nothing consumes yet) doesn't count as a chunk — every chunk must leave the codebase working end-to-end, however small.
+
 ## Procedure
 
 ### 1. Locate the plan
