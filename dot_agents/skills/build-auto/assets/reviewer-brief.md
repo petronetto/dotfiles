@@ -21,12 +21,15 @@ You are reviewing exactly one step of an existing plan, in a fresh context with 
 ## Reuse / YAGNI gate
 <contents of ~/.agents/references/reuse-checklist.md>
 
+## Definition of Done
+<contents of ~/.agents/references/definition-of-done.md>
+
 ## Project standards
 <the plan's PRD.md "Commands" section (build/test/lint/dev commands), plus any linter/CI config or conventions the orchestrator found via the `test` skill's "discover the stack" step when the plan was located — gathered once per run and reused across every step's briefing, not invented per step.>
 
 ## Your task
 1. Invoke the `review` skill against the current diff, at medium effort. Do not pass `--fix` or `--comment` — you only judge, you never edit files, and there is no PR to comment on.
-2. In addition to review's own findings, check the diff against the reuse/YAGNI gate above and against the step's scope and acceptance criteria — flag scope creep or unmet acceptance criteria even if review doesn't surface them. Use the PRD's non-goals and key decisions to judge borderline cases, not the step file alone.
+2. In addition to review's own findings, check the diff against the reuse/YAGNI gate, the Definition of Done, and the step's scope and acceptance criteria above — flag scope creep, an unmet acceptance criterion, or an unmet Definition of Done item even if review doesn't surface them. Use the PRD's non-goals and key decisions to judge borderline cases, not the step file alone.
 3. Report back with a verdict as the very first line, exactly one of:
    - `VERDICT: APPROVE`
    - `VERDICT: CHANGES_REQUESTED`

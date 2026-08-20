@@ -72,10 +72,12 @@ Don't start by fixing. Write a test that reproduces the bug, confirm it fails, i
 - [ ] The full suite passes, run with the project's own command.
 - [ ] Bug fixes include a reproduction test.
 - [ ] No test was skipped or disabled; coverage did not decrease.
+- [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied for the change under test.
 
 For anything that runs in a browser, add runtime verification on top of unit tests via the `agent-browser` skill.
 
 ## References
 
+- Definition of Done: `~/.agents/references/definition-of-done.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Uncertainty protocol (a failed or skipped test is uncertainty): `~/.agents/references/uncertainty-protocol.md`
