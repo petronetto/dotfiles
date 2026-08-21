@@ -14,6 +14,7 @@ import type {
   ReadonlyFooterDataProvider,
   SessionEntry,
   Theme,
+  ThemeColor,
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth, type Component } from "@earendil-works/pi-tui";
 import { readFileSync, statSync } from "node:fs";
@@ -25,13 +26,39 @@ const TOKENS_10K = 10_000;
 const TOKENS_PER_M = 1_000_000;
 const TOKENS_10M = 10_000_000;
 const MIN_STATS_PADDING = 2;
-// Context-percent color thresholds, matching the built-in footer (70/90).
-const WARN_AT_PERCENT = 70;
+// Context bar: 20 cells at 5% each, fill count = clamp(round(percent / 5)).
+// Fill and percent text share the used-% threshold color; brackets and
+// empty cells stay dim.
+const SEGMENTS = 20;
+const PERCENT_PER_SEGMENT = 5;
+const WARN_AT_PERCENT = 75;
 const CRITICAL_AT_PERCENT = 90;
 
 // Pull-based rendering: the TUI calls render() on every repaint, and this
 // context (live getters) is refreshed on every session_start.
 let latestCtx: ExtensionContext | undefined;
+
+function contextColor(percent: number | null): ThemeColor {
+  if (percent === null) return "dim";
+  if (percent >= CRITICAL_AT_PERCENT) return "error";
+  if (percent >= WARN_AT_PERCENT) return "warning";
+  return "accent";
+}
+
+function renderBar(percent: number | null, theme: Theme): string {
+  if (percent === null) {
+    return theme.fg("dim", `[${"░".repeat(SEGMENTS)}] --%`);
+  }
+  const filled = Math.min(SEGMENTS, Math.max(0, Math.round(percent / PERCENT_PER_SEGMENT)));
+  const color = contextColor(percent);
+  return (
+    theme.fg("dim", "[") +
+    theme.fg(color, "█".repeat(filled)) +
+    theme.fg("dim", "░".repeat(SEGMENTS - filled)) +
+    theme.fg("dim", "] ") +
+    theme.fg(color, `${percent.toFixed(1)}%`)
+  );
+}
 
 function sanitizeStatusText(text: string): string {
   return text
@@ -197,8 +224,8 @@ class ContextBarFooter implements Component {
     // After compaction, tokens are unknown until the next LLM response.
     const contextUsage = ctx.getContextUsage();
     const contextWindow = contextUsage?.contextWindow ?? model?.contextWindow ?? 0;
-    const contextPercentValue = contextUsage?.percent ?? 0;
-    const contextPercent = contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : "?";
+    const contextPercent: number | null =
+      contextUsage?.percent === null ? null : (contextUsage?.percent ?? 0);
 
     const cwd = ctx.sessionManager.getCwd();
     let pwd = formatCwdForFooter(cwd, process.env.HOME || process.env.USERPROFILE);
@@ -225,21 +252,12 @@ class ContextBarFooter implements Component {
     }
 
     const autoIndicator = readCompactionEnabled(cwd, ctx.isProjectTrusted()) ? " (auto)" : "";
-    const contextPercentDisplay =
-      contextPercent === "?"
-        ? `?/${formatTokens(contextWindow)}${autoIndicator}`
-        : `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
-    // The context segment leads the stats line as its own color run (dim
-    // below the warning threshold): its trailing reset would clear a dim
-    // wrapper around the following stats, so those dim as a separate run.
-    let contextSegment: string;
-    if (contextPercentValue > CRITICAL_AT_PERCENT) {
-      contextSegment = theme.fg("error", contextPercentDisplay);
-    } else if (contextPercentValue > WARN_AT_PERCENT) {
-      contextSegment = theme.fg("warning", contextPercentDisplay);
-    } else {
-      contextSegment = theme.fg("dim", contextPercentDisplay);
-    }
+    // The context segment leads the stats line as its own color run: its
+    // trailing reset would clear a dim wrapper around the following stats,
+    // so those dim as a separate run.
+    const contextSegment =
+      renderBar(contextPercent, theme) +
+      theme.fg(contextColor(contextPercent), `/${formatTokens(contextWindow)}${autoIndicator}`);
 
     if (process.env.PI_EXPERIMENTAL === "1") {
       statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
