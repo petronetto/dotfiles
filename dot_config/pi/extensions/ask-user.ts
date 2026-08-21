@@ -1,6 +1,7 @@
 // Ask User - pi extension that registers the `ask_user` tool.
-// Opens a focused single-select dialog (title chip, bold question, numbered
-// options) instead of asking questions as plain chat text.
+// Opens a focused question dialog (title chip, bold question, numbered
+// options, optional multi-select checkboxes) instead of asking questions as
+// plain chat text.
 // Adapted from pi's shipped examples/extensions/question.ts.
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -29,7 +30,15 @@ interface AskUserDetails {
   answer: string | null;
   index?: number;
   wasCustom?: boolean;
+  answers?: SelectedAnswer[];
 }
+
+interface SelectedAnswer {
+  index: number;
+  label: string;
+}
+
+type DialogResult = { answer: string; wasCustom: boolean; index?: number; answers?: SelectedAnswer[] };
 
 const OptionSchema = Type.Object({
   label: Type.String({ description: "Display label for the option" }),
@@ -42,6 +51,9 @@ const AskUserParams = Type.Object({
   }),
   question: Type.String({ description: "The question to ask the user" }),
   options: Type.Array(OptionSchema, { description: "Options for the user to choose from" }),
+  multiSelect: Type.Optional(
+    Type.Boolean({ description: "Allow selecting multiple options with checkboxes (default false)" }),
+  ),
 });
 
 export default function askUser(pi: ExtensionAPI) {
@@ -73,12 +85,14 @@ export default function askUser(pi: ExtensionAPI) {
         };
       }
 
+      const multi = params.multiSelect === true;
       const allOptions: DisplayOption[] = [...params.options, { label: "Type something.", isOther: true }];
 
-      const result = await ctx.ui.custom<{ answer: string; wasCustom: boolean; index?: number } | null>(
+      const result = await ctx.ui.custom<DialogResult | null>(
         (tui, theme, _kb, done) => {
           let optionIndex = 0;
           let editMode = false;
+          const ticked = new Set<number>();
           let cachedLines: string[] | undefined;
 
           const editorTheme: EditorTheme = {
@@ -132,14 +146,34 @@ export default function askUser(pi: ExtensionAPI) {
               refresh();
               return;
             }
+            if (multi && matchesKey(data, Key.space)) {
+              if (!allOptions[optionIndex].isOther) {
+                if (ticked.has(optionIndex)) {
+                  ticked.delete(optionIndex);
+                } else {
+                  ticked.add(optionIndex);
+                }
+              }
+              refresh();
+              return;
+            }
             if (matchesKey(data, Key.enter)) {
               const selected = allOptions[optionIndex];
               if (selected.isOther) {
                 editMode = true;
                 refresh();
-              } else {
-                done({ answer: selected.label, wasCustom: false, index: optionIndex + 1 });
+                return;
               }
+              if (multi) {
+                if (ticked.size > 0) {
+                  const answers = [...ticked]
+                    .sort((a, b) => a - b)
+                    .map((i) => ({ index: i + 1, label: allOptions[i].label }));
+                  done({ answer: answers[0].label, wasCustom: false, index: answers[0].index, answers });
+                }
+                return;
+              }
+              done({ answer: selected.label, wasCustom: false, index: optionIndex + 1 });
               return;
             }
             if (matchesKey(data, Key.escape)) {
@@ -181,11 +215,12 @@ export default function askUser(pi: ExtensionAPI) {
               const selected = i === optionIndex;
               const isOther = opt.isOther === true;
               const prefix = selected ? theme.fg("accent", "❯ ") : "  ";
-              const label = `${i + 1}. ${opt.label}${isOther && editMode ? " ✎" : ""}`;
+              const box = multi ? (ticked.has(i) ? theme.fg("accent", "☑ ") : theme.fg("dim", "☐ ")) : "";
+              const label = `${box}${i + 1}. ${opt.label}${isOther && editMode ? " ✎" : ""}`;
               const color = selected || (isOther && editMode) ? "accent" : "text";
               addWrappedWithPrefix(prefix, theme.fg(color, label));
               if (opt.description) {
-                addWrappedWithPrefix("     ", theme.fg("muted", opt.description));
+                addWrappedWithPrefix(multi ? "       " : "     ", theme.fg("muted", opt.description));
               }
             }
 
@@ -201,7 +236,10 @@ export default function askUser(pi: ExtensionAPI) {
             if (editMode) {
               addWrappedWithPrefix(" ", theme.fg("dim", "Enter to submit · Esc to go back"));
             } else {
-              addWrappedWithPrefix(" ", theme.fg("dim", "Enter to select · ↑/↓ to navigate · Esc to cancel"));
+              const footer = multi
+                ? "Enter to confirm · ↑/↓ to navigate · Space to toggle · Esc to cancel"
+                : "Enter to select · ↑/↓ to navigate · Esc to cancel";
+              addWrappedWithPrefix(" ", theme.fg("dim", footer));
             }
             lines.push(theme.fg("accent", "─".repeat(renderWidth)));
 
@@ -246,8 +284,11 @@ export default function askUser(pi: ExtensionAPI) {
         };
       }
 
+      const answers = result.answers ?? [{ index: result.index, label: result.answer }];
       return {
-        content: [{ type: "text", text: `User selected: ${result.index}. ${result.answer}` }],
+        content: [
+          { type: "text", text: `User selected: ${answers.map((a) => `${a.index}. ${a.label}`).join(", ")}` },
+        ],
         details: {
           title: params.title,
           question: params.question,
@@ -255,6 +296,7 @@ export default function askUser(pi: ExtensionAPI) {
           answer: result.answer,
           index: result.index,
           wasCustom: false,
+          ...(multi && { answers: result.answers }),
         } as AskUserDetails,
       };
     },
@@ -287,6 +329,11 @@ export default function askUser(pi: ExtensionAPI) {
           0,
           0,
         );
+      }
+
+      if (details.answers) {
+        const display = details.answers.map((a) => `${a.index}. ${a.label}`).join(", ");
+        return new Text(theme.fg("success", "✓ ") + theme.fg("accent", display), 0, 0);
       }
 
       const display = details.index ? `${details.index}. ${details.answer}` : details.answer;
