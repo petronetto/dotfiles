@@ -229,21 +229,24 @@ class ContextBarFooter implements Component {
       contextPercent === "?"
         ? `?/${formatTokens(contextWindow)}${autoIndicator}`
         : `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
-    let contextPercentStr: string;
+    // The context segment leads the stats line as its own color run (dim
+    // below the warning threshold): its trailing reset would clear a dim
+    // wrapper around the following stats, so those dim as a separate run.
+    let contextSegment: string;
     if (contextPercentValue > CRITICAL_AT_PERCENT) {
-      contextPercentStr = theme.fg("error", contextPercentDisplay);
+      contextSegment = theme.fg("error", contextPercentDisplay);
     } else if (contextPercentValue > WARN_AT_PERCENT) {
-      contextPercentStr = theme.fg("warning", contextPercentDisplay);
+      contextSegment = theme.fg("warning", contextPercentDisplay);
     } else {
-      contextPercentStr = contextPercentDisplay;
+      contextSegment = theme.fg("dim", contextPercentDisplay);
     }
-    statsParts.push(contextPercentStr);
 
     if (process.env.PI_EXPERIMENTAL === "1") {
       statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
     }
 
-    let statsLeft = statsParts.join(" ");
+    const statsRest = statsParts.join(" ");
+    let statsLeft = statsRest ? `${contextSegment} ${theme.fg("dim", statsRest)}` : contextSegment;
     const modelName = model?.id || "no-model";
     let statsLeftWidth = visibleWidth(statsLeft);
     if (statsLeftWidth > width) {
@@ -285,14 +288,12 @@ class ContextBarFooter implements Component {
       }
     }
 
-    // statsLeft may contain color codes (context %) ending with a reset that
-    // would clear an outer dim wrapper, so dim the runs before and after the
-    // colored segment independently.
-    const dimStatsLeft = theme.fg("dim", statsLeft);
+    // statsLeft is fully styled already (context segment color run + dim
+    // token stats); only the padding + right side still needs dimming.
     const remainder = statsLine.slice(statsLeft.length);
     const dimRemainder = theme.fg("dim", remainder);
     const pwdLine = truncateToWidth(theme.fg("dim", pwd), width, theme.fg("dim", "..."));
-    const lines = [pwdLine, dimStatsLeft + dimRemainder];
+    const lines = [pwdLine, statsLeft + dimRemainder];
 
     const extensionStatuses = footerData.getExtensionStatuses();
     if (extensionStatuses.size > 0) {
