@@ -16,7 +16,7 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 - Stop after every step. Do not continue on your own.
 - Never commit without explicit, unambiguous approval (per step).
 - Never reference the plan, steps, or chunks in commit messages or code comments; plans are not committed, so the reference is meaningless.
-- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`).
+- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`). Ask multi-option decisions (which plan to resume, resume vs restart a step) per `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`.
 - Preserve existing behavior unless the step requires changing it.
 
 ## Gotchas
@@ -83,5 +83,6 @@ Before a step counts as done:
 - Code-quality standards: `~/.agents/references/code-quality.md`
 - Reuse/YAGNI gate: `~/.agents/references/reuse-checklist.md`
 - Uncertainty protocol: `~/.agents/references/uncertainty-protocol.md`
+- Question format and decision log: `~/.agents/references/question-format.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill

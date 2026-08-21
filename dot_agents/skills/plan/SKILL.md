@@ -37,7 +37,7 @@ Run `scripts/plan-dir.sh <task-name>` to compute:
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas).
+Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas). Ask these per `~/.agents/references/question-format.md`, appending each answer to the directory's `decisions.md`.
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
@@ -81,6 +81,7 @@ Before handing off to `build`, confirm:
 ## References
 
 - Definition of Done: `~/.agents/references/definition-of-done.md`
+- Question format and decision log: `~/.agents/references/question-format.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
 - PRD template (owned by `spec`, updated here): `assets/prd-file.md`

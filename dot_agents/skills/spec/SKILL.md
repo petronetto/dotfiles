@@ -11,7 +11,7 @@ Specify what to build and why before any code. Interview the user one question a
 ## Hard rules
 
 - Never write or edit code—output is Markdown only.
-- Interview one question at a time. For each, recommend an answer with reasoning, then ask to confirm or refine. If the codebase answers it, read instead of asking. Use `lavish` to present options.
+- Interview one question at a time using the format in `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`. If the codebase answers it, read instead of asking.
 - Surface assumptions explicitly and have the user correct them before proceeding.
 - Resolve every open question and design decision with the user. Never proceed on a guess.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
@@ -46,7 +46,7 @@ Before writing anything, list what you are assuming (platform, data model, auth,
 Most requests are one capability; skip this. If one request bundles several independently testable capabilities that could ship and be verified separately, first propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
 
 ### 5. Interview the user
-Interview until you reach shared understanding, walking each design branch one question at a time. Use `lavish` to present options. Never proceed with unresolved decisions.
+Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/<branch>/<task-name>/decisions.md`. Never proceed with unresolved decisions.
 
 ### 6. Write the PRD
 Fill the template at `assets/prd-file.md` into `.plans/<branch>/<task-name>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions with why. Step files link back to it instead of restating it.
@@ -80,10 +80,12 @@ Before handing off to `plan`, confirm:
 - [ ] The project's build/test/lint commands are recorded.
 - [ ] Key decisions are recorded with a one-line rationale each.
 - [ ] Assumptions were surfaced and either corrected or accepted.
+- [ ] Every interview question and answer is logged in `decisions.md`.
 - [ ] `PRD.md` is saved under `.plans/<branch>/<task-name>/`.
 
 ## References
 
+- Question format and decision log: `~/.agents/references/question-format.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - PRD template: `assets/prd-file.md`
 - Plan directory script: `scripts/plan-dir.sh`
