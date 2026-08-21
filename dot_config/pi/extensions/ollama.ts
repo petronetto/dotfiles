@@ -35,7 +35,13 @@ const SHOW_TIMEOUT_MS = 4_000;
 const SHOW_CONCURRENCY = 6;
 
 // Fallbacks for models whose metadata lacks a context length (e.g. MLX).
+// Cap local windows well below the true model limit: ollama's /v1 endpoint
+// sends no bytes until the whole prompt is processed, and pi aborts after
+// its httpIdleTimeoutMs (default 5 min). At ~350 tok/s prefill, windows
+// above ~65k tokens cannot finish prefill in time, so pi would time out on
+// every request once a session grows near the window.
 const DEFAULT_CONTEXT_WINDOW = 262_144;
+const MAX_LOCAL_CONTEXT_WINDOW = 65_536;
 const DEFAULT_MAX_TOKENS = 16_384;
 const ZERO_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } as const;
 
@@ -128,20 +134,54 @@ async function discoverLocalModels(host: string, signal?: AbortSignal): Promise<
     undefined,
     signal,
   );
-  return (payload.models ?? [])
-    .filter((model) => (model.capabilities ?? ["completion"]).includes("completion"))
-    .map((model) => {
-      const capabilities = model.capabilities ?? [];
+  const models = (payload.models ?? []).filter((model) =>
+    (model.capabilities ?? ["completion"]).includes("completion"),
+  );
+
+  // MLX models report no context_length in /api/tags; fetch the precise
+  // value from /api/show (fast, local) instead of guessing.
+  const enriched = await Promise.all(
+    models.map(async (model) => {
+      let contextWindow = model.details?.context_length ?? undefined;
+      if (contextWindow === undefined) {
+        contextWindow = await contextLengthFromShow(host, model.name, signal);
+      }
       return {
         id: model.name,
         name: model.name,
-        reasoning: capabilities.includes("thinking"),
-        input: inputFromCapabilities(capabilities),
+        reasoning: (model.capabilities ?? []).includes("thinking"),
+        input: inputFromCapabilities(model.capabilities ?? []),
         cost: { ...ZERO_COST },
-        contextWindow: model.details?.context_length ?? DEFAULT_CONTEXT_WINDOW,
+        contextWindow: Math.min(contextWindow ?? DEFAULT_CONTEXT_WINDOW, MAX_LOCAL_CONTEXT_WINDOW),
         maxTokens: DEFAULT_MAX_TOKENS,
       };
-    });
+    }),
+  );
+  return enriched;
+}
+
+// Returns the model's true context length via /api/show, or undefined when
+// the daemon does not report one (or is too slow to answer).
+async function contextLengthFromShow(
+  host: string,
+  modelName: string,
+  signal?: AbortSignal,
+): Promise<number | undefined> {
+  try {
+    const payload = await fetchJson<OllamaShowResponse>(
+      `${host}/api/show`,
+      SHOW_TIMEOUT_MS,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: modelName }),
+      },
+      signal,
+    );
+    return contextLengthFrom(payload.model_info);
+  } catch {
+    return undefined;
+  }
 }
 
 async function fetchCloudCatalog(signal?: AbortSignal): Promise<string[]> {
