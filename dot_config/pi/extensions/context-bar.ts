@@ -38,6 +38,13 @@ const CRITICAL_AT_PERCENT = 90;
 // context (live getters) is refreshed on every session_start.
 let latestCtx: ExtensionContext | undefined;
 
+// Percent held through the post-compaction gap (tokens unknown until the
+// next LLM response), so the bar keeps its last value instead of flashing
+// the placeholder. Reset on session_start: a stale percent from a previous
+// session must never render, and a resumed session re-fills it on first
+// render from persisted usage.
+let lastKnownPercent: number | null = null;
+
 function contextColor(percent: number | null): ThemeColor {
   if (percent === null) return "dim";
   if (percent >= CRITICAL_AT_PERCENT) return "error";
@@ -224,8 +231,13 @@ class ContextBarFooter implements Component {
     // After compaction, tokens are unknown until the next LLM response.
     const contextUsage = ctx.getContextUsage();
     const contextWindow = contextUsage?.contextWindow ?? model?.contextWindow ?? 0;
-    const contextPercent: number | null =
+    let contextPercent: number | null =
       contextUsage?.percent === null ? null : (contextUsage?.percent ?? 0);
+    if (contextPercent === null) {
+      contextPercent = lastKnownPercent;
+    } else {
+      lastKnownPercent = contextPercent;
+    }
 
     const cwd = ctx.sessionManager.getCwd();
     let pwd = formatCwdForFooter(cwd, process.env.HOME || process.env.USERPROFILE);
@@ -328,6 +340,7 @@ class ContextBarFooter implements Component {
 
 export default function contextBar(pi: ExtensionAPI): void {
   pi.on("session_start", (_event, ctx) => {
+    lastKnownPercent = null;
     latestCtx = ctx;
     if (!ctx.hasUI) return;
     ctx.ui.setFooter((tui, theme, footerData) => {
