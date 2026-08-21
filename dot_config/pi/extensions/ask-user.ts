@@ -4,13 +4,23 @@
 // Adapted from pi's shipped examples/extensions/question.ts.
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Key, matchesKey, Text, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import {
+  Editor,
+  type EditorTheme,
+  Key,
+  matchesKey,
+  Text,
+  visibleWidth,
+  wrapTextWithAnsi,
+} from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 interface OptionWithDesc {
   label: string;
   description?: string;
 }
+
+type DisplayOption = OptionWithDesc & { isOther?: boolean };
 
 interface AskUserDetails {
   title: string;
@@ -63,90 +73,151 @@ export default function askUser(pi: ExtensionAPI) {
         };
       }
 
-      const result = await ctx.ui.custom<{ answer: string; index: number } | null>((tui, theme, _kb, done) => {
-        let optionIndex = 0;
-        let cachedLines: string[] | undefined;
+      const allOptions: DisplayOption[] = [...params.options, { label: "Type something.", isOther: true }];
 
-        function refresh() {
-          cachedLines = undefined;
-          tui.requestRender();
-        }
+      const result = await ctx.ui.custom<{ answer: string; wasCustom: boolean; index?: number } | null>(
+        (tui, theme, _kb, done) => {
+          let optionIndex = 0;
+          let editMode = false;
+          let cachedLines: string[] | undefined;
 
-        function handleInput(data: string) {
-          if (matchesKey(data, Key.up)) {
-            optionIndex = Math.max(0, optionIndex - 1);
-            refresh();
-            return;
-          }
-          if (matchesKey(data, Key.down)) {
-            optionIndex = Math.min(params.options.length - 1, optionIndex + 1);
-            refresh();
-            return;
-          }
-          if (matchesKey(data, Key.enter)) {
-            done({ answer: params.options[optionIndex].label, index: optionIndex + 1 });
-            return;
-          }
-          if (matchesKey(data, Key.escape)) {
-            done(null);
-          }
-        }
+          const editorTheme: EditorTheme = {
+            borderColor: (s) => theme.fg("accent", s),
+            selectList: {
+              selectedPrefix: (t) => theme.fg("accent", t),
+              selectedText: (t) => theme.fg("accent", t),
+              description: (t) => theme.fg("muted", t),
+              scrollInfo: (t) => theme.fg("dim", t),
+              noMatch: (t) => theme.fg("warning", t),
+            },
+          };
+          const editor = new Editor(tui, editorTheme);
 
-        function render(width: number): string[] {
-          if (cachedLines) return cachedLines;
+          editor.onSubmit = (value) => {
+            const trimmed = value.trim();
+            if (trimmed) {
+              done({ answer: trimmed, wasCustom: true });
+            } else {
+              editMode = false;
+              editor.setText("");
+              refresh();
+            }
+          };
 
-          const lines: string[] = [];
-          const renderWidth = Math.max(1, width);
-
-          function addWrapped(text: string) {
-            lines.push(...wrapTextWithAnsi(text, renderWidth));
+          function refresh() {
+            cachedLines = undefined;
+            tui.requestRender();
           }
 
-          function addWrappedWithPrefix(prefix: string, text: string) {
-            const prefixWidth = visibleWidth(prefix);
-            if (prefixWidth >= renderWidth) {
-              addWrapped(prefix + text);
+          function handleInput(data: string) {
+            if (editMode) {
+              if (matchesKey(data, Key.escape)) {
+                editMode = false;
+                editor.setText("");
+                refresh();
+                return;
+              }
+              editor.handleInput(data);
+              refresh();
               return;
             }
-            const wrapped = wrapTextWithAnsi(text, renderWidth - prefixWidth);
-            const continuationPrefix = " ".repeat(prefixWidth);
-            for (let i = 0; i < wrapped.length; i++) {
-              lines.push(`${i === 0 ? prefix : continuationPrefix}${wrapped[i]}`);
+
+            if (matchesKey(data, Key.up)) {
+              optionIndex = Math.max(0, optionIndex - 1);
+              refresh();
+              return;
+            }
+            if (matchesKey(data, Key.down)) {
+              optionIndex = Math.min(allOptions.length - 1, optionIndex + 1);
+              refresh();
+              return;
+            }
+            if (matchesKey(data, Key.enter)) {
+              const selected = allOptions[optionIndex];
+              if (selected.isOther) {
+                editMode = true;
+                refresh();
+              } else {
+                done({ answer: selected.label, wasCustom: false, index: optionIndex + 1 });
+              }
+              return;
+            }
+            if (matchesKey(data, Key.escape)) {
+              done(null);
             }
           }
 
-          lines.push(theme.fg("accent", "─".repeat(renderWidth)));
-          addWrappedWithPrefix(" ", theme.bg("selectedBg", theme.fg("text", ` ${params.title} `)));
-          lines.push("");
-          addWrappedWithPrefix(" ", theme.fg("text", theme.bold(params.question)));
-          lines.push("");
+          function render(width: number): string[] {
+            if (cachedLines) return cachedLines;
 
-          for (let i = 0; i < params.options.length; i++) {
-            const opt = params.options[i];
-            const selected = i === optionIndex;
-            const prefix = selected ? theme.fg("accent", "❯ ") : "  ";
-            addWrappedWithPrefix(prefix, theme.fg(selected ? "accent" : "text", `${i + 1}. ${opt.label}`));
-            if (opt.description) {
-              addWrappedWithPrefix("     ", theme.fg("muted", opt.description));
+            const lines: string[] = [];
+            const renderWidth = Math.max(1, width);
+
+            function addWrapped(text: string) {
+              lines.push(...wrapTextWithAnsi(text, renderWidth));
             }
+
+            function addWrappedWithPrefix(prefix: string, text: string) {
+              const prefixWidth = visibleWidth(prefix);
+              if (prefixWidth >= renderWidth) {
+                addWrapped(prefix + text);
+                return;
+              }
+              const wrapped = wrapTextWithAnsi(text, renderWidth - prefixWidth);
+              const continuationPrefix = " ".repeat(prefixWidth);
+              for (let i = 0; i < wrapped.length; i++) {
+                lines.push(`${i === 0 ? prefix : continuationPrefix}${wrapped[i]}`);
+              }
+            }
+
+            lines.push(theme.fg("accent", "─".repeat(renderWidth)));
+            addWrappedWithPrefix(" ", theme.bg("selectedBg", theme.fg("text", ` ${params.title} `)));
+            lines.push("");
+            addWrappedWithPrefix(" ", theme.fg("text", theme.bold(params.question)));
+            lines.push("");
+
+            for (let i = 0; i < allOptions.length; i++) {
+              const opt = allOptions[i];
+              const selected = i === optionIndex;
+              const isOther = opt.isOther === true;
+              const prefix = selected ? theme.fg("accent", "❯ ") : "  ";
+              const label = `${i + 1}. ${opt.label}${isOther && editMode ? " ✎" : ""}`;
+              const color = selected || (isOther && editMode) ? "accent" : "text";
+              addWrappedWithPrefix(prefix, theme.fg(color, label));
+              if (opt.description) {
+                addWrappedWithPrefix("     ", theme.fg("muted", opt.description));
+              }
+            }
+
+            if (editMode) {
+              lines.push("");
+              addWrappedWithPrefix(" ", theme.fg("muted", "Your answer:"));
+              for (const line of editor.render(Math.max(1, renderWidth - 2))) {
+                lines.push(` ${line}`);
+              }
+            }
+
+            lines.push("");
+            if (editMode) {
+              addWrappedWithPrefix(" ", theme.fg("dim", "Enter to submit · Esc to go back"));
+            } else {
+              addWrappedWithPrefix(" ", theme.fg("dim", "Enter to select · ↑/↓ to navigate · Esc to cancel"));
+            }
+            lines.push(theme.fg("accent", "─".repeat(renderWidth)));
+
+            cachedLines = lines;
+            return lines;
           }
 
-          lines.push("");
-          addWrappedWithPrefix(" ", theme.fg("dim", "Enter to select · ↑/↓ to navigate · Esc to cancel"));
-          lines.push(theme.fg("accent", "─".repeat(renderWidth)));
-
-          cachedLines = lines;
-          return lines;
-        }
-
-        return {
-          render,
-          invalidate: () => {
-            cachedLines = undefined;
-          },
-          handleInput,
-        };
-      });
+          return {
+            render,
+            invalidate: () => {
+              cachedLines = undefined;
+            },
+            handleInput,
+          };
+        },
+      );
 
       const simpleOptions = params.options.map((o) => o.label);
 
@@ -158,6 +229,19 @@ export default function askUser(pi: ExtensionAPI) {
             question: params.question,
             options: simpleOptions,
             answer: null,
+          } as AskUserDetails,
+        };
+      }
+
+      if (result.wasCustom) {
+        return {
+          content: [{ type: "text", text: `User wrote: ${result.answer}` }],
+          details: {
+            title: params.title,
+            question: params.question,
+            options: simpleOptions,
+            answer: result.answer,
+            wasCustom: true,
           } as AskUserDetails,
         };
       }
@@ -179,7 +263,8 @@ export default function askUser(pi: ExtensionAPI) {
       let text = theme.fg("toolTitle", theme.bold("ask_user ")) + theme.fg("muted", args.question);
       const opts = Array.isArray(args.options) ? args.options : [];
       if (opts.length) {
-        const numbered = opts.map((o: OptionWithDesc, i: number) => `${i + 1}. ${o.label}`);
+        const labels = opts.map((o: OptionWithDesc) => o.label);
+        const numbered = [...labels, "Type something."].map((o, i) => `${i + 1}. ${o}`);
         text += `\n${theme.fg("dim", `  Options: ${numbered.join(", ")}`)}`;
       }
       return new Text(text, 0, 0);
@@ -194,6 +279,14 @@ export default function askUser(pi: ExtensionAPI) {
 
       if (details.answer === null) {
         return new Text(theme.fg("warning", "Cancelled"), 0, 0);
+      }
+
+      if (details.wasCustom) {
+        return new Text(
+          theme.fg("success", "✓ ") + theme.fg("muted", "(wrote) ") + theme.fg("accent", details.answer),
+          0,
+          0,
+        );
       }
 
       const display = details.index ? `${details.index}. ${details.answer}` : details.answer;
