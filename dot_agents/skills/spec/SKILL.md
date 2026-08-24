@@ -63,7 +63,7 @@ any of them before you proceed; move corrected ones to `validated` or
 Most requests are one capability; skip this. If one request bundles several independently testable capabilities that could ship and be verified separately, first propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
 
 ### 6. Interview the user
-Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/<branch>/<task-name>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it. Never proceed with unresolved decisions.
+Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/<branch>/<task-name>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it; omit it only for pure user preferences with no supporting finding (per `question-format.md`). Never proceed with unresolved decisions.
 
 ### 7. Promote cross-cutting decisions to ADRs
 For each decision that meets both tests, (a) two or more real alternatives

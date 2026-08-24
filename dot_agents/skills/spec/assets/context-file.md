@@ -13,7 +13,7 @@ approved.
 | Project | <project-full-path>    |
 | Branch  | <branch>               |
 | Task    | <task-name>            |
-| Status  | in-progress | done       |
+| Status  | in-progress / done       |
 
 ## Request
 The feature or fix in the user's own terms, paraphrased into one paragraph.
