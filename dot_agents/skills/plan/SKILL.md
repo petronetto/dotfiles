@@ -12,7 +12,7 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 
 - Never write or edit code—output is Markdown only.
 - One responsibility per step; each step leaves the codebase working.
-- Read the PRD for problem, approach, and key decisions; link step files back to it instead of restating.
+- Read the PRD for problem, approach, and key decisions; read `CONTEXT.md` for the provenance behind those decisions, and link step files back to them instead of restating. Treat any `ADR-NNN-*.md` as the authoritative record for the decision it covers.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
 
@@ -37,7 +37,7 @@ Run `scripts/plan-dir.sh <task-name>` to compute:
 ```
 <project-full-path>/.plans/<branch>/<task-name>/
 ```
-Read `PRD.md` there for the spec. If it is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas). Ask these per `~/.agents/references/question-format.md`, appending each answer to the directory's `decisions.md`.
+Read `PRD.md` there for the spec, and `CONTEXT.md` for the discovery findings and provenance that back its decisions. Read any `ADR-NNN-*.md` for the cross-cutting decisions they record. If `PRD.md` is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas). Ask these per `~/.agents/references/question-format.md`, appending each answer to the directory's `decisions.md`, each with an `**Evidence:**` line back to `CONTEXT.md`.
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
