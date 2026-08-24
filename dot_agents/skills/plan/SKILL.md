@@ -84,5 +84,5 @@ Before handing off to `build`, confirm:
 - Question format and decision log: `~/.agents/references/question-format.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
-- PRD template (owned by `spec`, updated here): `assets/prd-file.md`
+- PRD template (owned by `spec`): `../spec/assets/prd-file.md`
 - Plan directory script: `scripts/plan-dir.sh`

@@ -7,14 +7,15 @@ multiple plan steps and had real alternatives worth recording. Promote a
 than one step. Otherwise the decision stays a `decisions.md` entry; the PRD's
 "Key decisions" links to the Q-number directly.
 
-Immutable once Accepted; to change it, write a new ADR that supersedes this one
-and update the Status line here. Number ADRs sequentially from the highest
-existing ADR-NNN in the directory.
+Immutable once Accepted except for the Status and Superseded-by fields; to
+change the decision, write a new ADR that supersedes this one, then mark this
+one superseded. Number ADRs sequentially from the highest existing ADR-NNN
+in the directory.
 
 | Field    | Value                 |
 | -------- | --------------------- |
 | Date     | YYYY-MM-DD             |
-| Status   | proposed | accepted | superseded |
+| Status   | proposed / accepted / superseded |
 | Project  | <project-full-path>    |
 | Branch   | <branch>               |
 | Task     | <task-name>            |
