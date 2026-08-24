@@ -27,7 +27,10 @@ Three tiers, from the "scope discipline" principle:
 The shape of the solution in prose, before it's broken into steps: the
 strategy, and the key architectural/design decisions made during the
 interview, with why alternatives were rejected. Step files link back here
-instead of restating it.
+instead of restating it. The discovery findings and provenance behind these
+decisions live in `CONTEXT.md`; durable cross-cutting decisions with real
+alternatives are promoted to `ADR-NNN` files and linked from the Key
+decisions table below.
 
 ## Commands
 The project's own commands, with flags, so `build`, `test`, and `build-auto`
@@ -49,8 +52,13 @@ Kept in sync as steps are added, split, or reordered.
 ## Key decisions
 Decisions resolved during the interview that constrain multiple steps
 (naming, library/framework choices, data model, boundaries), each with a
-one-line rationale, so a reviewer or a fresh sub-agent with no memory of
-the interview doesn't re-litigate or contradict them.
+one-line rationale and a link to its traceability, so a reviewer or a fresh
+sub-agent with no memory of the interview doesn't re-litigate or contradict
+them.
+
+| #  | Decision | Rationale | Traceability |
+| -- | -------- | --------- | ------------ |
+| D1 | <…>     | <one line> | Q3 / ADR-001 / CONTEXT.md › <topic> |
 
 ## Risks & open questions
 Known risks or deferred questions that could affect later steps, if any.

@@ -26,7 +26,14 @@ Append each entry to `<project-full-path>/.plans/<branch>/<task-name>/decisions.
 A) (Recommended) <option A>
 B) <option B>
 **Answer:** A — <answer as accepted, with any user refinement>
+**Evidence:** CONTEXT.md › <topic or provenance row that informed this>
 ```
 
 - Never rewrite an entry; a changed decision gets a new entry naming the one it supersedes.
 - Continue numbering from the highest QX already in the file.
+- The `**Evidence:**` line links the decision back to the research that
+  informed it, so the PRD is traceable. Omit it only when the decision is a
+  pure user preference with no supporting finding.
+- When a decision is promoted to a standalone ADR (`ADR-NNN`), keep the
+  `decisions.md` entry and add `**Promoted to:** ADR-NNN` instead of (or in
+  addition to) the Evidence line.
