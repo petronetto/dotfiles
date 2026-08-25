@@ -5,8 +5,9 @@
   "enableInstallTelemetry": false,
   "theme": "dark",
   "defaultProjectTrust": "always",
+  "httpIdleTimeoutMs": 0,
+  "tuiMode": "regular",
   "packages": [
-    "npm:@plannotator/pi-extension",
     "npm:pi-subagents",
     "npm:pi-web-access",
     "npm:pi-vision-handoff"
