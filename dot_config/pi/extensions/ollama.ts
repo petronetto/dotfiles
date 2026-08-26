@@ -41,7 +41,7 @@ const SHOW_CONCURRENCY = 6;
 // above ~65k tokens cannot finish prefill in time, so pi would time out on
 // every request once a session grows near the window.
 const DEFAULT_CONTEXT_WINDOW = 262_144;
-const MAX_LOCAL_CONTEXT_WINDOW = 65_536;
+const MAX_LOCAL_CONTEXT_WINDOW = 131_072;
 const DEFAULT_MAX_TOKENS = 16_384;
 const ZERO_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } as const;
 
