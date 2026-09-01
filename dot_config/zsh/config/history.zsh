@@ -13,5 +13,5 @@ setopt HIST_FIND_NO_DUPS     # Don't display duplicates in search results
 setopt HIST_IGNORE_SPACE     # Don't save commands starting with space
 
 # Configure history-substring-search keybindings
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
+# bindkey '^[[A' history-substring-search-up
+# bindkey '^[[B' history-substring-search-down
