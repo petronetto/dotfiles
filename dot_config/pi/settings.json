@@ -15,9 +15,9 @@
   "warnings": {
     "anthropicExtraUsage": false
   },
-  "defaultProvider": "together",
-  "defaultModel": "zai-org/GLM-5.3-Flash",
-  "lastChangelogVersion": "0.84.2",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
+  "lastChangelogVersion": "0.84.4",
   "enabledModels": [
     "anthropic/claude-haiku-4-5",
     "anthropic/claude-sonnet-5",
@@ -29,8 +29,11 @@
     "github-copilot/gpt-5-mini",
     "github-copilot/gpt-5.3-codex",
     "github-copilot/gpt-5.6-luna",
-    "github-copilot/gpt-5.6-sol",
     "github-copilot/gpt-5.6-terra",
+    "github-copilot/gpt-5.6-sol",
+    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-5.6-terra",
+    "openai-codex/gpt-5.6-sol",
     "opencode-go/glm-5.2",
     "opencode-go/glm-5.3-flash",
     "opencode-go/glm-5.3",
