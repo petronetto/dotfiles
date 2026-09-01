@@ -125,6 +125,17 @@
     "light": "Gruvbox Material Light Mix",
     "dark": "Gruvbox Material Dark Mix"
   },
+  "file_types": {
+    "JSONC": [
+      "**/.zed/*.json",
+      "**/.vscode/**/*.json",
+      "**/{zed,Zed}/{settings,keymap,tasks,debug}.json",
+      "tsconfig*.json",
+    ],
+    "Markdown": [".rules", ".cursorrules", ".windsurfrules", ".clinerules"],
+    "Shell Script": [".env.*", "Brewfile", ".chezmoiignore"],
+    "TOML": [".editorconfig"],
+  },
   "auto_install_extensions": {
     "html": true,
     "php": true,
