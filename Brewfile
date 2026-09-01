@@ -51,6 +51,8 @@ brew "ansible"      # automation & provisioning
 brew "awscli"       # AWS CLI v2
 
 # --- AI coding agents & LLM tooling ---
+tap "jundot/omlx", "https://github.com/jundot/omlx"
+brew "omlx"          # local LLM inference on Apple Silicon (jundot/omlx tap)
 brew "pi-coding-agent"
 brew "agent-browser"
 brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
