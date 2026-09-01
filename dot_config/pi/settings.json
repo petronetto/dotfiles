@@ -15,8 +15,8 @@
   "warnings": {
     "anthropicExtraUsage": false
   },
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-sonnet-5",
+  "defaultProvider": "together",
+  "defaultModel": "zai-org/GLM-5.3-Flash",
   "lastChangelogVersion": "0.84.2",
   "enabledModels": [
     "anthropic/claude-haiku-4-5",
@@ -32,15 +32,20 @@
     "github-copilot/gpt-5.6-sol",
     "github-copilot/gpt-5.6-terra",
     "opencode-go/glm-5.2",
+    "opencode-go/glm-5.3-flash",
     "opencode-go/glm-5.3",
     "opencode-go/kimi-k3",
     "opencode-go/qwen3.8-max",
     "opencode-go/minimax-m3",
     "opencode-go/deepseek-v4-pro",
+    "together/zai-org/GLM-5.3",
+    "together/zai-org/GLM-5.3-Flash",
+    "together/zai-org/GLM-5.2",
+    "together/moonshotai/Kimi-K3",
+    "together/MiniMaxAI/MiniMax-M3",
     "openrouter/openrouter/free",
     "ollama/qwen3.8:27b-mlx",
     "ollama/ornith-1.5:35b",
-    "ollama/qwen3-coder:30b",
     "ollama/muse-glimmer:30b-mlx",
     "ollama/gemma4:31b-mlx"
   ]
