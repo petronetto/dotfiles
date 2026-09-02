@@ -15,6 +15,25 @@
   "warnings": {
     "anthropicExtraUsage": false
   },
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3,
+    "provider": {
+      "timeoutMs": 1800000,
+      "maxRetryDelayMs": 60000
+    }
+  },
+  "thinkingBudgets": {
+    "minimal": 1024,
+    "low": 4096,
+    "medium": 10240,
+    "high": 32768
+  },
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  },
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-terra",
   "lastChangelogVersion": "0.84.4",
