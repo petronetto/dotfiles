@@ -124,6 +124,7 @@ cask "todoist-app"
 # --- Utilities ---
 cask "rectangle"            # window management & snapping
 cask "maccy"                # clipboard manager
+cask "vorssaint"           # menu bar system utilities
 
 # --- Containers ---
 cask "docker-desktop"
