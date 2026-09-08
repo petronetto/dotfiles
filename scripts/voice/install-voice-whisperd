@@ -1,0 +1,124 @@
+#!/usr/bin/env zsh
+
+# Install the voice-whisperd transcription daemon and its LaunchAgent.
+#
+# Mirrors scripts/install-fn-f4-remap: deploy the daemon to
+# ~/.local/lib/voice/whisperd.py, write a LaunchAgent that runs it on demand
+# (RunAtLoad=false, KeepAlive=false, so launchd never auto-starts or restarts
+# it — the toggle script in step 001 starts it via kickstart, and the daemon
+# self-exits after an idle timeout), and bootstrap it.
+#
+# Idempotent: if the deployed daemon, the plist, and the load state are all
+# already correct, it skips straight to a no-op. Best-effort: a failure is
+# reported but never blocks the caller (e.g. a chezmoi provisioning run).
+#
+# Usage: scripts/voice/install-voice-whisperd
+
+set -euo pipefail
+
+LAUNCH_AGENT_LABEL="com.petronetto.voice-whisperd"
+LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/${LAUNCH_AGENT_LABEL}.plist"
+VOICE_DIR="${0:A:h}"
+VOICE_SOURCE="$VOICE_DIR/whisperd.py"
+VOICE_LIB="$HOME/.local/lib/voice/whisperd.py"
+DOMAIN="gui/$(id -u)"
+
+WHISPER_PYTHON=""
+resolve_venv_python() {
+  # Find the openai-whisper pipx venv python, then validate it can import
+  # whisper+torch. Tried in order: the deployed wrapper's shebang, the pipx
+  # bin dir, then the well-known venv path.
+  local cand b
+  if [[ -x "$HOME/.local/bin/whisper" ]]; then
+    cand="$(head -1 "$HOME/.local/bin/whisper" 2>/dev/null | awk '{sub(/^#!/, ""); print $1}')"
+  fi
+  if [[ -z "$cand" ]] && command -v pipx >/dev/null 2>&1; then
+    b="$(pipx environment --bin-dir 2>/dev/null || true)"
+    if [[ -n "$b" && -x "$b/whisper" ]]; then
+      cand="$(head -1 "$b/whisper" 2>/dev/null | awk '{sub(/^#!/, ""); print $1}')"
+    fi
+  fi
+  if [[ -z "$cand" ]]; then
+    cand="$HOME/.local/share/pipx/venvs/openai-whisper/bin/python"
+  fi
+  if [[ -x "$cand" ]] && "$cand" -c 'import whisper, torch' 2>/dev/null; then
+    WHISPER_PYTHON="$cand"
+    return 0
+  fi
+  echo "❌ could not locate a usable openai-whisper venv python (tried: $cand)" >&2
+  return 1
+}
+
+lib_up_to_date() {
+  [[ -f "$VOICE_LIB" ]] && diff -q "$VOICE_SOURCE" "$VOICE_LIB" &>/dev/null
+}
+
+plist_up_to_date() {
+  [[ -f "$LAUNCH_AGENT_PLIST" ]] && diff -q <(printf '%s\n' "$NEW_PLIST_CONTENT") "$LAUNCH_AGENT_PLIST" &>/dev/null
+}
+
+launch_agent_loaded() {
+  launchctl print "$DOMAIN/${LAUNCH_AGENT_LABEL}" &>/dev/null
+}
+
+main() {
+  echo "ℹ️ Installing voice-whisperd transcription daemon..."
+
+  resolve_venv_python || return 1
+  echo "ℹ️ Using openai-whisper venv: $WHISPER_PYTHON"
+
+  NEW_PLIST_CONTENT=$(cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${LAUNCH_AGENT_LABEL}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${WHISPER_PYTHON}</string>
+    <string>${VOICE_LIB}</string>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>KeepAlive</key>
+  <false/>
+</dict>
+</plist>
+EOF
+)
+
+  if lib_up_to_date && plist_up_to_date && launch_agent_loaded; then
+    echo "✅ voice-whisperd is already installed, skipping"
+    return 0
+  fi
+
+  if lib_up_to_date; then
+    echo "✅ Deployed daemon is already up to date"
+  else
+    echo "ℹ️ Deploying $VOICE_LIB..."
+    mkdir -p "$(dirname "$VOICE_LIB")"
+    cp -f "$VOICE_SOURCE" "$VOICE_LIB"
+  fi
+
+  if plist_up_to_date; then
+    echo "✅ LaunchAgent plist is already up to date"
+  else
+    echo "ℹ️ Writing $LAUNCH_AGENT_PLIST..."
+    mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")"
+    printf '%s\n' "$NEW_PLIST_CONTENT" > "$LAUNCH_AGENT_PLIST"
+
+    echo "ℹ️ Reloading LaunchAgent..."
+    launchctl bootout "$DOMAIN/${LAUNCH_AGENT_LABEL}" 2>/dev/null || true
+    launchctl bootstrap "$DOMAIN" "$LAUNCH_AGENT_PLIST"
+  fi
+
+  if ! launch_agent_loaded; then
+    echo "ℹ️ Loading LaunchAgent..."
+    launchctl bootstrap "$DOMAIN" "$LAUNCH_AGENT_PLIST"
+  fi
+
+  echo "✅ voice-whisperd is installed and on demand (idle-exit, KeepAlive=false)"
+}
+
+main || echo "❌ install-voice-whisperd failed, continuing..." >&2

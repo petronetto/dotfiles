@@ -1,0 +1,41 @@
+#!/usr/bin/env zsh
+
+# Fully revert the voice-whisperd daemon installed by install-voice-whisperd.
+#
+# Unloads the LaunchAgent, then removes the plist and the deployed daemon copy.
+# Idempotent: safe to re-run.
+#
+# Usage: scripts/voice/uninstall-voice-whisperd
+
+set -uo pipefail
+
+LABEL="com.petronetto.voice-whisperd"
+PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
+VOICE_LIB="$HOME/.local/lib/voice/whisperd.py"
+DOMAIN="gui/$(id -u)"
+
+echo "ℹ️ Uninstalling voice-whisperd..."
+
+if launchctl print "$DOMAIN/$LABEL" &>/dev/null; then
+    echo "ℹ️ Unloading LaunchAgent..."
+    launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null
+else
+    echo "ℹ️ LaunchAgent is not loaded"
+fi
+
+if [[ -f "$PLIST" ]]; then
+    echo "ℹ️ Removing $PLIST..."
+    rm -f "$PLIST"
+else
+    echo "ℹ️ LaunchAgent plist already removed"
+fi
+
+if [[ -f "$VOICE_LIB" ]]; then
+    echo "ℹ️ Removing $VOICE_LIB..."
+    rm -f "$VOICE_LIB"
+    rmdir "$(dirname "$VOICE_LIB")" 2>/dev/null || true
+else
+    echo "ℹ️ Deployed daemon already removed"
+fi
+
+echo "✅ voice-whisperd fully reverted (LaunchAgent unbootstrapped, plist and daemon removed)"

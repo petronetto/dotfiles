@@ -1,0 +1,188 @@
+#!/usr/bin/env zsh
+
+# Automated test for voice-whisperd.
+#
+# Proves the daemon contract without leaving anything running:
+#   1. builds a synthetic WAV fixture (ffmpeg sine + silence; NOT a live mic),
+#   2. runs the daemon directly with a short idle timeout to control the test,
+#   3. polls /health until it is ready (model cached, so load is one-time),
+#   4. POSTs the fixture twice via `curl -F file=@fixture.wav`, asserting a JSON
+#      response with a "text" field, and times both requests,
+#   5. proves the model is held in memory (exactly one "model loaded" log line),
+#   6. proves idle self-exit (the process vanishes after the timeout, no restart),
+#   7. validates the LaunchAgent plist wiring (RunAtLoad/KeepAlive false) and
+#      confirms launchd does not auto-start it, then leaves it unbootstrapped.
+#
+# Usage: scripts/voice/test-voice-whisperd
+
+set -uo pipefail
+
+LABEL="com.petronetto.voice-whisperd"
+PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
+VOICE_DIR="${0:A:h}"
+VOICE_LIB="$HOME/.local/lib/voice/whisperd.py"
+DOMAIN="gui/$(id -u)"
+PORT="${VOICE_WHISPERD_PORT:-8765}"
+IDLE="${VOICE_WHISPERD_IDLE_TIMEOUT:-4}"
+
+DAEMON_PID=""
+DAEMON_LOG=""
+FFIX=""
+
+cleanup() {
+   [[ -n "$DAEMON_PID" ]] && kill "$DAEMON_PID" 2>/dev/null
+   launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null
+   rm -rf "$FFIX"
+}
+trap cleanup EXIT
+trap cleanup INT TERM
+
+fail() { echo "❌ $1" >&2; exit 1; }
+
+# A monotonically increasing timestamp in seconds. EPOCHREALTIME is unreliable
+# in non-interactive zsh (empty / unset under `set -u` here); `date +%s.%N`
+# gives sub-second precision where the local `date` supports %N, with a
+# portable fallback to whole seconds if %N prints literally.
+now() {
+  local t="$(date +%s.%N 2>/dev/null)"
+  [[ "$t" == *N ]] && t="${t%N}"   # %N unsupported on this box: strip literal
+  printf '%s\n' "$t"
+}
+
+resolve_venv_python() {
+   # Same discovery as install-voice-whisperd; hard-fails if none is usable.
+  local cand b
+  if [[ -x "$HOME/.local/bin/whisper" ]]; then
+    cand="$(head -1 "$HOME/.local/bin/whisper" 2>/dev/null | awk '{sub(/^#!/, ""); print $1}')"
+  fi
+  if [[ -z "$cand" ]] && command -v pipx >/dev/null 2>&1; then
+    b="$(pipx environment --bin-dir 2>/dev/null || true)"
+    if [[ -n "$b" && -x "$b/whisper" ]]; then
+      cand="$(head -1 "$b/whisper" 2>/dev/null | awk '{sub(/^#!/, ""); print $1}')"
+    fi
+  fi
+  if [[ -z "$cand" ]]; then
+    cand="$HOME/.local/share/pipx/venvs/openai-whisper/bin/python"
+  fi
+  if [[ -x "$cand" ]] && "$cand" -c 'import whisper, torch' 2>/dev/null; then
+    echo "$cand"
+    return 0
+  fi
+  return 1
+}
+
+main() {
+  echo "ℹ️ Running voice-whisperd test..."
+
+  local py; py="$(resolve_venv_python)" \
+     || fail "could not locate a usable openai-whisper venv python"
+  echo "ℹ️ Using openai-whisper venv: $py"
+  command -v ffmpeg >/dev/null 2>&1 || fail "ffmpeg not found on PATH"
+  command -v curl >/dev/null 2>&1 || fail "curl not found on PATH"
+
+  # 1. Synthetic fixture via ffmpeg: 2s of 440Hz tone + 1s of appended silence.
+  FFIX="$(mktemp -d)"
+  local fix="$FFIX/fixture.wav"
+  echo "ℹ️ Building fixture WAV: $fix"
+  ffmpeg -y -f lavfi -i "sine=frequency=440:duration=2" \
+     -af "apad=pad_dur=1" -f wav "$fix" >/dev/null 2>&1 \
+     || fail "ffmpeg could not build the fixture WAV"
+  [[ -s "$fix" ]] || fail "fixture WAV is empty"
+  echo "ℹ️ Fixture: $fix ($(wc -c < "$fix" | tr -d ' ') bytes)"
+
+  # 2. Run the daemon directly (idle timeout short so the test is fast).
+  DAEMON_LOG="$FFIX/daemon.log"
+  VOICE_WHISPERD_PORT="$PORT" VOICE_WHISPERD_IDLE_TIMEOUT="$IDLE" \
+     "$py" "$VOICE_DIR/whisperd.py" > "$DAEMON_LOG" 2>&1 &
+  DAEMON_PID=$!
+  echo "ℹ️ Started daemon pid $DAEMON_PID (port $PORT, idle ${IDLE}s); model loading..."
+
+  # 3. Poll /health until ready (one-time model load; allow up to 180s on CPU).
+  for i in {1..180}; do
+    if curl -sf "http://127.0.0.1:$PORT/health" > /dev/null 2>&1; then
+       echo "ℹ️ /health ready after ${i}s"
+       break
+    fi
+     (( i == 180 )) && { tail -n 20 "$DAEMON_LOG" >&2;
+        fail "daemon never became ready (see log); is the port busy or the model missing?"; }
+    sleep 1
+  done
+  echo "ℹ️ /health: $(curl -sf "http://127.0.0.1:$PORT/health")"
+
+  # 4. Two transcribe requests; time each and assert the JSON {text} contract.
+  local t0 t1 t2
+  echo "ℹ️ Transcribe request 1 (model already in memory)..."
+  t0=$(now)
+  curl -sf -o "$FFIX/resp1.json" -F "file=@$fix" "http://127.0.0.1:$PORT/transcribe" \
+     || fail "transcribe request 1 failed (non-2xx)"
+  t1=$(now)
+  "$py" - "$FFIX/resp1.json" <<'PY' \
+     || fail "transcribe request 1 did not return a JSON object with a 'text' field"
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert "text" in d, "missing 'text' key"
+print("    transcript:", repr(d["text"]))
+print("    chars:", len(d["text"]))
+PY
+
+  echo "ℹ️ Transcribe request 2 (must NOT reload the model)..."
+  t2pre=$(now)
+  curl -sf -o "$FFIX/resp2.json" -F "file=@$fix" "http://127.0.0.1:$PORT/transcribe" \
+     || fail "transcribe request 2 failed (non-2xx)"
+  t2=$(now)
+
+  # 5. In-memory proof: the model log line appears exactly once across both requests.
+  local loads
+  loads="$(grep -c 'model loaded, ready' "$DAEMON_LOG" || true)"
+   [[ "$loads" -eq 1 ]] || fail "expected 1 'model loaded' line, found $loads (model was reloaded?)"
+  echo "ℹ️ request1=$(awk -v a=$t0 -v b=$t1 'BEGIN{printf "%.2f", b-a}')s \
+request2=$(awk -v a=$t2pre -v b=$t2 'BEGIN{printf "%.2f", b-a}')s \
+(mloaded once => model held in memory)"
+
+  # 6. Idle self-exit: stop sending traffic; the process must vanish on its own.
+  echo "ℹ️ Going idle; waiting for the daemon to self-exit (<~$((IDLE + 10))s)..."
+  for i in {1..$((IDLE + 10))}; do
+     kill -0 "$DAEMON_PID" 2>/dev/null || break
+    sleep 1
+  done
+  if kill -0 "$DAEMON_PID" 2>/dev/null; then
+    echo "    (timed out; sending SIGTERM)"
+    tail -n 20 "$DAEMON_LOG" >&2
+    fail "daemon did not self-exit after the idle timeout"
+  fi
+   # launchd must not respawn it: it is gone and stays gone.
+  sleep 3
+  if pgrep -fl "whisperd.py" >/dev/null 2>&1; then
+     pgrep -fl "whisperd.py" >&2
+     fail "a whisperd.py process is still running after idle exit"
+  fi
+   DAEMON_PID=""
+  echo "✅ daemon self-exited after idle timeout (no restart)"
+
+  # 7. LaunchAgent wiring: install (idempotent), verify the flags, prove no
+  #    auto-start, then leave the agent unbootstrapped via the cleanup trap.
+  "$VOICE_DIR/install-voice-whisperd"
+   [[ -f "$PLIST" ]] || fail "plist was not written by the installer"
+  grep -q '<key>RunAtLoad</key>' "$PLIST" \
+     && grep -A1 '<key>RunAtLoad</key>' "$PLIST" | grep -q '<false/>' \
+    || fail "plist is not RunAtLoad=false"
+  grep -A1 '<key>KeepAlive</key>' "$PLIST" | grep -q '<false/>' \
+     || fail "plist is not KeepAlive=false"
+  echo "✅ plist is RunAtLoad=false and KeepAlive=false"
+
+  echo "ℹ️ Bootstrapping the LaunchAgent to confirm wiring..."
+  launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null
+  launchctl bootstrap "$DOMAIN" "$PLIST" \
+     || fail "could not bootstrap the LaunchAgent"
+  launchctl print "$DOMAIN/$LABEL" >/dev/null \
+     || fail "bootstrapped LaunchAgent does not report"
+  if pgrep -fl "whisperd.py" >/dev/null 2>&1; then
+     pgrep -fl "whisperd.py" >&2
+     fail "RunAtLoad=false should not auto-start a whisperd.py process"
+  fi
+  echo "✅ LaunchAgent bootstraps; launchd does not auto-start it (no whisperd.py process)"
+
+  echo "✅ voice-whisperd test passed"
+}
+
+main
