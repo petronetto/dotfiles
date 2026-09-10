@@ -18,7 +18,6 @@ Example: "Acknowledged the global AGENTS.md and will follow it. Summary: ask bef
 ## Token & Context Efficiency
 - Save tokens and keep the context window clean.
 - For codebase exploration, delegate to sub-agents instead of reading files directly into the main context.
-- Run `rtk --help` at the start of a session to see supported commands, then prefix supported commands with `rtk` (e.g. `rtk rg`, `rtk git`).
 
 ## Governing Principles
 - Prefer quality, simplicity, robustness, and long-term maintainability over development speed or cost.

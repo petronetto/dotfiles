@@ -11,10 +11,6 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/block-legacy-cli.sh"
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/rtk-rewrite.sh"
           }
         ]
       }
