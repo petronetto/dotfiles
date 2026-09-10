@@ -15,6 +15,17 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 - Read the PRD for problem, approach, and key decisions; read `CONTEXT.md` for the provenance behind those decisions, and link step files back to them instead of restating. Treat any `ADR-NNN-*.md` as the authoritative record for the decision it covers.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
+- Reviewability is a hard requirement: follow the Writing rules below, and split any step that cannot stay within them.
+
+## Writing rules
+
+Steps are written for the reviewer, not for the planner:
+
+- Verb first, one action per chunk row, files named in every row.
+- Write outcomes, not design summaries: a chunk row states what must be observably true when it is done. Mechanics go in "Done when" only where they are non-obvious; rationale lives in `decisions.md`, never in the step file.
+- One sentence per table cell; no inline pseudo-code unless the algorithm is itself the deliverable.
+- Say it once: behavior lives in Chunks, commands in Verify, conditions in Acceptance. A fact appears in exactly one section.
+- At most ~30 content lines per step file (Review log and Commit excluded). Split the step instead of growing the file.
 
 ## Gotchas
 
@@ -46,10 +57,13 @@ Break the PRD into tiny, independently-reviewable steps. Each has one responsibi
 ```
 <project-full-path>/.plans/<branch>/<task-name>/NNN-<step-name>.md
 ```
-Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000). Update the PRD's "Steps" index in `PRD.md` to match.
+Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000), following the Writing rules.
 
-### 5. Present and stop
-Summarize the plan and list the files created. Do not implement. Hand off to `build` only after approval.
+### 5. Write the flow overview
+Fill the template at `assets/flow-file.md` into `FLOW.md` in the plan directory: one row per step, generated from the step files. Keep it in sync whenever steps are added, split, or reordered. Include the flow graph only when dependencies branch; omit it for strictly linear plans.
+
+### 6. Present and stop
+Present the plan for review by showing FLOW.md's table in the reply (that table is the review surface; the step files are the detail layer), then list the files created. Do not implement. Hand off to `build` only after approval.
 
 ## Rationalizations
 
@@ -59,6 +73,7 @@ Summarize the plan and list the files created. Do not implement. Hand off to `bu
 | "I can hold it all in my head." | Context windows are finite. Step files survive session boundaries and compaction. |
 | "It'll get planned while implementing." | Planning without decomposition is just typing with no checkpoints. |
 | "One big step is fine." | A large step hides a bug and makes a rollback painful. Small, working steps are free. |
+| "The plan needs all that detail to be safe." | Restated facts are not detail; they are reading load. One fact in one place, and the flow table carries the overview. |
 
 ## Red flags
 
@@ -70,7 +85,9 @@ Summarize the plan and list the files created. Do not implement. Hand off to `bu
 
 Before handing off to `build`, confirm:
 - [ ] The PRD (`PRD.md`) is approved.
-- [ ] Every step file has a goal, in/out-of-scope, and acceptance criteria.
+- [ ] Every step file has Delivers, Out of scope, a Chunks table with files and "Done when" on every row, and Acceptance criteria.
+- [ ] No fact is restated across sections; each appears once (spot-check one step).
+- [ ] `FLOW.md` exists with one row per step and matches the step files.
 - [ ] Every step has a verification step (test, build, or manual check).
 - [ ] Each step's verification confirms the codebase still builds/runs after that step lands alone, not just that its own new behavior works.
 - [ ] Step verification criteria account for the Definition of Done (`~/.agents/references/definition-of-done.md`), not just each step's own acceptance criteria.
@@ -84,5 +101,6 @@ Before handing off to `build`, confirm:
 - Question format and decision log: `~/.agents/references/question-format.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - Step file template: `assets/step-file.md`
+- Flow overview template: `assets/flow-file.md`
 - PRD template (owned by `spec`): `../spec/assets/prd-file.md`
 - Plan directory script: `scripts/plan-dir.sh`

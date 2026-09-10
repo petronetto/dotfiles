@@ -26,7 +26,7 @@ The previous attempt at this step was reviewed and changes were requested:
 <reviewer findings, verbatim, from the most recent cycle>
 
 ## Your task
-- Implement only the "Implementation chunks" listed in the step above — do not expand scope beyond it.
+- Implement only the chunk rows in the step's Chunks table — do not expand scope beyond it.
 - Run every piece of new code through the reuse/YAGNI gate before writing it.
 - Add/update tests per the step's "Verification" section; run the project's tests and linters, piping long output.
 - Hold the result to the Definition of Done above, not just the step's acceptance criteria.
