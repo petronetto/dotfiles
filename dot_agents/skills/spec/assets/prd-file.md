@@ -44,10 +44,9 @@ Dev:   <dev command, if any>
 ```
 
 ## Steps
-Index of step files, filled by `plan` as it writes `NNN-<step-name>.md`.
-Kept in sync as steps are added, split, or reordered.
-1. `000-<step-name>.md` — ...
-2. `001-<step-name>.md` — ...
+`plan` decomposes this PRD into step files and maintains the plan's review
+surface (step index, dependencies, flow) in `FLOW.md` next to this file.
+Do not duplicate step details here.
 
 ## Key decisions
 Decisions resolved during the interview that constrain multiple steps
