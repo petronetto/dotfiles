@@ -53,7 +53,6 @@ brew "awscli"       # AWS CLI v2
 # --- AI coding agents & LLM tooling ---
 brew "pi-coding-agent"
 brew "agent-browser"
-brew "rtk"          # LLM token-saving proxy (rtk-ai.app)
 
 # --- Media ---
 brew "ffmpeg"         # multimedia processing (transcode, extract, etc.)
