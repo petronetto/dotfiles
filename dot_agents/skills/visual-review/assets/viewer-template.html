@@ -1,0 +1,188 @@
+<!doctype html>
+<!--
+  viewer-template.html: the page contract for the visual-review skill.
+
+  The agent fills this template with real data from a plan directory
+  (FLOW.md, the step files, PRD.md) and writes the result as
+  `visual-review.html` in that plan directory. The result must stay a
+  single self-contained file: inline CSS only, zero JavaScript, zero
+  external URLs, works offline.
+
+  Contract rules (violating any of these fails the skill's checklist):
+  1. Keep the <style> block exactly as-is; extend it only with new classes
+     the data genuinely needs.
+  2. One <tr> per step in the flow table, in FLOW.md order.
+  3. One <article class="step"> per step file, in step order, carrying that
+     file's Status value as the badge class (pending | in-progress | done |
+     blocked).
+  4. The <section class="graph"> ships in every generated page ONLY when
+     dependencies branch; omit the whole section for linear plans.
+  5. Decisions and risks come from PRD.md verbatim; do not restate or
+     invent content.
+  6. No data may be invented: if a file does not say it, the page does not
+     show it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan review — <task-name></title>
+<style>
+  :root {
+    --bg: #fafafa; --fg: #1a1a1a; --muted: #667085; --card: #ffffff;
+    --border: #d0d5dd; --accent: #175cd3; --head: #f2f4f7;
+    --pending: #667085; --inprogress: #175cd3; --done: #067647; --blocked: #b42318;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101418; --fg: #e6e9ef; --muted: #98a2b3; --card: #171c22;
+      --border: #2a3138; --accent: #7cb2ff; --head: #1c2229;
+      --inprogress: #7cb2ff; --done: #4cc38a; --blocked: #f97066;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 60rem; padding: 1.5rem 1rem 3rem;
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1.35rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 2rem 0 .75rem; }
+  a { color: var(--accent); }
+  .meta { color: var(--muted); font-size: .85rem; margin-bottom: 1.5rem; }
+  .summary { display: flex; gap: .5rem; flex-wrap: wrap; margin: 0 0 .25rem; }
+  .badge {
+    display: inline-block; padding: .1rem .55rem; border-radius: 999px;
+    font-size: .75rem; font-weight: 600; color: #fff; background: var(--pending);
+  }
+  .badge.pending { background: var(--pending); }
+  .badge.in-progress { background: var(--inprogress); }
+  .badge.done { background: var(--done); }
+  .badge.blocked { background: var(--blocked); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; background: var(--card); }
+  th, td { border: 1px solid var(--border); padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: var(--head); font-weight: 600; }
+  td.files, td.depends { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; }
+  .step {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem 1.25rem; margin: 0 0 1rem;
+  }
+  .step header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: .5rem; }
+  .step h3 { margin: 0; font-size: 1.05rem; }
+  .step header .badge { margin-left: auto; }
+  .step table { margin: .5rem 0; }
+  .step .delivers { margin: 0 0 .75rem; }
+  .verify, .acceptance { font-size: .9rem; color: var(--fg); }
+  .verify .cmd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem;
+    background: var(--head); border: 1px solid var(--border); border-radius: 6px;
+    padding: .15rem .4rem; display: inline-block; margin: .1rem 0;
+  }
+  .graph { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .node {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: .5rem .75rem; font-size: .85rem;
+  }
+  .node .id { color: var(--muted); font-size: .75rem; display: block; }
+  .arrow { color: var(--muted); font-size: 1.1rem; }
+  .branch-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; width: 100%; margin-left: 2rem; }
+  .risk { color: var(--blocked); font-weight: 600; }
+  footer { margin-top: 2.5rem; color: var(--muted); font-size: .8rem; }
+</style>
+</head>
+<body>
+
+<h1>Plan review — <task-name></h1>
+<p class="meta">
+  <project-path> · branch <branch> · generated YYYY-MM-DD from FLOW.md, step files, and PRD.md
+</p>
+
+<!-- STATUS SUMMARY: one badge per status value present, with a count. -->
+<p class="summary">
+  <span class="badge done">3 done</span>
+  <span class="badge pending">1 pending</span>
+</p>
+
+<section>
+  <h2>Flow</h2>
+  <!-- One row per step, in FLOW.md order. Columns: #, Step, Delivers, Files, Depends, Verify. -->
+  <table>
+    <thead>
+      <tr><th>#</th><th>Step</th><th>Delivers</th><th>Files</th><th>Depends</th><th>Verify</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>000</td><td>example-step</td>
+        <td>One sentence from FLOW.md's Delivers cell.</td>
+        <td class="files">file(s) touched</td>
+        <td class="depends">none</td>
+        <td>verification method</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- GRAPH SECTION: include this whole section only when dependencies branch.
+     Chain linear branches in one .graph row with .arrow separators between
+     .node elements. For parallel groups, wrap the parallel nodes of one depth
+     level in a .branch-row so they sit on their own line. -->
+<section>
+  <h2>Dependencies</h2>
+  <div class="graph">
+    <span class="node"><span class="id">000</span>example-a</span>
+    <span class="arrow">&#8594;</span>
+    <span class="branch-row">
+      <span class="node"><span class="id">001</span>example-b1</span>
+      <span class="node"><span class="id">002</span>example-b2</span>
+    </span>
+    <span class="arrow">&#8594;</span>
+    <span class="node"><span class="id">003</span>example-c</span>
+  </div>
+</section>
+
+<section>
+  <h2>Steps</h2>
+  <!-- One article per step file, in step order. Status badge class = the
+       step file's Status value. Chunks render as a table; Verify and
+       Acceptance stay verbatim from the step file. -->
+  <article class="step">
+    <header>
+      <span class="badge done">done</span>
+      <h3>000 — Example step title</h3>
+    </header>
+    <p class="delivers">One sentence: what this step changes, and why it sits at this position in the flow.</p>
+    <table>
+      <thead><tr><th>#</th><th>Change</th><th>Files</th><th>Done when</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Verb-first instruction</td><td class="files">file(s)</td><td>observable outcome</td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+
+<section>
+  <h2>Key decisions</h2>
+  <!-- From PRD.md's Key decisions table, verbatim, traceability column included. -->
+  <table>
+    <thead><tr><th>#</th><th>Decision</th><th>Rationale</th><th>Traceability</th></tr></thead>
+    <tbody>
+      <tr><td>D1</td><td>Example decision</td><td>One-line rationale</td><td>ADR-001</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Risks and open questions</h2>
+  <!-- From PRD.md's Risks section; render each risk as a list item. -->
+  <ul>
+    <li><span class="risk">Risk:</span> example risk from the PRD.</li>
+  </ul>
+</section>
+
+<p class="meta">
+  Read-only review surface generated by the <code>visual-review</code> skill;
+  the plan files remain the source of truth. Regenerate after plan changes.
+</p>
+
+</body>
+</html>
