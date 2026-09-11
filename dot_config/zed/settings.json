@@ -42,7 +42,7 @@
     "mode": "subtle",
     "allow_data_collection": "no",
     "ollama": {
-      "model": "qwen2.5-coder:1.5b"
+      "model": "qwen2.5-coder:14b"
     },
     "provider": "ollama"
   },
@@ -68,11 +68,6 @@
     "favorite_models": [
       {
         "provider": "ollama",
-        "model": "glm-4.7-flash:latest",
-        "enable_thinking": true
-      },
-      {
-        "provider": "ollama",
         "model": "qwen3.8:27b-mlx",
         "enable_thinking": true
       },
@@ -83,7 +78,7 @@
       },
       {
         "provider": "ollama",
-        "model": "ornith:35b",
+        "model": "ornith-1.5:35b",
         "enable_thinking": true
       },
       {
@@ -102,8 +97,8 @@
   "cli_default_open_behavior": "new_window",
   "proxy": "",
   "project_panel": {
+    "folder_indicator": "icon",
     "auto_fold_dirs": false,
-    "folder_icons": true,
     "hide_gitignore": false,
     "dock": "left"
   },
@@ -123,7 +118,7 @@
   "theme": {
     "mode": "system",
     "light": "Gruvbox Material Light Mix",
-    "dark": "Gruvbox Material Dark Mix"
+    "dark": "Ristretto"
   },
   "file_types": {
     "JSONC": [
