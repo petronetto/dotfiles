@@ -7,6 +7,7 @@
 | Project | <project-full-path>    |
 | Branch   | <branch>                |
 | Task     | <task-name>             |
+| Roadmap  | <entry in `.plans/roadmap/ROADMAP.md` this PRD implements (e.g. E02), or none> |
 
 ## Problem
 What's broken, missing, or requested, and why it matters. 2-4 sentences.
