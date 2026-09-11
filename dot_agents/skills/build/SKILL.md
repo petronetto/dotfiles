@@ -49,7 +49,7 @@ For each step (lowest `NNN` not yet `Status: done`):
 - Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Set `Status: done`, record the final message under `Commit`, move to the next step.
 
 ### 3. Finish
-When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements.
+When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md`, set that entry's `Status` to `done` before reporting.
 
 ## Rationalizations
 

@@ -59,8 +59,11 @@ Assumptions table with status `open` or `accepted`. Ask the user to correct
 any of them before you proceed; move corrected ones to `validated` or
 `corrected`. Don't silently fill ambiguous requirements.
 
-### 5. Capability map (only when needed)
-Most requests are one capability; skip this. If one request bundles several independently testable capabilities that could ship and be verified separately, first propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
+### 5. Route before interviewing
+Most requests are one capability; skip this. Two exceptions:
+
+- **Greenfield**: the request is a whole new project built from scratch, with no meaningful codebase to explore. Stop and hand off to `blueprint`: it writes the project charter (stack, boundaries, constraints) and the epic roadmap, and each epic returns here afterwards as a normal request.
+- **Multi-capability**: one request bundles several independently testable capabilities that could ship and be verified separately. First propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
 
 ### 6. Interview the user
 Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/<branch>/<task-name>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it; omit it only for pure user preferences with no supporting finding (per `question-format.md`). Never proceed with unresolved decisions.
@@ -79,7 +82,7 @@ skip the ceremony for decisions with no real alternatives.
 Fill the template at `assets/prd-file.md` into `.plans/<branch>/<task-name>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it.
 
 ### 9. Present and stop
-Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). Do not implement. Hand off to `plan` only after approval.
+Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md`, set that entry's `Status` to `in-progress` and fill its `PRD` column with this task's plan directory. Do not implement. Hand off to `plan` only after approval.
 
 ## Rationalizations
 
@@ -89,6 +92,7 @@ Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions
 | "I'll write the spec after the code." | That's documentation, not specification. The PRD's value is forcing clarity before code exists. |
 | "The user knows what they want." | Even clear requests carry implicit assumptions. Surfacing them up front is the whole point. |
 | "It's one big feature; I'll keep it as one PRD." | If acceptance criteria cluster into independently testable groups, a monolithic PRD forces every step to reason over the whole contract. A small capability map is the cheap alternative. |
+| "It's a whole new project; one PRD covers it." | A project is many epics with their own cycles. `blueprint` writes the charter and roadmap first; each epic then comes back here as a normal request. |
 | "Planning is overhead." | Planning is the task. A 15-minute PRD prevents hours of rework. |
 
 ## Red flags
@@ -111,6 +115,7 @@ Before handing off to `plan`, confirm:
 - [ ] Cross-cutting decisions with real alternatives were promoted to `ADR-NNN-*.md`; the corresponding `decisions.md` entries note the promotion.
 - [ ] Assumptions were surfaced and either corrected or accepted.
 - [ ] `PRD.md` is saved under `.plans/<branch>/<task-name>/`.
+- [ ] If the PRD traces to a roadmap entry, that entry's `Status` is `in-progress` and its `PRD` link points here.
 
 ## References
 

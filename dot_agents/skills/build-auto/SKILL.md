@@ -53,7 +53,7 @@ Repeat until no `pending` steps remain (independent steps may run through this l
 **e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. `Status: done`, record the commit message, move on.
 
 ### 3. Finish
-Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done.
+Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md` and every step of that PRD's plan is `done`, set that entry's `Status` to `done` before reporting.
 
 ## Rationalizations
 
