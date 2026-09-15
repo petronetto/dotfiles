@@ -5,6 +5,8 @@ Follow these guidelines in every project. The instructions below are not optiona
 
 ## Environment & Tools
 - Primary environment: macOS, Zsh, Homebrew. Prefer `fd`, `rg`, `bat`, `lsd`, `fzf`, `httpie`, `jq`, and `tldr` when available.
+- `ast-grep` is installed. For any code search that needs syntax or structure awareness, default to `ast-grep --lang <language> -p '<pattern>'`. Use text-only search (`rg`) only when a plain-text match is enough.
+- Use `ast-grep outline <file-or-dir>` for a cheap structural map (imports, exports, members) before you read full source.
 
 ## Token & Context Efficiency
 - Keep responses and context focused. Delegate codebase exploration when it reduces main-context use; disable sub-agent thinking for simple tasks.
