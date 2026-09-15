@@ -39,6 +39,7 @@ brew "lsd"          # ls replacement (nerd-font icons)
 brew "zoxide"       # cd replacement (frecency-based)
 brew "fzf"          # fuzzy finder
 brew "ripgrep"      # grep replacement
+brew "ast-grep"     # AST-based structural code search (used by agent skills)
 brew "atuin"        # synced, searchable shell history
 brew "procs"        # ps replacement
 brew "tlrc"         # community-driven, simplified man pages
