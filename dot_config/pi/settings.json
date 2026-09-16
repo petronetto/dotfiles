@@ -61,6 +61,7 @@
     "openrouter/openrouter/free",
     "ollama/qwen3.8:27b-mlx",
     "ollama/ornith-1.5:35b",
-    "ollama/gemma4:31b-mlx"
+    "ollama/gemma4:31b-mlx",
+    "cline-pass/*"
   ]
 }
