@@ -34,8 +34,8 @@
     "reserveTokens": 16384,
     "keepRecentTokens": 20000
   },
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
+  "defaultProvider": "cline-pass",
+  "defaultModel": "cline-pass/glm-5.3-flash",
   "lastChangelogVersion": "0.85.1",
   "enabledModels": [
     "anthropic/claude-haiku-4-5",
