@@ -13,12 +13,6 @@
     },
   },
   {
-    "context": "Editor && vim_mode == insert",
-    "bindings": {
-      // "j k": "vim::NormalBefore"
-    },
-  },
-  {
     "context": "Editor",
     "bindings": {
       "cmd-shift-d": "editor::DuplicateLineDown"
