@@ -311,6 +311,8 @@ function setActivityPhase(phase: ActivityPhase): void {
 
 // ── Rendering ──
 // Pure string builders over cached state only; never throw on missing data.
+// No separator rules: pi's editor already draws border lines above and
+// below the prompt, so ours would double them.
 
 // Join two groups on one line with the right group flush at `width`; when
 // they don't fit, hard-clip like the validated prototype instead of moving
@@ -321,14 +323,15 @@ function joinSpread(width: number, left: string, right: string): string {
   return pad >= 1 ? left + " ".repeat(pad) + right : truncateToWidth(`${left} ${right}`, width, "");
 }
 
-// Git chip: branch icon + branch name (dim), a state dot (success when
-// clean, warning when dirty - the prototype's identity dot), then dim
-// change counts and ahead marker. Absent outside a repo / detached HEAD.
+// Git chip: branch icon + branch name in the success token (the
+// prototype's green chip), a state dot (success when clean, warning when
+// dirty - the prototype's identity dot), then dim change counts and ahead
+// marker. Absent outside a repo / detached HEAD.
 function renderGitChip(theme: Theme): string {
   const snapshot = gitSnapshot;
   if (!snapshot) return "";
   const dot = theme.fg(snapshot.dirty ? "warning" : "success", icons.dot);
-  const parts = [theme.fg("dim", `${icons.branch} ${snapshot.branch}`), dot];
+  const parts = [theme.fg("success", `${icons.branch} ${snapshot.branch}`), dot];
   if (snapshot.staged > 0) parts.push(theme.fg("dim", `+${snapshot.staged}`));
   if (snapshot.modified > 0) parts.push(theme.fg("dim", `~${snapshot.modified}`));
   if (snapshot.ahead > 0) parts.push(theme.fg("dim", `${icons.up}${snapshot.ahead}`));
@@ -336,11 +339,10 @@ function renderGitChip(theme: Theme): string {
 }
 
 // Top row: folder icon + ~-shortened cwd and the git chip left, session
-// cost and elapsed time right, full-width rule as the widget's last line.
+// cost and elapsed time right.
 function renderTopRow(width: number, theme: Theme): string[] {
-  const rule = theme.fg("dim", "─".repeat(Math.max(0, width)));
   const ctx = latestCtx;
-  if (!ctx) return [rule];
+  if (!ctx) return [];
 
   const cwd = shortenCwd(ctx.sessionManager.getCwd(), process.env.HOME || process.env.USERPROFILE);
   const dir = theme.fg("dim", `${icons.folder} ${cwd}`);
@@ -348,7 +350,7 @@ function renderTopRow(width: number, theme: Theme): string[] {
   const left = gitChip === "" ? dir : `${dir} ${gitChip}`;
   const cost = theme.fg("dim", `${icons.cost} ${formatCost(collectSessionCost(ctx.sessionManager.getBranch()))}`);
   const time = theme.fg("dim", `${icons.clock} ${formatElapsed(Math.max(0, Date.now() - sessionStart))}`);
-  return [joinSpread(width, left, `${cost} ${time}`), rule];
+  return [joinSpread(width, left, `${cost} ${time}`)];
 }
 
 // Context meter: 20 cells at ≥ 85 columns, 10 below (D10); fill count =
@@ -478,20 +480,19 @@ function renderStatuses(width: number, theme: Theme, footerData: ReadonlyFooterD
   return line === "" ? "" : truncateToWidth(theme.fg("dim", line), width, theme.fg("dim", "..."));
 }
 
-// Footer: a full-width rule, then the context meter and activity segment
-// left with model chips flush right, then the statuses line when another
-// extension has set one. The activity segment composes before the spacer,
-// so the right chips never move when it appears or disappears.
+// Footer: the context meter and activity segment left with model chips
+// flush right, then the statuses line when another extension has set one.
+// The activity segment composes before the spacer, so the right chips
+// never move when it appears or disappears.
 function renderFooter(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string[] {
-  const rule = theme.fg("dim", "─".repeat(Math.max(0, width)));
   const ctx = latestCtx;
-  if (!ctx) return [rule];
+  if (!ctx) return [];
 
   const usage = ctx.getContextUsage();
   const meter = renderMeter(width, usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "", theme);
   const activity = renderActivity(theme);
   const left = activity === "" ? meter : `${meter} ${activity}`;
-  const lines = [rule, fitFooterRow(width, left, renderChips(ctx, theme))];
+  const lines = [fitFooterRow(width, left, renderChips(ctx, theme))];
   const statuses = renderStatuses(width, theme, footerData);
   if (statuses !== "") lines.push(statuses);
   return lines;
