@@ -2,7 +2,7 @@
 // widget above the editor and a footer with a context meter, activity, and
 // model chips. Design: .plans/main/pi-statusbar/PRD.md.
 // Currently implemented: the top row widget (dir, git, cost, elapsed time)
-// and the footer (context meter, model chips).
+// and the footer (context meter, activity, model chips).
 
 import type {
   ExtensionAPI,
@@ -251,6 +251,58 @@ function stopGitWatchers(): void {
   }
 }
 
+// ── Activity ──
+// Goal 9: while a run is active the footer's activity segment is the single
+// working indicator; pi's built-in working row is hidden at install (D9) and
+// only restored by the /statusbar toggle (step 006).
+
+// Braille frames from the validated prototype, in advance order.
+const SPINNER_FRAMES = [
+  "\u280B",
+  "\u2819",
+  "\u2839",
+  "\u2838",
+  "\u283C",
+  "\u2834",
+  "\u2826",
+  "\u2827",
+  "\u2807",
+  "\u280F",
+];
+const SPINNER_INTERVAL_MS = 120;
+
+type ActivityPhase = "idle" | "thinking" | "streaming";
+
+let activityPhase: ActivityPhase = "idle";
+let spinFrame = 0;
+let spinTimer: ReturnType<typeof setInterval> | undefined;
+
+function startSpinner(): void {
+  if (spinTimer !== undefined) return;
+  spinTimer = setInterval(() => {
+    spinFrame = (spinFrame + 1) % SPINNER_FRAMES.length;
+    latestTui?.requestRender();
+  }, SPINNER_INTERVAL_MS);
+}
+
+// Idempotent: agent_end and agent_settled can both land idle, and dispose
+// must be safe on an already-stopped timer.
+function stopSpinner(): void {
+  if (spinTimer === undefined) return;
+  clearInterval(spinTimer);
+  spinTimer = undefined;
+}
+
+// Repaints on transition so the segment appears/disappears on the event
+// instead of waiting for the next tick.
+function setActivityPhase(phase: ActivityPhase): void {
+  if (activityPhase === phase) return;
+  activityPhase = phase;
+  if (phase === "idle") stopSpinner();
+  else startSpinner();
+  latestTui?.requestRender();
+}
+
 // ── Rendering ──
 // Pure string builders over cached state only; never throw on missing data.
 
@@ -325,6 +377,16 @@ function renderMeter(percent: number | null, windowLabel: string, theme: Theme):
   );
 }
 
+// Activity segment: spinner frame + phase label in the accent token (the
+// prototype's purple intent, mapped to pi's closest semantic token).
+// Absent while idle; composed before the spacer in renderFooter (D11), so
+// appearing or disappearing never moves the right chips.
+function renderActivity(theme: Theme): string {
+  if (activityPhase === "idle") return "";
+  const label = activityPhase === "thinking" ? "thinking" : "streaming";
+  return theme.fg("accent", `${SPINNER_FRAMES[spinFrame % SPINNER_FRAMES.length]} ${label}`);
+}
+
 // Thinking level → theme token. `max` shares `thinkingXhigh` because
 // `thinkingMax` is an optional token some themes lack.
 type ThinkingLevel = NonNullable<ExtensionContext["thinkingLevel"]>;
@@ -351,9 +413,9 @@ function renderChips(ctx: ExtensionContext, theme: Theme): string {
   return chips.join(" ");
 }
 
-// Footer: a full-width rule, then the context meter left with model chips
-// flush right. The activity segment (later step) slots between the meter and
-// the spacer, so the right chips never move when it appears.
+// Footer: a full-width rule, then the context meter and activity segment
+// left with model chips flush right. The activity segment composes before
+// the spacer, so the right chips never move when it appears or disappears.
 function renderFooter(width: number, theme: Theme): string[] {
   const rule = theme.fg("dim", "─".repeat(Math.max(0, width)));
   const ctx = latestCtx;
@@ -361,16 +423,42 @@ function renderFooter(width: number, theme: Theme): string[] {
 
   const usage = ctx.getContextUsage();
   const meter = renderMeter(usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "", theme);
-  return [rule, joinSpread(width, meter, renderChips(ctx, theme))];
+  const activity = renderActivity(theme);
+  const left = activity === "" ? meter : `${meter} ${activity}`;
+  return [rule, joinSpread(width, left, renderChips(ctx, theme))];
 }
 
 export default function piStatusbar(pi: ExtensionAPI): void {
   piApi = pi;
+  // Run-phase tracking is state-only, so it registers outside the hasUI
+  // guard; in print/RPC modes latestTui is unset and the repaints no-op.
+  pi.on("agent_start", () => setActivityPhase("thinking"));
+  pi.on("message_update", (event) => {
+    const delta = event.assistantMessageEvent?.type;
+    if (delta === "thinking_delta") setActivityPhase("thinking");
+    else if (delta === "text_delta") setActivityPhase("streaming");
+    // Other delta kinds (tool calls, usage…) leave the phase unchanged.
+  });
+  // agent_end goes idle even though pi may auto-retry or queue a continuation
+  // right after: the next agent_start re-arms the spinner, and agent_settled
+  // forces idle for queued continuations that never fire another agent_end.
+  pi.on("agent_end", () => setActivityPhase("idle"));
+  pi.on("agent_settled", () => setActivityPhase("idle"));
+  // Chips read cached ctx state; these selections change it mid-session.
+  pi.on("model_select", (_event, ctx) => {
+    latestCtx = ctx;
+    latestTui?.requestRender();
+  });
+  pi.on("thinking_level_select", (_event, ctx) => {
+    latestCtx = ctx;
+    latestTui?.requestRender();
+  });
   pi.on("session_start", (_event, ctx) => {
     latestCtx = ctx;
     sessionStart = Date.now();
     gitSnapshot = null; // the refresh below re-fills it; failures keep it null
     stopGitWatchers(); // the previous session's watchers must not survive
+    setActivityPhase("idle"); // the previous session's phase must not survive either
     if (!ctx.hasUI) return;
     ctx.ui.setWidget(
       "pi-statusbar",
@@ -381,7 +469,10 @@ export default function piStatusbar(pi: ExtensionAPI): void {
           // Theme is pi's live proxy: fg() resolves the active theme at render
           // time, so a no-op invalidate() is correct.
           invalidate: () => {},
-          dispose: () => stopGitWatchers(),
+          dispose: () => {
+            stopGitWatchers();
+            stopSpinner(); // the timer must not outlive the widget
+          },
         };
       },
       { placement: "aboveEditor" },
@@ -403,6 +494,9 @@ export default function piStatusbar(pi: ExtensionAPI): void {
         },
       };
     });
+    // The footer's activity segment is the single working indicator (D9);
+    // restoring the default is the /statusbar toggle's job (step 006).
+    ctx.ui.setWorkingIndicator({ frames: [] });
     startGitWatchers();
     void refreshGitSnapshot();
   });
