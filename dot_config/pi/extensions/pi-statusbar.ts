@@ -1,8 +1,8 @@
 // pi-statusbar - structured status area for pi: a location/git/cost/time
 // widget above the editor and a footer with a context meter, activity, and
 // model chips. Design: .plans/main/pi-statusbar/PRD.md.
-// Currently implemented: the top row widget (dir, cost, elapsed time) and
-// the footer (context meter, model chips).
+// Currently implemented: the top row widget (dir, git, cost, elapsed time)
+// and the footer (context meter, model chips).
 
 import type {
   ExtensionAPI,
@@ -11,8 +11,9 @@ import type {
   Theme,
   ThemeColor,
 } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { truncateToWidth, visibleWidth, type TUI } from "@earendil-works/pi-tui";
+import { statSync, watch, type FSWatcher } from "node:fs";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 // ── Icons ──
 // Nerd Font glyphs by default; flip to the ASCII set on terminals without a
@@ -44,10 +45,19 @@ const ASCII_ICONS = {
 const icons = useNerdFont ? NERD_FONT_ICONS : ASCII_ICONS;
 
 // ── State ──
-// Pull-based rendering: renderers read only this cached state, refreshed on
-// session_start before any UI work.
+// Pull-based rendering: renderers read only this cached state, refreshed off
+// the render path on session_start, branch changes, and debounced .git
+// watches.
 let latestCtx: ExtensionContext | undefined;
+let latestTui: TUI | undefined;
+// Stable handle on the extension API: `exec` for the git spawn lives here,
+// not on the per-session context.
+let piApi: ExtensionAPI | undefined;
 let sessionStart = 0;
+
+// Last parsed `git status --porcelain -b`; null = no repo, detached HEAD, or
+// not yet fetched. Written only by refreshGitSnapshot().
+let gitSnapshot: GitSnapshot | null = null;
 
 // ── Formatting ──
 
@@ -106,6 +116,141 @@ function collectSessionCost(entries: SessionEntry[]): number {
   return cost;
 }
 
+// ── Git snapshot ──
+// Goal 8: a cached parse of `git status --porcelain -b`, refreshed off the
+// render path (session_start, branch changes, debounced .git watches);
+// renderers only ever read `gitSnapshot`.
+
+interface GitSnapshot {
+  branch: string;
+  staged: number;
+  modified: number;
+  ahead: number;
+  dirty: boolean;
+}
+
+const GIT_WATCH_DEBOUNCE_MS = 250;
+// Caps a hung spawn so the single-flight flag below cannot wedge shut.
+const GIT_EXEC_TIMEOUT_MS = 5_000;
+
+let gitRefreshInFlight = false;
+let gitWatchers: FSWatcher[] = [];
+let gitWatchTimer: ReturnType<typeof setTimeout> | undefined;
+
+// Pure parse of `git status --porcelain -b` v1 output. null = not a repo
+// (empty/malformed output) or detached HEAD. An unborn branch
+// (`## No commits yet on <branch>`) still yields a branch. Ignored entries
+// (`!!`) are not changes; untracked (`??`) count as modified; conflict
+// codes (ADU combos) count via their columns. `behind` is parsed as part of
+// the header but intentionally not kept: only `↑N` is displayed.
+function parseGitStatus(output: string): GitSnapshot | null {
+  const lines = output.split("\n");
+  const header = (lines[0] ?? "").trim();
+  if (header === "## HEAD (no branch)") return null; // detached
+  const headerMatch = /^## (?:No commits yet on )?(\S+)/.exec(header);
+  if (!headerMatch) return null;
+  // `...upstream` follows the branch in `## <branch>...<upstream>`; branch
+  // names cannot contain `..`.
+  const branch = headerMatch[1].split("...", 1)[0];
+
+  let staged = 0;
+  let modified = 0;
+  for (const line of lines.slice(1)) {
+    // Status rows are exactly `XY <path>`; anything else is skipped.
+    const x = line[0];
+    const y = line[1];
+    if (!x || !y || line[2] !== " ") continue;
+    if (x === "!" && y === "!") continue; // ignored file
+    if (x !== " " && x !== "?") staged += 1;
+    if (y !== " " && y !== "?") modified += 1;
+    else if (x === "?") modified += 1; // untracked counts as modified
+  }
+
+  const ahead = /\[ahead (\d+)/.exec(header);
+  return {
+    branch,
+    staged,
+    modified,
+    ahead: ahead ? Number(ahead[1]) : 0,
+    dirty: staged > 0 || modified > 0,
+  };
+}
+
+// Failure rule: a failed or empty status keeps the previous snapshot
+// (transient git errors must not blink the chip away); only session_start
+// resets to null, so leaving a repo clears on the next session.
+// Single-flight: concurrent triggers drop re-entry instead of stacking
+// spawns; a later trigger re-runs.
+async function refreshGitSnapshot(): Promise<void> {
+  if (gitRefreshInFlight) return;
+  const ctx = latestCtx;
+  const api = piApi;
+  if (!ctx || !api) return;
+  gitRefreshInFlight = true;
+  try {
+    const result = await api.exec("git", ["status", "--porcelain", "-b"], {
+      cwd: ctx.cwd,
+      timeout: GIT_EXEC_TIMEOUT_MS,
+    });
+    if (result.code === 0 && result.stdout !== "") {
+      gitSnapshot = parseGitStatus(result.stdout);
+      latestTui?.requestRender(); // repaint so fresh counts show without input
+    }
+  } catch {
+    // exec() resolves failures into the result; this only keeps the
+    // fire-and-forget call from ever rejecting.
+  } finally {
+    gitRefreshInFlight = false;
+  }
+}
+
+// One shared timer for both watched files: the trailing debounce coalesces
+// the burst a branch switch causes (HEAD rewrite, then an index update).
+function scheduleGitRefresh(): void {
+  if (gitWatchTimer !== undefined) clearTimeout(gitWatchTimer);
+  gitWatchTimer = setTimeout(() => {
+    gitWatchTimer = undefined;
+    void refreshGitSnapshot();
+  }, GIT_WATCH_DEBOUNCE_MS);
+}
+
+// Watch .git/HEAD and .git/index so edits made outside pi refresh the
+// counts. Plain repos only: a linked worktree (.git as a file) or a missing
+// repo skips the watcher - branch switches there still refresh via
+// onBranchChange and session events.
+function startGitWatchers(): void {
+  stopGitWatchers(); // re-arm on every session_start: the cwd may have moved
+  const ctx = latestCtx;
+  if (!ctx) return;
+  const gitDir = resolve(ctx.cwd, ".git");
+  try {
+    if (!statSync(gitDir).isDirectory()) return;
+  } catch {
+    return; // no .git here
+  }
+  for (const name of ["HEAD", "index"]) {
+    try {
+      const watcher = watch(join(gitDir, name), () => scheduleGitRefresh());
+      // Without an error handler a watcher error would crash the process.
+      watcher.on("error", () => watcher.close()); // e.g. the file vanished
+      gitWatchers.push(watcher);
+    } catch {
+      // A missing file (a fresh repo has no index yet) just means no watch.
+    }
+  }
+}
+
+// Idempotent teardown, safe to call from both components' dispose() and
+// every session_start.
+function stopGitWatchers(): void {
+  for (const watcher of gitWatchers) watcher.close();
+  gitWatchers = [];
+  if (gitWatchTimer !== undefined) {
+    clearTimeout(gitWatchTimer);
+    gitWatchTimer = undefined;
+  }
+}
+
 // ── Rendering ──
 // Pure string builders over cached state only; never throw on missing data.
 
@@ -118,15 +263,31 @@ function joinSpread(width: number, left: string, right: string): string {
   return pad >= 1 ? left + " ".repeat(pad) + right : truncateToWidth(`${left} ${right}`, width, "");
 }
 
-// Top row: folder icon + ~-shortened cwd left, session cost and elapsed time
-// right, full-width rule as the widget's last line.
+// Git chip: branch icon + branch name (dim), a state dot (success when
+// clean, warning when dirty - the prototype's identity dot), then dim
+// change counts and ahead marker. Absent outside a repo / detached HEAD.
+function renderGitChip(theme: Theme): string {
+  const snapshot = gitSnapshot;
+  if (!snapshot) return "";
+  const dot = theme.fg(snapshot.dirty ? "warning" : "success", icons.dot);
+  const parts = [theme.fg("dim", `${icons.branch} ${snapshot.branch}`), dot];
+  if (snapshot.staged > 0) parts.push(theme.fg("dim", `+${snapshot.staged}`));
+  if (snapshot.modified > 0) parts.push(theme.fg("dim", `~${snapshot.modified}`));
+  if (snapshot.ahead > 0) parts.push(theme.fg("dim", `${icons.up}${snapshot.ahead}`));
+  return parts.join(" ");
+}
+
+// Top row: folder icon + ~-shortened cwd and the git chip left, session
+// cost and elapsed time right, full-width rule as the widget's last line.
 function renderTopRow(width: number, theme: Theme): string[] {
   const rule = theme.fg("dim", "─".repeat(Math.max(0, width)));
   const ctx = latestCtx;
   if (!ctx) return [rule];
 
   const cwd = shortenCwd(ctx.sessionManager.getCwd(), process.env.HOME || process.env.USERPROFILE);
-  const left = theme.fg("dim", `${icons.folder} ${cwd}`);
+  const dir = theme.fg("dim", `${icons.folder} ${cwd}`);
+  const gitChip = renderGitChip(theme);
+  const left = gitChip === "" ? dir : `${dir} ${gitChip}`;
   const cost = theme.fg("dim", `${icons.cost} ${formatCost(collectSessionCost(ctx.sessionManager.getBranch()))}`);
   const time = theme.fg("dim", `${icons.clock} ${formatElapsed(Math.max(0, Date.now() - sessionStart))}`);
   return [joinSpread(width, left, `${cost} ${time}`), rule];
@@ -204,25 +365,45 @@ function renderFooter(width: number, theme: Theme): string[] {
 }
 
 export default function piStatusbar(pi: ExtensionAPI): void {
+  piApi = pi;
   pi.on("session_start", (_event, ctx) => {
     latestCtx = ctx;
     sessionStart = Date.now();
+    gitSnapshot = null; // the refresh below re-fills it; failures keep it null
+    stopGitWatchers(); // the previous session's watchers must not survive
     if (!ctx.hasUI) return;
     ctx.ui.setWidget(
       "pi-statusbar",
-      (_tui, theme) => ({
-        render: (width: number) => renderTopRow(width, theme),
-        // Theme is pi's live proxy: fg() resolves the active theme at render
-        // time, so a no-op invalidate() is correct.
-        invalidate: () => {},
-      }),
+      (tui, theme) => {
+        latestTui = tui;
+        return {
+          render: (width: number) => renderTopRow(width, theme),
+          // Theme is pi's live proxy: fg() resolves the active theme at render
+          // time, so a no-op invalidate() is correct.
+          invalidate: () => {},
+          dispose: () => stopGitWatchers(),
+        };
+      },
       { placement: "aboveEditor" },
     );
-    ctx.ui.setFooter((_tui, theme, _footerData) => ({
-      render: (width: number) => renderFooter(width, theme),
-      // Same live-proxy reasoning as the widget's invalidate above.
-      invalidate: () => {},
-      dispose: () => {},
-    }));
+    ctx.ui.setFooter((_tui, theme, footerData) => {
+      // Branch switches are detected by pi's own HEAD watcher; refresh our
+      // snapshot against the new branch (the repaint happens when the
+      // refresh lands).
+      const unsubscribeBranchChange = footerData.onBranchChange(() => {
+        void refreshGitSnapshot();
+      });
+      return {
+        render: (width: number) => renderFooter(width, theme),
+        // Same live-proxy reasoning as the widget's invalidate above.
+        invalidate: () => {},
+        dispose: () => {
+          unsubscribeBranchChange();
+          stopGitWatchers();
+        },
+      };
+    });
+    startGitWatchers();
+    void refreshGitSnapshot();
   });
 }
