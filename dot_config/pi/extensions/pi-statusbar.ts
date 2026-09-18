@@ -2,11 +2,13 @@
 // widget above the editor and a footer with a context meter, activity, and
 // model chips. Design: .plans/main/pi-statusbar/PRD.md.
 // Currently implemented: the top row widget (dir, git, cost, elapsed time)
-// and the footer (context meter, activity, model chips).
+// and the footer (context meter, activity, model chips, extension statuses)
+// with width-based collapse (compact meter, chip drops, truncation).
 
 import type {
   ExtensionAPI,
   ExtensionContext,
+  ReadonlyFooterDataProvider,
   SessionEntry,
   Theme,
   ThemeColor,
@@ -345,10 +347,12 @@ function renderTopRow(width: number, theme: Theme): string[] {
   return [joinSpread(width, left, `${cost} ${time}`), rule];
 }
 
-// Context meter: 20 cells (shrinking below 85 columns is a later step); fill
-// count = clamp(round(percent / 100 × cells)). Fill and percent share the
-// used-% threshold color; track and window label stay dim.
+// Context meter: 20 cells at ≥ 85 columns, 10 below (D10); fill count =
+// clamp(round(percent / 100 × cells)). Fill and percent share the used-%
+// threshold color; track and window label stay dim.
 const METER_CELLS = 20;
+const METER_CELLS_COMPACT = 10;
+const COMPACT_BELOW_COLS = 85;
 const METER_WARN_AT_PERCENT = 50;
 const METER_ERROR_AT_PERCENT = 75;
 
@@ -361,16 +365,18 @@ function meterColor(percent: number): ThemeColor {
 }
 
 // `██████░░░░ 34.0%/1.0M` - bold percent in the threshold color, dim track
-// and window label. Unknown usage renders the empty track with `--%`.
-function renderMeter(percent: number | null, windowLabel: string, theme: Theme): string {
+// and window label. Unknown usage renders the empty track with `--%`. The
+// cell count follows the footer width: compact below 85 columns (D10).
+function renderMeter(width: number, percent: number | null, windowLabel: string, theme: Theme): string {
+  const cells = width >= COMPACT_BELOW_COLS ? METER_CELLS : METER_CELLS_COMPACT;
   if (percent === null) {
-    return theme.fg("dim", `${"░".repeat(METER_CELLS)} --%${windowLabel}`);
+    return theme.fg("dim", `${"░".repeat(cells)} --%${windowLabel}`);
   }
-  const filled = Math.min(METER_CELLS, Math.max(0, Math.round((percent / 100) * METER_CELLS)));
+  const filled = Math.min(cells, Math.max(0, Math.round((percent / 100) * cells)));
   const color = meterColor(percent);
   return (
     theme.fg(color, "█".repeat(filled)) +
-    theme.fg("dim", "░".repeat(METER_CELLS - filled)) +
+    theme.fg("dim", "░".repeat(cells - filled)) +
     " " +
     theme.bold(theme.fg(color, `${percent.toFixed(1)}%`)) +
     theme.fg("dim", windowLabel)
@@ -400,32 +406,91 @@ const THINKING_TOKENS: Record<Exclude<ThinkingLevel, "off">, ThemeColor> = {
   max: "thinkingXhigh",
 };
 
+// Footer chips in display order; `thinking` is "" when hidden (no reasoning
+// model or level off). Fields, not a joined string, so the width collapse
+// can drop chips without parsing styled text.
+interface ModelChips {
+  provider: string;
+  model: string;
+  thinking: string;
+}
+
 // Model chips: provider (dim), model id (accent), thinking level (level
 // token). The thinking chip needs a reasoning model with a level set.
-function renderChips(ctx: ExtensionContext, theme: Theme): string {
+function renderChips(ctx: ExtensionContext, theme: Theme): ModelChips | null {
   const model = ctx.model;
-  if (!model) return "";
-  const chips = [theme.fg("dim", `${icons.provider} ${model.provider}`), theme.fg("accent", model.id)];
+  if (!model) return null;
   const level = ctx.thinkingLevel;
-  if (model.reasoning && level && level !== "off") {
-    chips.push(theme.fg(THINKING_TOKENS[level], `${icons.think} ${level}`));
+  return {
+    provider: theme.fg("dim", `${icons.provider} ${model.provider}`),
+    model: theme.fg("accent", model.id),
+    thinking:
+      model.reasoning && level && level !== "off"
+        ? theme.fg(THINKING_TOKENS[level], `${icons.think} ${level}`)
+        : "",
+  };
+}
+
+// Width collapse for the footer row (Goal 11): the right side sheds chips
+// before anything truncates - provider first, then thinking; the model chip
+// persists. The first variant that fits wins; only when even the model-only
+// row overflows does joinSpread hard-clip it.
+function fitFooterRow(width: number, left: string, chips: ModelChips | null): string {
+  if (!chips) return joinSpread(width, left, "");
+  const variants = [
+    [chips.provider, chips.model, chips.thinking],
+    [chips.model, chips.thinking],
+    [chips.model],
+  ];
+  for (const variant of variants) {
+    const right = variant.filter((chip) => chip !== "").join(" ");
+    // Strictly < width: joinSpread also needs room for the separator space.
+    if (visibleWidth(left) + visibleWidth(right) < width) {
+      return joinSpread(width, left, right);
+    }
   }
-  return chips.join(" ");
+  return joinSpread(width, left, chips.model);
+}
+
+// Status texts are single-line footer material: control whitespace becomes
+// spaces, runs collapse, edges trim (context-bar statuses-line precedent).
+function sanitizeStatusText(text: string): string {
+  return text
+    .replace(/[\r\n\t]/g, " ")
+    .replace(/ +/g, " ")
+    .trim();
+}
+
+// Extension statuses (Goal 4): other extensions' setStatus texts as a
+// conditional last footer line (D2) so they never vanish. Sorted by
+// extension key, dimmed as secondary signals. Empty after sanitizing (no
+// statuses, or whitespace-only ones) renders nothing, never a blank row.
+function renderStatuses(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string {
+  const line = Array.from(footerData.getExtensionStatuses().entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, text]) => sanitizeStatusText(text))
+    .filter(Boolean)
+    .join(" ");
+  return line === "" ? "" : truncateToWidth(theme.fg("dim", line), width, theme.fg("dim", "..."));
 }
 
 // Footer: a full-width rule, then the context meter and activity segment
-// left with model chips flush right. The activity segment composes before
-// the spacer, so the right chips never move when it appears or disappears.
-function renderFooter(width: number, theme: Theme): string[] {
+// left with model chips flush right, then the statuses line when another
+// extension has set one. The activity segment composes before the spacer,
+// so the right chips never move when it appears or disappears.
+function renderFooter(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string[] {
   const rule = theme.fg("dim", "─".repeat(Math.max(0, width)));
   const ctx = latestCtx;
   if (!ctx) return [rule];
 
   const usage = ctx.getContextUsage();
-  const meter = renderMeter(usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "", theme);
+  const meter = renderMeter(width, usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "", theme);
   const activity = renderActivity(theme);
   const left = activity === "" ? meter : `${meter} ${activity}`;
-  return [rule, joinSpread(width, left, renderChips(ctx, theme))];
+  const lines = [rule, fitFooterRow(width, left, renderChips(ctx, theme))];
+  const statuses = renderStatuses(width, theme, footerData);
+  if (statuses !== "") lines.push(statuses);
+  return lines;
 }
 
 export default function piStatusbar(pi: ExtensionAPI): void {
@@ -485,7 +550,7 @@ export default function piStatusbar(pi: ExtensionAPI): void {
         void refreshGitSnapshot();
       });
       return {
-        render: (width: number) => renderFooter(width, theme),
+        render: (width: number) => renderFooter(width, theme, footerData),
         // Same live-proxy reasoning as the widget's invalidate above.
         invalidate: () => {},
         dispose: () => {
