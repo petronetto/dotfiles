@@ -3,7 +3,8 @@
 // model chips. Design: .plans/main/pi-statusbar/PRD.md.
 // Currently implemented: the top row widget (dir, git, cost, elapsed time)
 // and the footer (context meter, activity, model chips, extension statuses)
-// with width-based collapse (compact meter, chip drops, truncation).
+// with width-based collapse (compact meter, chip drops, truncation), plus
+// the `/statusbar` command toggling all of it off/on for the session.
 
 import type {
   ExtensionAPI,
@@ -56,6 +57,9 @@ let latestTui: TUI | undefined;
 // not on the per-session context.
 let piApi: ExtensionAPI | undefined;
 let sessionStart = 0;
+// Session-scoped /statusbar toggle (Goal 10): true = our surfaces installed.
+// Never persisted anywhere; a fresh session_start always re-arms it.
+let statusbarActive = true;
 
 // Last parsed `git status --porcelain -b`; null = no repo, detached HEAD, or
 // not yet fetched. Written only by refreshGitSnapshot().
@@ -493,6 +497,66 @@ function renderFooter(width: number, theme: Theme, footerData: ReadonlyFooterDat
   return lines;
 }
 
+// ── Install / teardown ──
+// Goal 10: one install path shared by session_start and the /statusbar
+// toggle; teardown restores every surface pi had before. Both take whichever
+// context is at hand (session or command - both expose `ui`). pi repaints on
+// every set* call, so the swap appears without an explicit requestRender.
+function installStatusbar(ctx: ExtensionContext): void {
+  statusbarActive = true; // a fresh session always starts with the statusbar on
+  ctx.ui.setWidget(
+    "pi-statusbar",
+    (tui, theme) => {
+      latestTui = tui;
+      return {
+        render: (width: number) => renderTopRow(width, theme),
+        // Theme is pi's live proxy: fg() resolves the active theme at render
+        // time, so a no-op invalidate() is correct.
+        invalidate: () => {},
+        dispose: () => {
+          stopGitWatchers();
+          stopSpinner(); // the timer must not outlive the widget
+        },
+      };
+    },
+    { placement: "aboveEditor" },
+  );
+  ctx.ui.setFooter((_tui, theme, footerData) => {
+    // Branch switches are detected by pi's own HEAD watcher; refresh our
+    // snapshot against the new branch (the repaint happens when the
+    // refresh lands).
+    const unsubscribeBranchChange = footerData.onBranchChange(() => {
+      void refreshGitSnapshot();
+    });
+    return {
+      render: (width: number) => renderFooter(width, theme, footerData),
+      // Same live-proxy reasoning as the widget's invalidate above.
+      invalidate: () => {},
+      dispose: () => {
+        unsubscribeBranchChange();
+        stopGitWatchers();
+      },
+    };
+  });
+  // The footer's activity segment is the single working indicator (D9);
+  // teardown restores the default for /statusbar off.
+  ctx.ui.setWorkingIndicator({ frames: [] });
+  startGitWatchers();
+  void refreshGitSnapshot();
+}
+
+// Removes all three surfaces and restores pi's built-ins. The module-level
+// cleanup runs explicitly (idempotent) instead of relying on the widget
+// dispose that setWidget(key, undefined) happens to trigger.
+function teardownStatusbar(ctx: ExtensionContext): void {
+  statusbarActive = false;
+  ctx.ui.setWidget("pi-statusbar", undefined);
+  ctx.ui.setFooter(undefined);
+  ctx.ui.setWorkingIndicator(); // no argument restores the built-in indicator
+  setActivityPhase("idle"); // also stops the spinner timer
+  stopGitWatchers();
+}
+
 export default function piStatusbar(pi: ExtensionAPI): void {
   piApi = pi;
   // Run-phase tracking is state-only, so it registers outside the hasUI
@@ -521,48 +585,22 @@ export default function piStatusbar(pi: ExtensionAPI): void {
   pi.on("session_start", (_event, ctx) => {
     latestCtx = ctx;
     sessionStart = Date.now();
-    gitSnapshot = null; // the refresh below re-fills it; failures keep it null
+    gitSnapshot = null; // install's refresh re-fills it; failures keep it null
     stopGitWatchers(); // the previous session's watchers must not survive
     setActivityPhase("idle"); // the previous session's phase must not survive either
     if (!ctx.hasUI) return;
-    ctx.ui.setWidget(
-      "pi-statusbar",
-      (tui, theme) => {
-        latestTui = tui;
-        return {
-          render: (width: number) => renderTopRow(width, theme),
-          // Theme is pi's live proxy: fg() resolves the active theme at render
-          // time, so a no-op invalidate() is correct.
-          invalidate: () => {},
-          dispose: () => {
-            stopGitWatchers();
-            stopSpinner(); // the timer must not outlive the widget
-          },
-        };
-      },
-      { placement: "aboveEditor" },
-    );
-    ctx.ui.setFooter((_tui, theme, footerData) => {
-      // Branch switches are detected by pi's own HEAD watcher; refresh our
-      // snapshot against the new branch (the repaint happens when the
-      // refresh lands).
-      const unsubscribeBranchChange = footerData.onBranchChange(() => {
-        void refreshGitSnapshot();
-      });
-      return {
-        render: (width: number) => renderFooter(width, theme, footerData),
-        // Same live-proxy reasoning as the widget's invalidate above.
-        invalidate: () => {},
-        dispose: () => {
-          unsubscribeBranchChange();
-          stopGitWatchers();
-        },
-      };
-    });
-    // The footer's activity segment is the single working indicator (D9);
-    // restoring the default is the /statusbar toggle's job (step 006).
-    ctx.ui.setWorkingIndicator({ frames: [] });
-    startGitWatchers();
-    void refreshGitSnapshot();
+    installStatusbar(ctx);
+  });
+  // /statusbar (Goal 10): session-scoped toggle. Off tears our surfaces down
+  // so the built-in footer and working indicator return; on reinstalls them.
+  // State lives only in this session - session_start re-arms it, nothing is
+  // persisted to settings.
+  pi.registerCommand("statusbar", {
+    description: "Toggle the status bar",
+    handler: async (_args, cmdCtx) => {
+      if (!cmdCtx.hasUI) return; // no surfaces to swap in print/RPC modes
+      if (statusbarActive) teardownStatusbar(cmdCtx);
+      else installStatusbar(cmdCtx);
+    },
   });
 }
