@@ -5,6 +5,10 @@
 // and the footer (context meter, activity, model chips, extension statuses)
 // with width-based collapse (compact meter, chip drops, truncation), plus
 // the `/statusbar` command toggling all of it off/on for the session.
+// Styling: ADR-002 tinted segment blocks — each segment gets a background of
+// its identity color blended over the theme's `userMessageBg` (ADR-001's
+// fg-only look is superseded); all colors derive from theme tokens at render
+// time.
 
 import type {
   ExtensionAPI,
@@ -309,6 +313,97 @@ function setActivityPhase(phase: ActivityPhase): void {
   latestTui?.requestRender();
 }
 
+// ── Tinted blocks (ADR-002) ──
+// Every segment renders as a tinted block like the validated prototype: the
+// block background is the segment's identity color blended over the theme's
+// `userMessageBg`, and the inner content keeps its theme.fg() foregrounds
+// (an fg-only reset preserves the background run). Every color derives from
+// theme tokens at render time — no fixed palette hexes. A theme prefix that
+// fails to parse degrades that segment to plain fg-only styling, never a
+// throw inside render().
+
+interface Rgb {
+  r: number;
+  g: number;
+  b: number;
+}
+
+// The validated prototype's mix(..., 0.18): identity color at 18% over the
+// block base.
+const TINT_RATIO = 0.18;
+
+// xterm 256 palette constants for the quantizer below (also in pi's own
+// theme.js): 6×6×6 color cube at indices 16-231, 24 grays at 232-255.
+const CUBE_VALUES = [0, 95, 135, 175, 215, 255];
+const GRAY_VALUES = Array.from({ length: 24 }, (_, i) => 8 + i * 10);
+
+// Parse the RGB out of a getFgAnsi/getBgAnsi prefix — truecolor
+// `38/48;2;R;G;B` or 256color `38/48;5;N`, with the index reverse-mapped
+// through the standard xterm palette. null on any unexpected form.
+function parseAnsiRgb(prefix: string): Rgb | null {
+  const match = /^\x1b\[(?:38|48);(?:2;(\d+);(\d+);(\d+)|5;(\d+))m$/.exec(prefix);
+  if (!match) return null;
+  if (match[1] !== undefined) return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]) };
+  const index = Number(match[4]);
+  if (index < 16 || index > 255) return null;
+  if (index < 232) {
+    const cell = index - 16;
+    const channel = (divisor: number) => CUBE_VALUES[Math.floor(cell / divisor) % 6];
+    return { r: channel(36), g: channel(6), b: channel(1) };
+  }
+  const gray = GRAY_VALUES[index - 232];
+  return { r: gray, g: gray, b: gray };
+}
+
+// 256-mode quantizer: nearest cube color, with grayscale preferred only for
+// nearly neutral colors — a port of pi's theme.js rgbTo256, so block
+// backgrounds quantize exactly like the theme's own colors do.
+function rgbTo256({ r, g, b }: Rgb): number {
+  const nearestIndex = (value: number) => {
+    let best = 0;
+    for (let i = 1; i < CUBE_VALUES.length; i++) {
+      if (Math.abs(value - CUBE_VALUES[i]) < Math.abs(value - CUBE_VALUES[best])) best = i;
+    }
+    return best;
+  };
+  const ri = nearestIndex(r);
+  const gi = nearestIndex(g);
+  const bi = nearestIndex(b);
+  // Weighted Euclidean distance (pi's human-eye weighting).
+  const distance = (dr: number, dg: number, db: number) => dr * dr * 0.299 + dg * dg * 0.587 + db * db * 0.114;
+  const cubeDist = distance(r - CUBE_VALUES[ri], g - CUBE_VALUES[gi], b - CUBE_VALUES[bi]);
+  const grayIndex = Math.min(GRAY_VALUES.length - 1, Math.max(0, Math.round((Math.round(0.299 * r + 0.587 * g + 0.114 * b) - 8) / 10)));
+  const gray = GRAY_VALUES[grayIndex];
+  const grayDist = distance(r - gray, g - gray, b - gray);
+  const spread = Math.max(r, g, b) - Math.min(r, g, b);
+  if (spread < 10 && grayDist < cubeDist) return 232 + grayIndex;
+  return 16 + 36 * ri + 6 * gi + bi;
+}
+
+// Mode-aware raw background SGR for a resolved RGB.
+function sgrBg(rgb: Rgb, mode: "truecolor" | "256color"): string {
+  return mode === "truecolor" ? `\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m` : `\x1b[48;5;${rgbTo256(rgb)}m`;
+}
+
+function blendOver(identity: Rgb, base: Rgb): Rgb {
+  return {
+    r: Math.round(identity.r * TINT_RATIO + base.r * (1 - TINT_RATIO)),
+    g: Math.round(identity.g * TINT_RATIO + base.g * (1 - TINT_RATIO)),
+    b: Math.round(identity.b * TINT_RATIO + base.b * (1 - TINT_RATIO)),
+  };
+}
+
+// One shared block wrapper: tinted background run around padded, already
+// styled content, closed with a background reset so the separating space
+// renders on the default background. When the block base or the identity
+// prefix cannot be parsed, degrade to the inner content alone (fg-only).
+function tinted(theme: Theme, identity: ThemeColor, inner: string): string {
+  const base = parseAnsiRgb(theme.getBgAnsi("userMessageBg"));
+  const id = parseAnsiRgb(theme.getFgAnsi(identity));
+  if (!base || !id) return inner;
+  return `${sgrBg(blendOver(id, base), theme.getColorMode())} ${inner} \x1b[49m`;
+}
+
 // ── Rendering ──
 // Pure string builders over cached state only; never throw on missing data.
 // No separator rules: pi's editor already draws border lines above and
@@ -335,7 +430,7 @@ function renderGitChip(theme: Theme): string {
   if (snapshot.staged > 0) parts.push(theme.fg("dim", `+${snapshot.staged}`));
   if (snapshot.modified > 0) parts.push(theme.fg("dim", `~${snapshot.modified}`));
   if (snapshot.ahead > 0) parts.push(theme.fg("dim", `${icons.up}${snapshot.ahead}`));
-  return parts.join(" ");
+  return tinted(theme, "success", parts.join(" "));
 }
 
 // Top row: folder icon + ~-shortened cwd and the git chip left, session
@@ -345,11 +440,18 @@ function renderTopRow(width: number, theme: Theme): string[] {
   if (!ctx) return [];
 
   const cwd = shortenCwd(ctx.sessionManager.getCwd(), process.env.HOME || process.env.USERPROFILE);
-  const dir = theme.fg("dim", `${icons.folder} ${cwd}`);
+  // Neutral segments: the `muted` gray as the block identity — the closest
+  // theme-adaptive match for the prototype's clearly-lighter neutral chips
+  // (the `text` token is too bright as a tint source).
+  const dir = tinted(theme, "muted", theme.fg("dim", `${icons.folder} ${cwd}`));
   const gitChip = renderGitChip(theme);
   const left = gitChip === "" ? dir : `${dir} ${gitChip}`;
-  const cost = theme.fg("dim", `${icons.cost} ${formatCost(collectSessionCost(ctx.sessionManager.getBranch()))}`);
-  const time = theme.fg("dim", `${icons.clock} ${formatElapsed(Math.max(0, Date.now() - sessionStart))}`);
+  const cost = tinted(
+    theme,
+    "muted",
+    theme.fg("dim", `${icons.cost} ${formatCost(collectSessionCost(ctx.sessionManager.getBranch()))}`),
+  );
+  const time = tinted(theme, "muted", theme.fg("dim", `${icons.clock} ${formatElapsed(Math.max(0, Date.now() - sessionStart))}`));
   return [joinSpread(width, left, `${cost} ${time}`)];
 }
 
@@ -370,22 +472,43 @@ function meterColor(percent: number): ThemeColor {
   return "success";
 }
 
-// `██████░░░░ 34.0%/1.0M` - bold percent in the threshold color, dim track
-// and window label. Unknown usage renders the empty track with `--%`. The
-// cell count follows the footer width: compact below 85 columns (D10).
+// Meter block (the prototype's meterSeg): tinted background at the
+// threshold color, fill cells as pure-identity-colored spaces, `░` track in
+// dim on the tint, bold percent in the threshold color, dim window label.
+// Unknown usage renders the empty track with `--%`. The cell count follows
+// the footer width: compact below 85 columns (D10). Degrades to the fg-only
+// bar when the theme colors cannot be parsed.
 function renderMeter(width: number, percent: number | null, windowLabel: string, theme: Theme): string {
   const cells = width >= COMPACT_BELOW_COLS ? METER_CELLS : METER_CELLS_COMPACT;
   if (percent === null) {
-    return theme.fg("dim", `${"░".repeat(cells)} --%${windowLabel}`);
+    return tinted(theme, "muted", theme.fg("dim", `${"░".repeat(cells)} --%${windowLabel}`));
   }
   const filled = Math.min(cells, Math.max(0, Math.round((percent / 100) * cells)));
   const color = meterColor(percent);
+  const id = parseAnsiRgb(theme.getFgAnsi(color));
+  const base = parseAnsiRgb(theme.getBgAnsi("userMessageBg"));
+  if (!id || !base) {
+    // Fg-only degrade: same bar the tinted block replaces.
+    return (
+      theme.fg(color, "█".repeat(filled)) +
+      theme.fg("dim", "░".repeat(cells - filled)) +
+      " " +
+      theme.bold(theme.fg(color, `${percent.toFixed(1)}%`)) +
+      theme.fg("dim", windowLabel)
+    );
+  }
+  const tint = sgrBg(blendOver(id, base), theme.getColorMode());
+  const fill = sgrBg(id, theme.getColorMode()) + " ".repeat(filled);
   return (
-    theme.fg(color, "█".repeat(filled)) +
+    tint +
+    " " +
+    fill +
+    tint +
     theme.fg("dim", "░".repeat(cells - filled)) +
     " " +
     theme.bold(theme.fg(color, `${percent.toFixed(1)}%`)) +
-    theme.fg("dim", windowLabel)
+    theme.fg("dim", windowLabel) +
+    " \x1b[49m"
   );
 }
 
@@ -396,7 +519,7 @@ function renderMeter(width: number, percent: number | null, windowLabel: string,
 function renderActivity(theme: Theme): string {
   if (activityPhase === "idle") return "";
   const label = activityPhase === "thinking" ? "thinking" : "streaming";
-  return theme.fg("accent", `${SPINNER_FRAMES[spinFrame % SPINNER_FRAMES.length]} ${label}`);
+  return tinted(theme, "accent", theme.fg("accent", `${SPINNER_FRAMES[spinFrame % SPINNER_FRAMES.length]} ${label}`));
 }
 
 // Thinking level → theme token. `max` shares `thinkingXhigh` because
@@ -421,19 +544,19 @@ interface ModelChips {
   thinking: string;
 }
 
-// Model chips: provider (dim), model id (accent), thinking level (level
-// token). The thinking chip needs a reasoning model with a level set.
+// Model chips (the prototype's ordering): provider in a neutral block, model
+// id in an accent block, thinking level in a block tinted with its level
+// token. The thinking chip needs a reasoning model with a level set.
 function renderChips(ctx: ExtensionContext, theme: Theme): ModelChips | null {
   const model = ctx.model;
   if (!model) return null;
   const level = ctx.thinkingLevel;
+  const thinkingToken = level && level !== "off" ? THINKING_TOKENS[level] : undefined;
   return {
-    provider: theme.fg("dim", `${icons.provider} ${model.provider}`),
-    model: theme.fg("accent", model.id),
+    provider: tinted(theme, "muted", theme.fg("dim", `${icons.provider} ${model.provider}`)),
+    model: tinted(theme, "accent", theme.fg("accent", model.id)),
     thinking:
-      model.reasoning && level && level !== "off"
-        ? theme.fg(THINKING_TOKENS[level], `${icons.think} ${level}`)
-        : "",
+      model.reasoning && thinkingToken ? tinted(theme, thinkingToken, theme.fg(thinkingToken, `${icons.think} ${level}`)) : "",
   };
 }
 
@@ -469,15 +592,17 @@ function sanitizeStatusText(text: string): string {
 
 // Extension statuses (Goal 4): other extensions' setStatus texts as a
 // conditional last footer line (D2) so they never vanish. Sorted by
-// extension key, dimmed as secondary signals. Empty after sanitizing (no
-// statuses, or whitespace-only ones) renders nothing, never a blank row.
+// extension key, dimmed as a secondary signal in a neutral block. Empty
+// after sanitizing (no statuses, or whitespace-only ones) renders nothing,
+// never a blank row.
 function renderStatuses(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string {
   const line = Array.from(footerData.getExtensionStatuses().entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, text]) => sanitizeStatusText(text))
     .filter(Boolean)
     .join(" ");
-  return line === "" ? "" : truncateToWidth(theme.fg("dim", line), width, theme.fg("dim", "..."));
+  if (line === "") return "";
+  return truncateToWidth(tinted(theme, "muted", theme.fg("dim", line)), width, theme.fg("dim", "..."));
 }
 
 // Footer: the context meter and activity segment left with model chips
