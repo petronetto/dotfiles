@@ -1,22 +1,20 @@
-// pi-statusbar - structured status area for pi: a location/git/cost/time
-// widget above the editor and a footer with a context meter, activity, and
-// model chips. Design: .plans/main/pi-statusbar/PRD.md.
-// Currently implemented: the top row widget (dir, git, cost, elapsed time)
-// and the footer (context meter, activity, model chips, extension statuses)
-// with width-based collapse (compact meter, chip drops, truncation), plus
-// the `/statusbar` command toggling all of it off/on for the session.
-// Styling: ADR-002 tinted segment blocks — each segment gets a background of
-// its identity color blended over the theme's `userMessageBg` (ADR-001's
-// fg-only look is superseded); all colors derive from theme tokens at render
-// time.
+// pi-statusbar - structured status area for pi: a location/git/time widget
+// above the editor and a footer with a context meter, session token
+// totals, and model chips. Design: .plans/main/pi-statusbar/PRD.md.
+// Currently implemented: the top row widget (dir, git, last-response time)
+// and the footer (context meter, token totals, model chips, extension
+// statuses) with width-based collapse (compact meter, chip drops,
+// truncation), plus the `/statusbar` command toggling all of it off/on for
+// the session. pi's native working indicator is left untouched.
+// Styling: ADR-003 terminal palette chips — every background and foreground
+// is an ANSI palette index (SGR 38/48;5;N, N ∈ 0-15), so the terminal maps
+// the colors: changing the Ghostty theme recolors the whole bar. No hexes.
 
 import type {
   ExtensionAPI,
   ExtensionContext,
   ReadonlyFooterDataProvider,
   SessionEntry,
-  Theme,
-  ThemeColor,
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth, type TUI } from "@earendil-works/pi-tui";
 import { statSync, watch, type FSWatcher } from "node:fs";
@@ -33,9 +31,8 @@ const NERD_FONT_ICONS = {
   provider: "\uF2DB",
   think: "\uF0D0",
   clock: "\uF017",
-  cost: "\uF155",
   up: "\u2191",
-  dot: "\u25CF",
+  down: "\u2193",
 } as const;
 
 const ASCII_ICONS = {
@@ -44,9 +41,8 @@ const ASCII_ICONS = {
   provider: "api:",
   think: "th:",
   clock: "@",
-  cost: "$",
   up: "^",
-  dot: "*",
+  down: "v",
 } as const;
 
 const icons = useNerdFont ? NERD_FONT_ICONS : ASCII_ICONS;
@@ -60,7 +56,11 @@ let latestTui: TUI | undefined;
 // Stable handle on the extension API: `exec` for the git spawn lives here,
 // not on the per-session context.
 let piApi: ExtensionAPI | undefined;
-let sessionStart = 0;
+// Last-response timer: while a run is active the time chip ticks with the
+// live elapsed; agent_end freezes it into lastResponseMs. null = no response
+// yet in this session.
+let activeRunStart: number | null = null;
+let lastResponseMs: number | null = null;
 // Session-scoped /statusbar toggle (Goal 10): true = our surfaces installed.
 // Never persisted anywhere; a fresh session_start always re-arms it.
 let statusbarActive = true;
@@ -85,16 +85,13 @@ function shortenCwd(cwd: string, home: string | undefined): string {
   return relativeToHome === "" ? "~" : `~${sep}${relativeToHome}`;
 }
 
-// `12m` under an hour, `1h02` at or over an hour.
-function formatElapsed(ms: number): string {
-  const totalMinutes = Math.floor(ms / 60_000);
-  if (totalMinutes < 60) return `${totalMinutes}m`;
-  return `${Math.floor(totalMinutes / 60)}h${String(totalMinutes % 60).padStart(2, "0")}`;
-}
-
-// Dollar amount with two decimals.
-function formatCost(cost: number): string {
-  return `$${cost.toFixed(2)}`;
+// `42s` under a minute, `12m05s` under an hour, `1h02m` at or over.
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 60) return `${minutes}m${String(totalSeconds % 60).padStart(2, "0")}s`;
+  return `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}m`;
 }
 
 // Token count, `k`/`M`-scaled like the built-in footer: <1k plain, <10k
@@ -109,21 +106,31 @@ function formatTokens(count: number): string {
 
 // ── Data ──
 
-// Session cost: usage.cost.total summed over the active branch - assistant
-// replies, toolResult messages carrying usage, and branch summary/compaction
-// entries carrying usage. 0 before the first usage.
-function collectSessionCost(entries: SessionEntry[]): number {
-  let cost = 0;
+// Session token totals over the active branch - assistant replies,
+// toolResult messages carrying usage, and branch summary/compaction entries
+// carrying usage. Follows the built-in footer's convention: ↑ input, ↓ output;
+// cache read/write stay out to avoid inflating cached sessions.
+interface SessionTokens {
+  input: number;
+  output: number;
+}
+
+function collectSessionTokens(entries: SessionEntry[]): SessionTokens {
+  let input = 0;
+  let output = 0;
   for (const entry of entries) {
     if (entry.type === "message" && entry.message.role === "assistant") {
-      cost += entry.message.usage.cost.total;
+      input += entry.message.usage.input;
+      output += entry.message.usage.output;
     } else if (entry.type === "message" && entry.message.role === "toolResult" && entry.message.usage) {
-      cost += entry.message.usage.cost.total;
+      input += entry.message.usage.input;
+      output += entry.message.usage.output;
     } else if ((entry.type === "branch_summary" || entry.type === "compaction") && entry.usage) {
-      cost += entry.usage.cost.total;
+      input += entry.usage.input;
+      output += entry.usage.output;
     }
   }
-  return cost;
+  return { input, output };
 }
 
 // ── Git snapshot ──
@@ -261,147 +268,68 @@ function stopGitWatchers(): void {
   }
 }
 
-// ── Activity ──
-// Goal 9: while a run is active the footer's activity segment is the single
-// working indicator; pi's built-in working row is hidden at install (D9) and
-// only restored by the /statusbar toggle (step 006).
+// ── Palette chips (ADR-003) ──
+// Every segment renders as a solid chip whose colors are ANSI palette
+// indices (0-15), the way the terminal defines them. Ghostty maps these to
+// the active theme, so switching the terminal theme recolors the bar with
+// zero changes here; light themes keep working because the palette roles
+// (red/green/blue/gray…) invert with the theme. No fixed hexes anywhere.
 
-// Braille frames from the validated prototype, in advance order.
-const SPINNER_FRAMES = [
-  "\u280B",
-  "\u2819",
-  "\u2839",
-  "\u2838",
-  "\u283C",
-  "\u2834",
-  "\u2826",
-  "\u2827",
-  "\u2807",
-  "\u280F",
-];
-const SPINNER_INTERVAL_MS = 120;
+// Palette indices by role. 0 is the theme's opposite-of-background color,
+// which is why it doubles as chip text on colored backgrounds.
+const PAL = {
+  black: 0, // chip text on colored backgrounds
+  red: 1, // meter error fill
+  green: 2, // meter ok fill, clean git chip
+  yellow: 3, // meter warn fill, dirty git chip
+  blue: 4, // model chip
+  magenta: 5, // free role (no current chip uses it)
+  cyan: 6, // thinking chip
+  gray: 7, // secondary text on the default background
+  panel: 8, // neutral chip background (the theme's "bright black" gray)
+} as const;
 
-type ActivityPhase = "idle" | "thinking" | "streaming";
+// Segment colors: one named variable per chip role, so every look knob
+// lives here. Values are PAL roles, per ADR-003.
+const COLORS = {
+  chipText: PAL.black, // fg on colored chip backgrounds
+  neutralBg: PAL.panel, // neutral chip background (dir, time, provider…)
+  meterTrack: PAL.panel, // meter track and frame
+  meterOk: PAL.green,
+  meterWarn: PAL.yellow,
+  meterError: PAL.red,
+  gitClean: PAL.green,
+  gitDirty: PAL.yellow,
+  model: PAL.blue,
+  thinking: PAL.cyan,
+  secondaryFg: PAL.gray, // secondary text on the default background
+} as const;
 
-let activityPhase: ActivityPhase = "idle";
-let spinFrame = 0;
-let spinTimer: ReturnType<typeof setInterval> | undefined;
-
-function startSpinner(): void {
-  if (spinTimer !== undefined) return;
-  spinTimer = setInterval(() => {
-    spinFrame = (spinFrame + 1) % SPINNER_FRAMES.length;
-    latestTui?.requestRender();
-  }, SPINNER_INTERVAL_MS);
+// Palette-indexed foreground; `\x1b[39m` resets to the terminal's default
+// fg, which is what the segments are separated by.
+function pal(n: number, text: string): string {
+  return `\x1b[38;5;${n}m${text}\x1b[39m`;
 }
 
-// Idempotent: agent_end and agent_settled can both land idle, and dispose
-// must be safe on an already-stopped timer.
-function stopSpinner(): void {
-  if (spinTimer === undefined) return;
-  clearInterval(spinTimer);
-  spinTimer = undefined;
+// Solid chip: palette background with padded content, closed with a
+// background reset so the separating space renders on the default
+// background. `inner` must carry its own foreground.
+function chip(bg: number, inner: string): string {
+  return `\x1b[48;5;${bg}m ${inner} \x1b[49m`;
 }
 
-// Repaints on transition so the segment appears/disappears on the event
-// instead of waiting for the next tick.
-function setActivityPhase(phase: ActivityPhase): void {
-  if (activityPhase === phase) return;
-  activityPhase = phase;
-  if (phase === "idle") stopSpinner();
-  else startSpinner();
-  latestTui?.requestRender();
+// Neutral chip: the theme's gray (palette 8) as background and the
+// terminal's default fg as text — both ends of that pair invert with the
+// theme, so it stays readable in light and dark themes alike.
+function neutralChip(text: string): string {
+  return chip(COLORS.neutralBg, text);
 }
 
-// ── Tinted blocks (ADR-002) ──
-// Every segment renders as a tinted block like the validated prototype: the
-// block background is the segment's identity color blended over the theme's
-// `userMessageBg`, and the inner content keeps its theme.fg() foregrounds
-// (an fg-only reset preserves the background run). Every color derives from
-// theme tokens at render time — no fixed palette hexes. A theme prefix that
-// fails to parse degrades that segment to plain fg-only styling, never a
-// throw inside render().
-
-interface Rgb {
-  r: number;
-  g: number;
-  b: number;
-}
-
-// The validated prototype's mix(..., 0.18): identity color at 18% over the
-// block base.
-const TINT_RATIO = 0.18;
-
-// xterm 256 palette constants for the quantizer below (also in pi's own
-// theme.js): 6×6×6 color cube at indices 16-231, 24 grays at 232-255.
-const CUBE_VALUES = [0, 95, 135, 175, 215, 255];
-const GRAY_VALUES = Array.from({ length: 24 }, (_, i) => 8 + i * 10);
-
-// Parse the RGB out of a getFgAnsi/getBgAnsi prefix — truecolor
-// `38/48;2;R;G;B` or 256color `38/48;5;N`, with the index reverse-mapped
-// through the standard xterm palette. null on any unexpected form.
-function parseAnsiRgb(prefix: string): Rgb | null {
-  const match = /^\x1b\[(?:38|48);(?:2;(\d+);(\d+);(\d+)|5;(\d+))m$/.exec(prefix);
-  if (!match) return null;
-  if (match[1] !== undefined) return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]) };
-  const index = Number(match[4]);
-  if (index < 16 || index > 255) return null;
-  if (index < 232) {
-    const cell = index - 16;
-    const channel = (divisor: number) => CUBE_VALUES[Math.floor(cell / divisor) % 6];
-    return { r: channel(36), g: channel(6), b: channel(1) };
-  }
-  const gray = GRAY_VALUES[index - 232];
-  return { r: gray, g: gray, b: gray };
-}
-
-// 256-mode quantizer: nearest cube color, with grayscale preferred only for
-// nearly neutral colors — a port of pi's theme.js rgbTo256, so block
-// backgrounds quantize exactly like the theme's own colors do.
-function rgbTo256({ r, g, b }: Rgb): number {
-  const nearestIndex = (value: number) => {
-    let best = 0;
-    for (let i = 1; i < CUBE_VALUES.length; i++) {
-      if (Math.abs(value - CUBE_VALUES[i]) < Math.abs(value - CUBE_VALUES[best])) best = i;
-    }
-    return best;
-  };
-  const ri = nearestIndex(r);
-  const gi = nearestIndex(g);
-  const bi = nearestIndex(b);
-  // Weighted Euclidean distance (pi's human-eye weighting).
-  const distance = (dr: number, dg: number, db: number) => dr * dr * 0.299 + dg * dg * 0.587 + db * db * 0.114;
-  const cubeDist = distance(r - CUBE_VALUES[ri], g - CUBE_VALUES[gi], b - CUBE_VALUES[bi]);
-  const grayIndex = Math.min(GRAY_VALUES.length - 1, Math.max(0, Math.round((Math.round(0.299 * r + 0.587 * g + 0.114 * b) - 8) / 10)));
-  const gray = GRAY_VALUES[grayIndex];
-  const grayDist = distance(r - gray, g - gray, b - gray);
-  const spread = Math.max(r, g, b) - Math.min(r, g, b);
-  if (spread < 10 && grayDist < cubeDist) return 232 + grayIndex;
-  return 16 + 36 * ri + 6 * gi + bi;
-}
-
-// Mode-aware raw background SGR for a resolved RGB.
-function sgrBg(rgb: Rgb, mode: "truecolor" | "256color"): string {
-  return mode === "truecolor" ? `\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m` : `\x1b[48;5;${rgbTo256(rgb)}m`;
-}
-
-function blendOver(identity: Rgb, base: Rgb): Rgb {
-  return {
-    r: Math.round(identity.r * TINT_RATIO + base.r * (1 - TINT_RATIO)),
-    g: Math.round(identity.g * TINT_RATIO + base.g * (1 - TINT_RATIO)),
-    b: Math.round(identity.b * TINT_RATIO + base.b * (1 - TINT_RATIO)),
-  };
-}
-
-// One shared block wrapper: tinted background run around padded, already
-// styled content, closed with a background reset so the separating space
-// renders on the default background. When the block base or the identity
-// prefix cannot be parsed, degrade to the inner content alone (fg-only).
-function tinted(theme: Theme, identity: ThemeColor, inner: string): string {
-  const base = parseAnsiRgb(theme.getBgAnsi("userMessageBg"));
-  const id = parseAnsiRgb(theme.getFgAnsi(identity));
-  if (!base || !id) return inner;
-  return `${sgrBg(blendOver(id, base), theme.getColorMode())} ${inner} \x1b[49m`;
+// Identity chip: colored background (palette 1-6) with palette-black text,
+// the standard colored-badge contrast: the theme defines 0 as the color
+// that opposes the colored backgrounds it ships.
+function colorChip(bg: number, text: string): string {
+  return chip(bg, pal(COLORS.chipText, text));
 }
 
 // ── Rendering ──
@@ -418,41 +346,37 @@ function joinSpread(width: number, left: string, right: string): string {
   return pad >= 1 ? left + " ".repeat(pad) + right : truncateToWidth(`${left} ${right}`, width, "");
 }
 
-// Git chip: branch icon + branch name in the success token (the
-// prototype's green chip), a state dot (success when clean, warning when
-// dirty - the prototype's identity dot), then dim change counts and ahead
-// marker. Absent outside a repo / detached HEAD.
-function renderGitChip(theme: Theme): string {
+// Git chip: branch icon + name + dim counts. The chip background carries
+// the state (green when clean, yellow when dirty) instead of the old state
+// dot, which cannot contrast inside a solid chip. Absent outside a repo /
+// detached HEAD.
+function renderGitChip(): string {
   const snapshot = gitSnapshot;
   if (!snapshot) return "";
-  const dot = theme.fg(snapshot.dirty ? "warning" : "success", icons.dot);
-  const parts = [theme.fg("success", `${icons.branch} ${snapshot.branch}`), dot];
-  if (snapshot.staged > 0) parts.push(theme.fg("dim", `+${snapshot.staged}`));
-  if (snapshot.modified > 0) parts.push(theme.fg("dim", `~${snapshot.modified}`));
-  if (snapshot.ahead > 0) parts.push(theme.fg("dim", `${icons.up}${snapshot.ahead}`));
-  return tinted(theme, "success", parts.join(" "));
+  const parts = [`${icons.branch} ${snapshot.branch}`];
+  if (snapshot.staged > 0) parts.push(`+${snapshot.staged}`);
+  if (snapshot.modified > 0) parts.push(`~${snapshot.modified}`);
+  if (snapshot.ahead > 0) parts.push(`${icons.up}${snapshot.ahead}`);
+  return colorChip(snapshot.dirty ? COLORS.gitDirty : COLORS.gitClean, parts.join(" "));
 }
 
-// Top row: folder icon + ~-shortened cwd and the git chip left, session
-// cost and elapsed time right.
-function renderTopRow(width: number, theme: Theme): string[] {
+// Top row: folder icon + current directory name (not the whole path) and
+// the git chip left, last-response time right; all neutrals as panel-gray
+// chips with default-fg text.
+function renderTopRow(width: number): string[] {
   const ctx = latestCtx;
   if (!ctx) return [];
 
   const cwd = shortenCwd(ctx.sessionManager.getCwd(), process.env.HOME || process.env.USERPROFILE);
-  // Neutral segments: the `muted` gray as the block identity — the closest
-  // theme-adaptive match for the prototype's clearly-lighter neutral chips
-  // (the `text` token is too bright as a tint source).
-  const dir = tinted(theme, "muted", theme.fg("dim", `${icons.folder} ${cwd}`));
-  const gitChip = renderGitChip(theme);
+  const dirName = cwd.split(sep).pop() || cwd;
+  const dir = neutralChip(`${icons.folder} ${dirName}`);
+  const gitChip = renderGitChip();
   const left = gitChip === "" ? dir : `${dir} ${gitChip}`;
-  const cost = tinted(
-    theme,
-    "muted",
-    theme.fg("dim", `${icons.cost} ${formatCost(collectSessionCost(ctx.sessionManager.getBranch()))}`),
-  );
-  const time = tinted(theme, "muted", theme.fg("dim", `${icons.clock} ${formatElapsed(Math.max(0, Date.now() - sessionStart))}`));
-  return [joinSpread(width, left, `${cost} ${time}`)];
+  // Live elapsed while a run is active, the frozen last-response time after
+  // it ends; `--` before the first response of the session.
+  const elapsed = activeRunStart !== null ? Date.now() - activeRunStart : lastResponseMs;
+  const time = neutralChip(`${icons.clock} ${elapsed === null ? "--" : formatDuration(elapsed)}`);
+  return [joinSpread(width, left, time)];
 }
 
 // Context meter: 20 cells at ≥ 85 columns, 10 below (D10); fill count =
@@ -465,75 +389,35 @@ const METER_WARN_AT_PERCENT = 50;
 const METER_ERROR_AT_PERCENT = 75;
 
 // success below half, warning 50-74, error at 75+ (used-% semantics, not the
-// built-in bar's 75/90 breakpoints).
-function meterColor(percent: number): ThemeColor {
-  if (percent >= METER_ERROR_AT_PERCENT) return "error";
-  if (percent >= METER_WARN_AT_PERCENT) return "warning";
-  return "success";
+// built-in bar's 75/90 breakpoints). Palette index, not a theme token.
+function meterColor(percent: number): number {
+  if (percent >= METER_ERROR_AT_PERCENT) return COLORS.meterError;
+  if (percent >= METER_WARN_AT_PERCENT) return COLORS.meterWarn;
+  return COLORS.meterOk;
 }
 
-// Meter block (the prototype's meterSeg): tinted background at the
-// threshold color, fill cells as pure-identity-colored spaces, `░` track in
-// dim on the tint, bold percent in the threshold color, dim window label.
-// Unknown usage renders the empty track with `--%`. The cell count follows
-// the footer width: compact below 85 columns (D10). Degrades to the fg-only
-// bar when the theme colors cannot be parsed.
-function renderMeter(width: number, percent: number | null, windowLabel: string, theme: Theme): string {
+// Meter chip: one framed block of colored fill cells on a panel-gray track,
+// then a bold percent in the threshold color and a gray window label, all
+// outside the chip. Unknown usage renders the empty track with `--%`. The
+// cell count follows the footer width: compact below 85 columns (D10).
+function renderMeter(width: number, percent: number | null, windowLabel: string): string {
   const cells = width >= COMPACT_BELOW_COLS ? METER_CELLS : METER_CELLS_COMPACT;
+  // One continuous background run: panel pad, colored fill cells, panel
+  // track, panel pad — the trailing reset only lands after the whole frame.
+  const bar = (color: number, filled: number) =>
+    `\x1b[48;5;${COLORS.meterTrack}m \x1b[48;5;${color}m${" ".repeat(filled)}` +
+    `\x1b[48;5;${COLORS.meterTrack}m${" ".repeat(cells - filled)} \x1b[49m`;
   if (percent === null) {
-    return tinted(theme, "muted", theme.fg("dim", `${"░".repeat(cells)} --%${windowLabel}`));
+    return `${bar(COLORS.meterTrack, 0)} ${pal(COLORS.secondaryFg, `--%${windowLabel}`)}`;
   }
   const filled = Math.min(cells, Math.max(0, Math.round((percent / 100) * cells)));
   const color = meterColor(percent);
-  const id = parseAnsiRgb(theme.getFgAnsi(color));
-  const base = parseAnsiRgb(theme.getBgAnsi("userMessageBg"));
-  if (!id || !base) {
-    // Fg-only degrade: same bar the tinted block replaces.
-    return (
-      theme.fg(color, "█".repeat(filled)) +
-      theme.fg("dim", "░".repeat(cells - filled)) +
-      " " +
-      theme.bold(theme.fg(color, `${percent.toFixed(1)}%`)) +
-      theme.fg("dim", windowLabel)
-    );
-  }
-  const tint = sgrBg(blendOver(id, base), theme.getColorMode());
-  const fill = sgrBg(id, theme.getColorMode()) + " ".repeat(filled);
   return (
-    tint +
-    " " +
-    fill +
-    tint +
-    theme.fg("dim", "░".repeat(cells - filled)) +
-    " " +
-    theme.bold(theme.fg(color, `${percent.toFixed(1)}%`)) +
-    theme.fg("dim", windowLabel) +
-    " \x1b[49m"
+    `${bar(color, filled)} ` +
+    `\x1b[1m${pal(color, `${percent.toFixed(1)}%`)}\x1b[22m` +
+    pal(COLORS.secondaryFg, windowLabel)
   );
 }
-
-// Activity segment: spinner frame + phase label in the accent token (the
-// prototype's purple intent, mapped to pi's closest semantic token).
-// Absent while idle; composed before the spacer in renderFooter (D11), so
-// appearing or disappearing never moves the right chips.
-function renderActivity(theme: Theme): string {
-  if (activityPhase === "idle") return "";
-  const label = activityPhase === "thinking" ? "thinking" : "streaming";
-  return tinted(theme, "accent", theme.fg("accent", `${SPINNER_FRAMES[spinFrame % SPINNER_FRAMES.length]} ${label}`));
-}
-
-// Thinking level → theme token. `max` shares `thinkingXhigh` because
-// `thinkingMax` is an optional token some themes lack.
-type ThinkingLevel = NonNullable<ExtensionContext["thinkingLevel"]>;
-
-const THINKING_TOKENS: Record<Exclude<ThinkingLevel, "off">, ThemeColor> = {
-  minimal: "thinkingMinimal",
-  low: "thinkingLow",
-  medium: "thinkingMedium",
-  high: "thinkingHigh",
-  xhigh: "thinkingXhigh",
-  max: "thinkingXhigh",
-};
 
 // Footer chips in display order; `thinking` is "" when hidden (no reasoning
 // model or level off). Fields, not a joined string, so the width collapse
@@ -544,19 +428,17 @@ interface ModelChips {
   thinking: string;
 }
 
-// Model chips (the prototype's ordering): provider in a neutral block, model
-// id in an accent block, thinking level in a block tinted with its level
-// token. The thinking chip needs a reasoning model with a level set.
-function renderChips(ctx: ExtensionContext, theme: Theme): ModelChips | null {
+// Model chips (the prototype's ordering): provider in a neutral chip,
+// model id in a blue chip, thinking level in a cyan chip. The thinking chip
+// needs a reasoning model with a level set.
+function renderChips(ctx: ExtensionContext): ModelChips | null {
   const model = ctx.model;
   if (!model) return null;
   const level = ctx.thinkingLevel;
-  const thinkingToken = level && level !== "off" ? THINKING_TOKENS[level] : undefined;
   return {
-    provider: tinted(theme, "muted", theme.fg("dim", `${icons.provider} ${model.provider}`)),
-    model: tinted(theme, "accent", theme.fg("accent", model.id)),
-    thinking:
-      model.reasoning && thinkingToken ? tinted(theme, thinkingToken, theme.fg(thinkingToken, `${icons.think} ${level}`)) : "",
+    provider: neutralChip(`${icons.provider} ${model.provider}`),
+    model: colorChip(COLORS.model, model.id),
+    thinking: model.reasoning && level && level !== "off" ? colorChip(COLORS.thinking, `${icons.think} ${level}`) : "",
   };
 }
 
@@ -595,30 +477,28 @@ function sanitizeStatusText(text: string): string {
 // extension key, dimmed as a secondary signal in a neutral block. Empty
 // after sanitizing (no statuses, or whitespace-only ones) renders nothing,
 // never a blank row.
-function renderStatuses(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string {
+function renderStatuses(width: number, footerData: ReadonlyFooterDataProvider): string {
   const line = Array.from(footerData.getExtensionStatuses().entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, text]) => sanitizeStatusText(text))
     .filter(Boolean)
     .join(" ");
   if (line === "") return "";
-  return truncateToWidth(tinted(theme, "muted", theme.fg("dim", line)), width, theme.fg("dim", "..."));
+  return truncateToWidth(neutralChip(line), width, "...");
 }
 
-// Footer: the context meter and activity segment left with model chips
+// Footer: the context meter with session token totals left, model chips
 // flush right, then the statuses line when another extension has set one.
-// The activity segment composes before the spacer, so the right chips
-// never move when it appears or disappears.
-function renderFooter(width: number, theme: Theme, footerData: ReadonlyFooterDataProvider): string[] {
+function renderFooter(width: number, footerData: ReadonlyFooterDataProvider): string[] {
   const ctx = latestCtx;
   if (!ctx) return [];
 
   const usage = ctx.getContextUsage();
-  const meter = renderMeter(width, usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "", theme);
-  const activity = renderActivity(theme);
-  const left = activity === "" ? meter : `${meter} ${activity}`;
-  const lines = [fitFooterRow(width, left, renderChips(ctx, theme))];
-  const statuses = renderStatuses(width, theme, footerData);
+  const meter = renderMeter(width, usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "");
+  const tokens = collectSessionTokens(ctx.sessionManager.getBranch());
+  const tokensChip = neutralChip(`${icons.up}${formatTokens(tokens.input)} ${icons.down}${formatTokens(tokens.output)}`);
+  const lines = [fitFooterRow(width, `${meter} ${tokensChip}`, renderChips(ctx))];
+  const statuses = renderStatuses(width, footerData);
   if (statuses !== "") lines.push(statuses);
   return lines;
 }
@@ -632,22 +512,21 @@ function installStatusbar(ctx: ExtensionContext): void {
   statusbarActive = true; // a fresh session always starts with the statusbar on
   ctx.ui.setWidget(
     "pi-statusbar",
-    (tui, theme) => {
+    (tui, _theme) => {
       latestTui = tui;
       return {
-        render: (width: number) => renderTopRow(width, theme),
-        // Theme is pi's live proxy: fg() resolves the active theme at render
-        // time, so a no-op invalidate() is correct.
+        render: (width: number) => renderTopRow(width),
+        // invalidate() is a no-op: nothing depends on the pi theme anymore —
+        // colors are palette indices the terminal resolves.
         invalidate: () => {},
         dispose: () => {
           stopGitWatchers();
-          stopSpinner(); // the timer must not outlive the widget
         },
       };
     },
     { placement: "aboveEditor" },
   );
-  ctx.ui.setFooter((_tui, theme, footerData) => {
+  ctx.ui.setFooter((_tui, _theme, footerData) => {
     // Branch switches are detected by pi's own HEAD watcher; refresh our
     // snapshot against the new branch (the repaint happens when the
     // refresh lands).
@@ -655,8 +534,8 @@ function installStatusbar(ctx: ExtensionContext): void {
       void refreshGitSnapshot();
     });
     return {
-      render: (width: number) => renderFooter(width, theme, footerData),
-      // Same live-proxy reasoning as the widget's invalidate above.
+      render: (width: number) => renderFooter(width, footerData),
+      // Same palette-index reasoning as the widget's invalidate above.
       invalidate: () => {},
       dispose: () => {
         unsubscribeBranchChange();
@@ -664,22 +543,18 @@ function installStatusbar(ctx: ExtensionContext): void {
       },
     };
   });
-  // The footer's activity segment is the single working indicator (D9);
-  // teardown restores the default for /statusbar off.
-  ctx.ui.setWorkingIndicator({ frames: [] });
+  // pi's native working indicator is left untouched (D9 reversed, Q14).
   startGitWatchers();
   void refreshGitSnapshot();
 }
 
-// Removes all three surfaces and restores pi's built-ins. The module-level
+// Removes both surfaces and restores pi's built-in footer. The module-level
 // cleanup runs explicitly (idempotent) instead of relying on the widget
 // dispose that setWidget(key, undefined) happens to trigger.
 function teardownStatusbar(ctx: ExtensionContext): void {
   statusbarActive = false;
   ctx.ui.setWidget("pi-statusbar", undefined);
   ctx.ui.setFooter(undefined);
-  ctx.ui.setWorkingIndicator(); // no argument restores the built-in indicator
-  setActivityPhase("idle"); // also stops the spinner timer
   stopGitWatchers();
 }
 
@@ -687,18 +562,17 @@ export default function piStatusbar(pi: ExtensionAPI): void {
   piApi = pi;
   // Run-phase tracking is state-only, so it registers outside the hasUI
   // guard; in print/RPC modes latestTui is unset and the repaints no-op.
-  pi.on("agent_start", () => setActivityPhase("thinking"));
-  pi.on("message_update", (event) => {
-    const delta = event.assistantMessageEvent?.type;
-    if (delta === "thinking_delta") setActivityPhase("thinking");
-    else if (delta === "text_delta") setActivityPhase("streaming");
-    // Other delta kinds (tool calls, usage…) leave the phase unchanged.
+  pi.on("agent_start", () => {
+    activeRunStart = Date.now();
+    latestTui?.requestRender();
   });
-  // agent_end goes idle even though pi may auto-retry or queue a continuation
-  // right after: the next agent_start re-arms the spinner, and agent_settled
-  // forces idle for queued continuations that never fire another agent_end.
-  pi.on("agent_end", () => setActivityPhase("idle"));
-  pi.on("agent_settled", () => setActivityPhase("idle"));
+  // Freeze the last-response timer; a retried or queued continuation starts
+  // a fresh run on its next agent_start.
+  pi.on("agent_end", () => {
+    if (activeRunStart !== null) lastResponseMs = Date.now() - activeRunStart;
+    activeRunStart = null;
+    latestTui?.requestRender();
+  });
   // Chips read cached ctx state; these selections change it mid-session.
   pi.on("model_select", (_event, ctx) => {
     latestCtx = ctx;
@@ -710,15 +584,15 @@ export default function piStatusbar(pi: ExtensionAPI): void {
   });
   pi.on("session_start", (_event, ctx) => {
     latestCtx = ctx;
-    sessionStart = Date.now();
+    activeRunStart = null;
+    lastResponseMs = null;
     gitSnapshot = null; // install's refresh re-fills it; failures keep it null
     stopGitWatchers(); // the previous session's watchers must not survive
-    setActivityPhase("idle"); // the previous session's phase must not survive either
     if (!ctx.hasUI) return;
     installStatusbar(ctx);
   });
   // /statusbar (Goal 10): session-scoped toggle. Off tears our surfaces down
-  // so the built-in footer and working indicator return; on reinstalls them.
+  // so the built-in footer returns; on, it reinstalls them.
   // State lives only in this session - session_start re-arms it, nothing is
   // persisted to settings.
   pi.registerCommand("statusbar", {
