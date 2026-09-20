@@ -9,8 +9,7 @@
   "tuiMode": "regular",
   "packages": [
     "npm:pi-subagents",
-    "npm:pi-web-access",
-    "npm:pi-vision-handoff"
+    "npm:pi-web-access"
   ],
   "warnings": {
     "anthropicExtraUsage": false
