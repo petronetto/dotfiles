@@ -6,9 +6,9 @@
 // statuses) with width-based collapse (compact meter, chip drops,
 // truncation), plus the `/statusbar` command toggling all of it off/on for
 // the session. pi's native working indicator is left untouched.
-// Styling: ADR-003 terminal palette chips — every background and foreground
-// is an ANSI palette index (SGR 38/48;5;N, N ∈ 0-15), so the terminal maps
-// the colors: changing the Ghostty theme recolors the whole bar. No hexes.
+// Styling: ADR-004 selectable palettes (Gruvbox, Catppuccin, terminal
+// default) at the top of the file; hex palettes enable the tinted tokens
+// segment, the terminal palette maps through ANSI palette indices.
 
 import type {
   ExtensionAPI,
@@ -31,8 +31,8 @@ const NERD_FONT_ICONS = {
   provider: "\uF2DB",
   think: "\uF0D0",
   clock: "\uF017",
-  up: "\u2191",
-  down: "\u2193",
+  up: "\uF062",
+  down: "\uF063",
 } as const;
 
 const ASCII_ICONS = {
@@ -46,6 +46,163 @@ const ASCII_ICONS = {
 } as const;
 
 const icons = useNerdFont ? NERD_FONT_ICONS : ASCII_ICONS;
+
+// ── Palettes ──
+// The bar's look comes from one selectable palette: Gruvbox and
+// Catppuccin hardcode their hexes (which makes tinted segments possible,
+// since the terminal background is known), and the default palette uses
+// ANSI palette indices so the terminal maps them to whatever theme is
+// active. Switch palettes in ACTIVE_PALETTE below.
+
+// A color is either a truecolor hex (hardcoded theme palettes) or an ANSI
+// palette index the terminal resolves (default palette).
+type Color = { hex: string } | { index: number };
+
+interface Palette {
+  // Terminal background; enables tinted segments when it is a hex.
+  background: string | null;
+  chipText: Color; // fg on colored chip backgrounds
+  neutralBg: Color; // neutral chip background (dir, time, provider…)
+  meterTrack: Color; // meter track
+  secondaryFg: Color; // secondary text on the default background
+  tokens: Color; // tokens segment identity
+  gitClean: Color;
+  gitDirty: Color;
+  model: Color;
+  thinking: Color;
+  meterOk: Color;
+  meterWarn: Color;
+  meterError: Color;
+}
+
+const PALETTES: Record<"gruvbox" | "catppuccin" | "terminal", Palette> = {
+  // Mirrors dot_config/ghostty/themes/Gruvbox Custom.
+  gruvbox: {
+    background: "#1b1b1b",
+    chipText: { hex: "#1b1b1b" },
+    neutralBg: { hex: "#4e4747" },
+    meterTrack: { hex: "#4e4747" },
+    secondaryFg: { hex: "#a89984" },
+    tokens: { hex: "#d3869b" },
+    gitClean: { hex: "#98971a" },
+    gitDirty: { hex: "#d79921" },
+    model: { hex: "#458588" },
+    thinking: { hex: "#689d6a" },
+    meterOk: { hex: "#98971a" },
+    meterWarn: { hex: "#d79921" },
+    meterError: { hex: "#cc241d" },
+  },
+  // Catppuccin Mocha.
+  catppuccin: {
+    background: "#1e1e2e",
+    chipText: { hex: "#1e1e2e" },
+    neutralBg: { hex: "#313244" },
+    meterTrack: { hex: "#313244" },
+    secondaryFg: { hex: "#7f849c" },
+    tokens: { hex: "#cba6f7" },
+    gitClean: { hex: "#a6e3a1" },
+    gitDirty: { hex: "#f9e2af" },
+    model: { hex: "#89b4fa" },
+    thinking: { hex: "#94e2d3" },
+    meterOk: { hex: "#a6e3a1" },
+    meterWarn: { hex: "#f9e2af" },
+    meterError: { hex: "#ed8796" },
+  },
+  // The terminal's own theme: every color is a palette index (0-15), so
+  // changing the terminal theme recolors the bar (ADR-003 behavior, kept
+  // as the adaptive fallback). No tinted segments: the real RGB is hidden.
+  terminal: {
+    background: null,
+    chipText: { index: 0 },
+    neutralBg: { index: 8 },
+    meterTrack: { index: 8 },
+    secondaryFg: { index: 7 },
+    tokens: { index: 13 },
+    gitClean: { index: 2 },
+    gitDirty: { index: 3 },
+    model: { index: 4 },
+    thinking: { index: 6 },
+    meterOk: { index: 2 },
+    meterWarn: { index: 3 },
+    meterError: { index: 1 },
+  },
+};
+
+// Switch the bar's look here.
+const ACTIVE_PALETTE: keyof typeof PALETTES = "gruvbox";
+const PALETTE = PALETTES[ACTIVE_PALETTE];
+
+// SGR parameter tail for a color: truecolor `2;R;G;B` or 256color `5;N`.
+function colorSgr(color: Color): string {
+  if ("hex" in color) {
+    return `2;${parseInt(color.hex.slice(1, 3), 16)};${parseInt(color.hex.slice(3, 5), 16)};${parseInt(color.hex.slice(5, 7), 16)}`;
+  }
+  return `5;${color.index}`;
+}
+
+// Palette foreground; `\x1b[39m` resets to the terminal's default fg, which
+// is what the segments are separated by.
+function fg(color: Color, text: string): string {
+  return `\x1b[38;${colorSgr(color)}m${text}\x1b[39m`;
+}
+
+// Tint ratio from the validated prototype: identity color at 18% over the
+// terminal background.
+const TINT_RATIO = 0.18;
+
+interface Rgb {
+  r: number;
+  g: number;
+  b: number;
+}
+
+function hexToRgb(hex: string): Rgb {
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+function rgbToHex({ r, g, b }: Rgb): string {
+  const channel = (v: number) => v.toString(16).padStart(2, "0");
+  return `#${channel(r)}${channel(g)}${channel(b)}`;
+}
+
+// Blend a palette color over the palette's terminal background. Only hex
+// palettes with a known background can compute it; anything else returns
+// null and the caller falls back to a solid chip.
+function tinted(identity: Color): Color | null {
+  if (!("hex" in identity) || PALETTE.background === null) return null;
+  const id = hexToRgb(identity.hex);
+  const base = hexToRgb(PALETTE.background);
+  const mix = (channel: number, over: number) =>
+    Math.round(channel * TINT_RATIO + over * (1 - TINT_RATIO));
+  return {
+    hex: rgbToHex({ r: mix(id.r, base.r), g: mix(id.g, base.g), b: mix(id.b, base.b) }),
+  };
+}
+
+// Solid chip: background run with padded content, closed with a background
+// reset so the separating space renders on the default background.
+// `inner` must carry its own foreground.
+function chip(bg: Color, inner: string): string {
+  return `\x1b[48;${colorSgr(bg)}m ${inner} \x1b[49m`;
+}
+
+// Neutral chip: the palette's gray as background and the terminal's
+// default fg as text — a pair that stays readable in light and dark themes
+// alike.
+function neutralChip(text: string): string {
+  return chip(PALETTE.neutralBg, text);
+}
+
+// Identity chip: colored background with the palette's chipText fg, the
+// standard colored-badge contrast (the theme's opposite-of-background
+// color over its colored backgrounds).
+function colorChip(bg: Color, text: string): string {
+  return chip(bg, fg(PALETTE.chipText, text));
+}
 
 // ── State ──
 // Pull-based rendering: renderers read only this cached state, refreshed off
@@ -268,70 +425,6 @@ function stopGitWatchers(): void {
   }
 }
 
-// ── Palette chips (ADR-003) ──
-// Every segment renders as a solid chip whose colors are ANSI palette
-// indices (0-15), the way the terminal defines them. Ghostty maps these to
-// the active theme, so switching the terminal theme recolors the bar with
-// zero changes here; light themes keep working because the palette roles
-// (red/green/blue/gray…) invert with the theme. No fixed hexes anywhere.
-
-// Palette indices by role. 0 is the theme's opposite-of-background color,
-// which is why it doubles as chip text on colored backgrounds.
-const PAL = {
-  black: 0, // chip text on colored backgrounds
-  red: 1, // meter error fill
-  green: 2, // meter ok fill, clean git chip
-  yellow: 3, // meter warn fill, dirty git chip
-  blue: 4, // model chip
-  magenta: 5, // free role (no current chip uses it)
-  cyan: 6, // thinking chip
-  gray: 7, // secondary text on the default background
-  panel: 8, // neutral chip background (the theme's "bright black" gray)
-} as const;
-
-// Segment colors: one named variable per chip role, so every look knob
-// lives here. Values are PAL roles, per ADR-003.
-const COLORS = {
-  chipText: PAL.black, // fg on colored chip backgrounds
-  neutralBg: PAL.panel, // neutral chip background (dir, time, provider…)
-  meterTrack: PAL.panel, // meter track and frame
-  meterOk: PAL.green,
-  meterWarn: PAL.yellow,
-  meterError: PAL.red,
-  gitClean: PAL.green,
-  gitDirty: PAL.yellow,
-  model: PAL.blue,
-  thinking: PAL.cyan,
-  secondaryFg: PAL.gray, // secondary text on the default background
-} as const;
-
-// Palette-indexed foreground; `\x1b[39m` resets to the terminal's default
-// fg, which is what the segments are separated by.
-function pal(n: number, text: string): string {
-  return `\x1b[38;5;${n}m${text}\x1b[39m`;
-}
-
-// Solid chip: palette background with padded content, closed with a
-// background reset so the separating space renders on the default
-// background. `inner` must carry its own foreground.
-function chip(bg: number, inner: string): string {
-  return `\x1b[48;5;${bg}m ${inner} \x1b[49m`;
-}
-
-// Neutral chip: the theme's gray (palette 8) as background and the
-// terminal's default fg as text — both ends of that pair invert with the
-// theme, so it stays readable in light and dark themes alike.
-function neutralChip(text: string): string {
-  return chip(COLORS.neutralBg, text);
-}
-
-// Identity chip: colored background (palette 1-6) with palette-black text,
-// the standard colored-badge contrast: the theme defines 0 as the color
-// that opposes the colored backgrounds it ships.
-function colorChip(bg: number, text: string): string {
-  return chip(bg, pal(COLORS.chipText, text));
-}
-
 // ── Rendering ──
 // Pure string builders over cached state only; never throw on missing data.
 // No separator rules: pi's editor already draws border lines above and
@@ -357,7 +450,7 @@ function renderGitChip(): string {
   if (snapshot.staged > 0) parts.push(`+${snapshot.staged}`);
   if (snapshot.modified > 0) parts.push(`~${snapshot.modified}`);
   if (snapshot.ahead > 0) parts.push(`${icons.up}${snapshot.ahead}`);
-  return colorChip(snapshot.dirty ? COLORS.gitDirty : COLORS.gitClean, parts.join(" "));
+  return colorChip(snapshot.dirty ? PALETTE.gitDirty : PALETTE.gitClean, parts.join(" "));
 }
 
 // Top row: folder icon + current directory name (not the whole path) and
@@ -389,34 +482,44 @@ const METER_WARN_AT_PERCENT = 50;
 const METER_ERROR_AT_PERCENT = 75;
 
 // success below half, warning 50-74, error at 75+ (used-% semantics, not the
-// built-in bar's 75/90 breakpoints). Palette index, not a theme token.
-function meterColor(percent: number): number {
-  if (percent >= METER_ERROR_AT_PERCENT) return COLORS.meterError;
-  if (percent >= METER_WARN_AT_PERCENT) return COLORS.meterWarn;
-  return COLORS.meterOk;
+// built-in bar's 75/90 breakpoints). Palette color, not a theme token.
+function meterColor(percent: number): Color {
+  if (percent >= METER_ERROR_AT_PERCENT) return PALETTE.meterError;
+  if (percent >= METER_WARN_AT_PERCENT) return PALETTE.meterWarn;
+  return PALETTE.meterOk;
 }
 
-// Meter chip: one framed block of colored fill cells on a panel-gray track,
-// then a bold percent in the threshold color and a gray window label, all
-// outside the chip. Unknown usage renders the empty track with `--%`. The
-// cell count follows the footer width: compact below 85 columns (D10).
+// Meter bar: colored fill cells flush at the left edge on a track run
+// (no padding: the fill must not look like it starts a cell late), then a
+// bold percent in the threshold color and the window label in secondary
+// fg, all outside the chip. Unknown usage renders the empty track with
+// `--%`. The cell count follows the footer width: compact below 85 columns
+// (D10).
 function renderMeter(width: number, percent: number | null, windowLabel: string): string {
   const cells = width >= COMPACT_BELOW_COLS ? METER_CELLS : METER_CELLS_COMPACT;
-  // One continuous background run: panel pad, colored fill cells, panel
-  // track, panel pad — the trailing reset only lands after the whole frame.
-  const bar = (color: number, filled: number) =>
-    `\x1b[48;5;${COLORS.meterTrack}m \x1b[48;5;${color}m${" ".repeat(filled)}` +
-    `\x1b[48;5;${COLORS.meterTrack}m${" ".repeat(cells - filled)} \x1b[49m`;
+  const bar = (color: Color, filled: number) =>
+    `\x1b[48;${colorSgr(color)}m${" ".repeat(filled)}` +
+    `\x1b[48;${colorSgr(PALETTE.meterTrack)}m${" ".repeat(cells - filled)}\x1b[49m`;
   if (percent === null) {
-    return `${bar(COLORS.meterTrack, 0)} ${pal(COLORS.secondaryFg, `--%${windowLabel}`)}`;
+    return `${bar(PALETTE.meterTrack, 0)} ${fg(PALETTE.secondaryFg, `--%${windowLabel}`)}`;
   }
   const filled = Math.min(cells, Math.max(0, Math.round((percent / 100) * cells)));
   const color = meterColor(percent);
   return (
     `${bar(color, filled)} ` +
-    `\x1b[1m${pal(color, `${percent.toFixed(1)}%`)}\x1b[22m` +
-    pal(COLORS.secondaryFg, windowLabel)
+    `\x1b[1m${fg(color, `${percent.toFixed(1)}%`)}\x1b[22m` +
+    fg(PALETTE.secondaryFg, windowLabel)
   );
+}
+
+// Tokens segment: session ↑/↓ totals in Nerd Font arrows. On hex palettes
+// the block is the tokens identity color tinted over the terminal
+// background with the content in the identity color; index palettes cannot
+// compute tints and degrade to a solid identity chip.
+function renderTokens(tokens: SessionTokens): string {
+  const content = `${icons.up}${formatTokens(tokens.input)} ${icons.down}${formatTokens(tokens.output)}`;
+  const tint = tinted(PALETTE.tokens);
+  return tint === null ? chip(PALETTE.tokens, fg(PALETTE.chipText, content)) : chip(tint, fg(PALETTE.tokens, content));
 }
 
 // Footer chips in display order; `thinking` is "" when hidden (no reasoning
@@ -437,8 +540,8 @@ function renderChips(ctx: ExtensionContext): ModelChips | null {
   const level = ctx.thinkingLevel;
   return {
     provider: neutralChip(`${icons.provider} ${model.provider}`),
-    model: colorChip(COLORS.model, model.id),
-    thinking: model.reasoning && level && level !== "off" ? colorChip(COLORS.thinking, `${icons.think} ${level}`) : "",
+    model: colorChip(PALETTE.model, model.id),
+    thinking: model.reasoning && level && level !== "off" ? colorChip(PALETTE.thinking, `${icons.think} ${level}`) : "",
   };
 }
 
@@ -496,8 +599,7 @@ function renderFooter(width: number, footerData: ReadonlyFooterDataProvider): st
   const usage = ctx.getContextUsage();
   const meter = renderMeter(width, usage?.percent ?? null, usage ? `/${formatTokens(usage.contextWindow)}` : "");
   const tokens = collectSessionTokens(ctx.sessionManager.getBranch());
-  const tokensChip = neutralChip(`${icons.up}${formatTokens(tokens.input)} ${icons.down}${formatTokens(tokens.output)}`);
-  const lines = [fitFooterRow(width, `${meter} ${tokensChip}`, renderChips(ctx))];
+  const lines = [fitFooterRow(width, `${meter} ${renderTokens(tokens)}`, renderChips(ctx))];
   const statuses = renderStatuses(width, footerData);
   if (statuses !== "") lines.push(statuses);
   return lines;

@@ -52,6 +52,7 @@ brew "ansible"      # automation & provisioning
 brew "awscli"       # AWS CLI v2
 
 # --- AI coding agents & LLM tooling ---
+brew "ollama"
 brew "pi-coding-agent"
 brew "agent-browser"
 
@@ -113,7 +114,6 @@ cask "bruno"          # open-source API client (Postman alternative)
 # --- AI desktop clients ---
 cask "claude"
 cask "claude-code"
-cask "ollama-app"
 
 # --- Productivity ---
 cask "obsidian"
@@ -121,7 +121,6 @@ cask "todoist-app"
 
 # --- Utilities ---
 cask "rectangle"            # window management & snapping
-cask "maccy"                # clipboard manager
 cask "vorssaint"            # menu bar system utilities
 
 # --- Containers ---
