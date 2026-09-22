@@ -1,19 +1,19 @@
 ---
 name: blueprint
-description: Plan a whole new project from scratch before any epic exists. Interview for vision, stack, and constraints, then write CHARTER.md (project constitution) and ROADMAP.md (shallow epic table) under .plans/roadmap/, and hand each epic to spec. Trigger on "blueprint", "greenfield", "new project from scratch", "plan the whole project", "roadmap". Markdown only, never code.
+description: Plan a whole new project from scratch before any epic exists. Interview for vision, stack, and constraints, then write CHARTER.md (project constitution) and ROADMAP.md (shallow epic table) in the roadmap plan task, and hand each epic to spec. Trigger on "blueprint", "greenfield", "new project from scratch", "plan the whole project", "roadmap". Markdown only, never code.
 argument-hint: "<project idea>"
 ---
 
 # Blueprint
 
-Turn a project idea into a charter and an epic roadmap, so every later `spec` → `plan` → `build` cycle stays small. Use this for greenfield work where the request spans the whole project; feature-level work goes straight to `spec`. State lives on disk under `.plans/roadmap/`, branch-independent by design: the roadmap spans branches and outlives any single task. Output is Markdown only; implementation is separate (`spec`, then `plan`, then `build`, one epic at a time).
+Turn a project idea into a charter and an epic roadmap, so every later `spec` → `plan` → `build` cycle stays small. Use this for greenfield work where the request spans the whole project; feature-level work goes straight to `spec`. State lives in the plan system's `roadmap` task, branch-independent by design: the roadmap spans branches and outlives any single task. Output is Markdown only; implementation is separate (`spec`, then `plan`, then `build`, one epic at a time).
 
 ## Hard rules
 
 - Never write or edit code; output is Markdown only.
 - The roadmap is shallow: it names, bounds, and orders epics, and never designs them. Architecture lives in the charter and its ADRs; epic design lives in each PRD.
 - Every epic boundary is sharp: one line of intent, explicit in/deferred scope, and something demonstrable when the epic alone is done.
-- Interview one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/roadmap/decisions.md` with an `**Evidence:**` line. Resolve every stack and architecture decision with the user before writing the charter; never proceed on a guess.
+- Interview one question at a time per `~/.agents/references/question-format.md`, appending each answer to `<location>/decisions.md` with an `**Evidence:**` line. Resolve every stack and architecture decision with the user before writing the charter; never proceed on a guess.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete a charter, roadmap, or epic row. Epic IDs are immutable once referenced; scope shifts defer work, they do not erase it.
 - A substantial existing codebase means this is not greenfield: route to `spec` instead.
@@ -23,11 +23,16 @@ Turn a project idea into a charter and an epic roadmap, so every later `spec` �
 - "Start a new blueprint" on an existing roadmap means re-planning it (refresh statuses, re-decompose what remains), not overwriting it.
 - Decompose only what the goals need (YAGNI): no v2 epics, no contingency epics. Add epics as learning grows.
 - If an epic is still too large to spec in one cycle, split it into sibling epics; do not nest roadmaps. Go as deep as the context problem requires, no deeper.
-- The roadmap directory is not branch-scoped. Do not derive it from git the way `plan-dir.sh` does.
+- The roadmap task is not branch-scoped. Its task name is always `roadmap`, never a branch-derived slug.
 
-## Available scripts
+## Plan adapter
 
-- **`scripts/roadmap-dir.sh`** — Computes (and optionally creates) `.plans/roadmap/` for the current repo. Unlike `plan-dir.sh`, the path is branch-independent on purpose.
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
+  a plan path. `spec` and `plan` read the same config, so every skill always
+  agrees on the location.
 
 ## Procedure
 
@@ -35,18 +40,22 @@ Turn a project idea into a charter and an epic roadmap, so every later `spec` �
 - Get the repo path from git. A fresh project has no codebase to explore; the discovery inputs are the user's idea, external research (use `/find-docs` for stack and tooling docs, plus prior art for the architecture), and the user's constraints.
 - Record findings as you go. They land in the charter's Research and Assumptions sections: the charter is the project-level provenance record that every epic's PRD inherits from.
 
-### 2. Decide the roadmap directory
-Run `bash scripts/roadmap-dir.sh --create` to compute and create:
-```
-<project-full-path>/.plans/roadmap/
-```
-If the directory already holds a charter, ask whether to re-plan the remaining epics or start a new charter (see Gotchas), per `~/.agents/references/question-format.md`.
+### 2. Decide the plan directory
+Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
+plan adapter. The roadmap task name is `roadmap`, fixed and
+branch-independent. Follow
+`~/.agents/plan-adapters/<adapter>/init.md` with the task name `roadmap`,
+and call the resolved directory `<location>` for the rest of this run.
+Follow `~/.agents/plan-adapters/<adapter>/read.md` on
+`<location>/CHARTER.md`; if the file exists, ask whether to re-plan the
+remaining epics or start a new charter (see Gotchas), per
+`~/.agents/references/question-format.md`.
 
 ### 3. Interview the user
-Cover, in order, one question at a time: vision (one paragraph in the user's terms), users and the job the project does for each, goals and non-goals, hard constraints (platform, deployment target, privacy, licenses, performance budgets), stack and architecture choices (research current docs before proposing; do not rely on training data), project layout, and test strategy. Log every answer in `decisions.md`, each with an `**Evidence:**` line to the research or a note that it is a pure user preference. Never proceed with an unresolved decision.
+Cover, in order, one question at a time: vision (one paragraph in the user's terms), users and the job the project does for each, goals and non-goals, hard constraints (platform, deployment target, privacy, licenses, performance budgets), stack and architecture choices (research current docs before proposing; do not rely on training data), project layout, and test strategy. Log every answer in `<location>/decisions.md`, each with an `**Evidence:**` line to the research or a note that it is a pure user preference. Never proceed with an unresolved decision.
 
 ### 4. Write `CHARTER.md`
-Fill `assets/charter-file.md` into `.plans/roadmap/CHARTER.md`: vision, users, goals, non-goals, hard constraints, the stack-decision table with rationale and traceability, project-wide boundaries (Always / Ask first / Never), layout and test strategy, research, and assumptions. Promote a decision to a standalone `ADR-NNN-*.md` (fill `../spec/assets/adr-file.md`, setting `Task` to `roadmap`) when it has real alternatives and constrains more than one epic; link it from the stack table. Most charters promote two to five ADRs; skip the ceremony when there are no real alternatives.
+Fill `assets/charter-file.md` into `<location>/CHARTER.md`: vision, users, goals, non-goals, hard constraints, the stack-decision table with rationale and traceability, project-wide boundaries (Always / Ask first / Never), layout and test strategy, research, and assumptions. Promote a decision to a standalone `ADR-NNN-*.md` (fill `../spec/assets/adr-file.md`, setting `Task` to `roadmap`) when it has real alternatives and constrains more than one epic; link it from the stack table. Most charters promote two to five ADRs; skip the ceremony when there are no real alternatives.
 
 ### 5. Decompose into epics
 - The first epic is a walking skeleton: scaffold, tooling, CI, and one thin vertical slice running end to end.
@@ -55,7 +64,7 @@ Fill `assets/charter-file.md` into `.plans/roadmap/CHARTER.md`: vision, users, g
 - Keep the set small; a typical project fits in a handful of epics. Split an oversized epic into siblings instead of designing it inside the roadmap.
 
 ### 6. Write `ROADMAP.md`
-Fill `assets/roadmap-file.md` into `.plans/roadmap/ROADMAP.md`: one row per epic with ID (`E01`, immutable once referenced), name, intent, scope boundary (in / deferred), dependencies, status (`planned`), and PRD path (empty until `spec` runs). Include the flow graph only when dependencies branch.
+Fill `assets/roadmap-file.md` into `<location>/ROADMAP.md`: one row per epic with ID (`E01`, immutable once referenced), name, intent, scope boundary (in / deferred), dependencies, status (`planned`), and PRD path (empty until `spec` runs). Include the flow graph only when dependencies branch.
 
 ### 7. Present and stop
 Present the roadmap table and the charter's key decisions, and list the files created (`CHARTER.md`, `ROADMAP.md`, `decisions.md`, and any `ADR-NNN-*.md`). Do not implement. Hand off to `spec` for the first epic whose dependencies are all `done` (normally the walking skeleton), pointing it at the roadmap entry.
@@ -100,5 +109,6 @@ Before handing off:
 - Charter template: `assets/charter-file.md`
 - Roadmap template: `assets/roadmap-file.md`
 - ADR template (owned by `spec`): `../spec/assets/adr-file.md`
-- Roadmap directory script: `scripts/roadmap-dir.sh`
+- Global plan config: `~/.agents/plans.config.md`
+- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
 - Per-epic pipeline: `spec` (PRD), `plan` (steps), `build` (implementation)
