@@ -22,9 +22,14 @@ Specify what to build and why before any code. Interview the user one question a
 
 - "Start a new one" means picking a different `<task-name>` slug — never overwriting or reusing an existing PRD's directory for unrelated work, even when the user says "start fresh."
 
-## Available scripts
+## Plan adapter
 
-- **`scripts/plan-dir.sh`** — Computes (and optionally creates) the plan directory path for the current repo and task name, so it always matches `plan`'s.
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
+  a plan path. `plan` reads the same config, so both skills always agree on
+  the location.
 
 ## Procedure
 
@@ -37,15 +42,18 @@ Specify what to build and why before any code. Interview the user one question a
   record is committed to disk in step 2 as `CONTEXT.md`.
 
 ### 2. Decide the plan directory
-Run `scripts/plan-dir.sh <task-name> --create` to compute and create:
-```
-<project-full-path>/.plans/<task-name>/
-```
-`<task-name>` is a short git-safe slug; the script validates it. If it already holds an unfinished PRD, ask whether to resume or start a new one (see Gotchas).
+Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
+plan adapter. `<task-name>` is a short git-safe slug (lowercase letters,
+digits, hyphens). Follow
+`~/.agents/plan-adapters/<adapter>/init.md` with `<task-name>`, and call
+the resolved directory `<location>` for the rest of this run. Follow
+`~/.agents/plan-adapters/<adapter>/read.md` on `<location>/PRD.md`; if the
+file exists and holds an unfinished PRD, ask whether to resume or start a
+new one (see Gotchas).
 
 ### 3. Write `CONTEXT.md`
 Fill the template at `assets/context-file.md` into
-`.plans/<task-name>/CONTEXT.md` with the discovery record begun in
+`<location>/CONTEXT.md` with the discovery record begun in
 step 1: the request in the user's terms, the codebase exploration, external
 research, the assumptions table, constraints discovered, open gaps, and a
 provenance map linking findings to the decisions they will inform. Refine it
@@ -66,7 +74,7 @@ Most requests are one capability; skip this. Two exceptions:
 - **Multi-capability**: one request bundles several independently testable capabilities that could ship and be verified separately. First propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
 
 ### 6. Interview the user
-Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `.plans/<task-name>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it; omit it only for pure user preferences with no supporting finding (per `question-format.md`). Never proceed with unresolved decisions.
+Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `<location>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it; omit it only for pure user preferences with no supporting finding (per `question-format.md`). Never proceed with unresolved decisions.
 
 ### 7. Promote cross-cutting decisions to ADRs
 For each decision that meets both tests, (a) two or more real alternatives
@@ -79,10 +87,15 @@ write a new ADR that supersedes it. Most specs produce zero to two ADRs;
 skip the ceremony for decisions with no real alternatives.
 
 ### 8. Write the PRD
-Fill the template at `assets/prd-file.md` into `.plans/<task-name>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it.
+Fill the template at `assets/prd-file.md` into `<location>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it.
 
 ### 9. Present and stop
-Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md`, set that entry's `Status` to `in-progress` and fill its `PRD` column with this task's plan directory. Do not implement. Hand off to `plan` only after approval.
+Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in the roadmap task's
+`ROADMAP.md`, follow `~/.agents/plan-adapters/<adapter>/set-status.md`
+with the `roadmap` task's location to set that entry's `Status` to
+`in-progress`, and follow the same adapter's `read.md` then `write.md` on
+that `ROADMAP.md` to fill the entry's `PRD` column with this task's
+`<location>`. Do not implement. Hand off to `plan` only after approval.
 
 ## Rationalizations
 
@@ -114,7 +127,7 @@ Before handing off to `plan`, confirm:
 - [ ] Every interview question and answer is logged in `decisions.md`, each entry carrying an `**Evidence:**` (or `**Promoted to:** ADR-NNN`) line.
 - [ ] Cross-cutting decisions with real alternatives were promoted to `ADR-NNN-*.md`; the corresponding `decisions.md` entries note the promotion.
 - [ ] Assumptions were surfaced and either corrected or accepted.
-- [ ] `PRD.md` is saved under `.plans/<task-name>/`.
+- [ ] `PRD.md` is saved under `<location>/`.
 - [ ] If the PRD traces to a roadmap entry, that entry's `Status` is `in-progress` and its `PRD` link points here.
 
 ## References
@@ -124,4 +137,5 @@ Before handing off to `plan`, confirm:
 - PRD template: `assets/prd-file.md`
 - Context (discovery) template: `assets/context-file.md`
 - ADR template: `assets/adr-file.md`
-- Plan directory script: `scripts/plan-dir.sh`
+- Global plan config: `~/.agents/plans.config.md`
+- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
