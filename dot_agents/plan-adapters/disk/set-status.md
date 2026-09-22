@@ -6,8 +6,14 @@ except the step header's `Blocked` row, which moves in lockstep with a
 step entering or leaving `blocked`.
 
 ## Inputs
-- `location=<dir>` — printed by `resolve.sh`; a task location for a step
-  status, the `--roadmap` location for a roadmap status.
+- `disk.root` — read from `~/.agents/plans.config.md`, the one global
+  config that names this adapter. Replace any `<repo-name>` in the value
+  with the repo's directory name; drop a trailing `/`; an empty root is
+  invalid. A relative root is prefixed with the repo root
+  (`git rev-parse --show-toplevel`); an absolute root is used as-is.
+- `location=<dir>` — `<disk.root>/<task-name>` as derived above; a task
+  location for a step status, the `roadmap` task's location for a
+  roadmap status.
 - `<step-file>` — the step file's name inside the task's plan directory
   (`NNN-*.md`). Given for a step status.
 - `<entry-id>` — the roadmap entry's ID (e.g. `E01`). Given for a roadmap
