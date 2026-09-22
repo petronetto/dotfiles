@@ -32,9 +32,14 @@ Steps are written for the reviewer, not for the planner:
 - "Start a new plan" means picking a different `<task-name>` slug (running `spec` for it if no PRD exists yet) — never overwriting an existing plan's step files, per the hard rule against deleting one.
 - A step that only adds scaffolding (a type or enum nothing consumes yet) isn't valid — every step must deliver a working, testable change on its own.
 
-## Available scripts
+## Plan adapter
 
-- **`scripts/plan-dir.sh`** — Computes the plan directory path for the current repo and task name, so it always matches `spec`'s.
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
+  a plan path. `spec` reads the same config, so both skills always agree on
+  the location.
 
 ## Procedure
 
@@ -44,18 +49,26 @@ Steps are written for the reviewer, not for the planner:
 - Prefer quality and simplicity over development cost.
 
 ### 2. Locate or create the plan directory
-Run `scripts/plan-dir.sh <task-name>` to compute:
-```
-<project-full-path>/.plans/<task-name>/
-```
-Read `PRD.md` there for the spec, and `CONTEXT.md` for the discovery findings and provenance that back its decisions. Read any `ADR-NNN-*.md` for the cross-cutting decisions they record. If `PRD.md` is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas). Ask these per `~/.agents/references/question-format.md`, appending each answer to the directory's `decisions.md`, each with an `**Evidence:**` line back to `CONTEXT.md`.
+Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
+plan adapter. Follow `~/.agents/plan-adapters/<adapter>/init.md` with
+`<task-name>` (idempotent), and call the resolved directory `<location>`
+for the rest of this run. Follow `~/.agents/plan-adapters/<adapter>/read.md`
+on `<location>/PRD.md` for the spec, and on `<location>/CONTEXT.md` for the
+discovery findings and provenance that back its decisions. Read any
+`<location>/ADR-NNN-*.md` for the cross-cutting decisions they record. If
+`PRD.md` is missing, stop and ask the user to run `spec` first (or offer to
+produce a minimal PRD inline); don't plan onto an undefined spec. If the
+directory holds unfinished steps, ask whether to resume or start a new plan
+(see Gotchas). Ask these per `~/.agents/references/question-format.md`,
+appending each answer to the directory's `decisions.md`, each with an
+`**Evidence:**` line back to `CONTEXT.md`.
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
 
 ### 4. Write one file per step
 ```
-<project-full-path>/.plans/<task-name>/NNN-<step-name>.md
+<location>/NNN-<step-name>.md
 ```
 Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000), following the Writing rules.
 
@@ -103,4 +116,5 @@ Before handing off to `build`, confirm:
 - Step file template: `assets/step-file.md`
 - Flow overview template: `assets/flow-file.md`
 - PRD template (owned by `spec`): `../spec/assets/prd-file.md`
-- Plan directory script: `scripts/plan-dir.sh`
+- Global plan config: `~/.agents/plans.config.md`
+- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
