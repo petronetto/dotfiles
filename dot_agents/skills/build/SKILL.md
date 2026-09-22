@@ -21,15 +21,24 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 
 ## Gotchas
 
-- Never reference the plan, step, or chunk in a commit message or code comment — plans live in `.plans/`, not the repo, so the reference means nothing to anyone reading the commit later. Describe the actual change instead.
+- Never reference the plan, step, or chunk in a commit message or code comment — plan files are not committed to the repo, so the reference means nothing to anyone reading the commit later. Describe the actual change instead.
 - A chunk that only adds scaffolding (an enum, a type, a stub nothing consumes yet) doesn't count as a chunk — every chunk must leave the codebase working end-to-end, however small.
+
+## Plan adapter
+
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
+  a plan path. `spec` and `plan`, which produced the plan, read the same
+  config, so every skill always agrees on the location.
 
 ## Procedure
 
 ### 1. Locate the plan
-- Plans are in the `.plans/` directory. Find the most recent `<task-name>` with `Status: pending`, `in-progress`, or `blocked` steps — `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
+- Read `~/.agents/plans.config.md` once: its `adapter:` key names the active plan adapter. Follow `~/.agents/plan-adapters/<adapter>/list.md` to enumerate the task directories; each listed entry is that task's `<location>`. Follow `~/.agents/plan-adapters/<adapter>/read.md` on each candidate's step files and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps — `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
-- Read `PRD.md` in that directory for the plan's problem, approach, and key decisions.
+- Follow `~/.agents/plan-adapters/<adapter>/read.md` on `<location>/PRD.md` for the plan's problem, approach, and key decisions.
 
 ### 2. Run the loop
 For each step (lowest `NNN` not yet `Status: done`):
@@ -38,18 +47,18 @@ For each step (lowest `NNN` not yet `Status: done`):
 - If `Status: blocked`, a prior `build-auto` run left it unresolved. Show the step file's `Blocked` reason and review log, then work it through the same loop below until it resolves.
 - If `Status: pending`, proceed as normal below.
 
-**Announce** — State the step and goal. Set `Status: in-progress`.
+**Announce** — State the step and goal. Follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: in-progress`.
 
 **Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `~/.agents/references/code-quality.md`. Run new code through the reuse/YAGNI gate (`~/.agents/references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
 
 **Stop for review** — Stop when complete. Do not commit. Do not start the next step.
 
 **Handle response**
-- Modifications requested: append to the review log via `assets/review-log-entry.md`, implement the changes as small chunks, stop again. Repeat as needed.
-- Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Set `Status: done`, record the final message under `Commit`, move to the next step.
+- Modifications requested: append to the review log (following `~/.agents/plan-adapters/<adapter>/append.md`) in the `assets/review-log-entry.md` format, implement the changes as small chunks, stop again. Repeat as needed.
+- Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: done`, record the final message under `Commit`, move to the next step.
 
 ### 3. Finish
-When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md`, set that entry's `Status` to `done` before reporting.
+When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, follow `~/.agents/plan-adapters/<adapter>/set-status.md` with the `roadmap` task's `<location>` — its entry from step 1's enumeration — to set that entry's `Status` to `done` before reporting.
 
 ## Rationalizations
 
@@ -86,3 +95,5 @@ Before a step counts as done:
 - Question format and decision log: `~/.agents/references/question-format.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill
+- Global plan config: `~/.agents/plans.config.md`
+- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
