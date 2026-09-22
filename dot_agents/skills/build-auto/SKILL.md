@@ -32,28 +32,37 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 
 - **`scripts/worktree.sh`** — Creates an isolated worktree for a parallel step (`create`) and merges + removes it once the step is approved (`finish`).
 
+## Plan adapter
+
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
+  a plan path. `spec`, `plan`, and `build` read the same config, so every
+  skill always agrees on the location.
+
 ## Procedure
 
 ### 1. Locate the plan
-Plans live in `.plans/<task-name>/`. Find the most recent `<task-name>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous—the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
+Read `~/.agents/plans.config.md` once: its `adapter:` key names the active plan adapter. Follow `~/.agents/plan-adapters/<adapter>/list.md` to enumerate the task directories; each listed entry is that task's `<location>`. Follow `~/.agents/plan-adapters/<adapter>/read.md` on each candidate's step files and find the most recent `<location>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous—the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
 
 ### 2. Loop over steps
 Repeat until no `pending` steps remain (independent steps may run through this loop in parallel):
 
-**a. Announce** — State the step and goal. If any `Depends` step is `Status: blocked`, mark this step `Status: blocked` (reason: "blocked by <dependency step>"), log it via `assets/review-log-entry.md`, and skip to the next step. Otherwise set `Status: in-progress`.
+**a. Announce** — State the step and goal. If any `Depends` step is `Status: blocked`, follow `~/.agents/plan-adapters/<adapter>/set-status.md` to mark this step `Status: blocked` (reason: "blocked by <dependency step>"), log it (following `~/.agents/plan-adapters/<adapter>/append.md`) in the `assets/review-log-entry.md` format, and skip to the next step. Otherwise follow the same recipe to set `Status: in-progress`.
 
 **b. Build** — Spawn a builder sub-agent briefed with `assets/builder-brief.md` filled in (step file, code-quality, reuse gate, repo/branch, and prior findings on retries). If this step is running in parallel with another, first run `scripts/worktree.sh create <plan-branch> <step-slug>` to create an isolated worktree for it, and brief the builder to work there instead of the shared tree. It implements the chunks, adds or updates tests per the step's Verification, runs the project's tests and linters, doesn't commit, and reports back a summary—or reports itself blocked with a reason.
 
 **c. Review** — Spawn a reviewer sub-agent briefed with `assets/reviewer-brief.md` filled in (step file, builder's report, reuse gate). It runs `review` at medium effort against the diff, also checks scope and acceptance criteria plus the reuse gate, and confirms the new behavior is covered by a test, returning a first-line verdict: `VERDICT: APPROVE` or `VERDICT: CHANGES_REQUESTED` plus findings.
 
-**d. Evaluate** — Log the verdict via `assets/review-log-entry.md`, then:
+**d. Evaluate** — Log the verdict (following `~/.agents/plan-adapters/<adapter>/append.md`) in the `assets/review-log-entry.md` format, then:
 - `APPROVE` → go to (e).
-- `CHANGES_REQUESTED` or builder blocked → under 3 cycles: spawn a new builder with the findings, back to (c). At cycle 3: `Status: blocked`, fill the step file's header `Blocked` field with a one-line reason (in addition to the review log entry), move to the next step.
+- `CHANGES_REQUESTED` or builder blocked → under 3 cycles: spawn a new builder with the findings, back to (c). At cycle 3: follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: blocked` with a one-line reason (filling the step file's header `Blocked` field, in addition to the review log entry), move to the next step.
 
-**e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. `Status: done`, record the commit message, move on.
+**e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. Follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: done`, record the commit message, move on.
 
 ### 3. Finish
-Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in `.plans/roadmap/ROADMAP.md` and every step of that PRD's plan is `done`, set that entry's `Status` to `done` before reporting.
+Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md` and every step of that PRD's plan is `done`, follow `~/.agents/plan-adapters/<adapter>/set-status.md` with the `roadmap` task's `<location>` — its entry from step 1's enumeration — to set that entry's `Status` to `done` before reporting.
 
 ## Rationalizations
 
@@ -93,3 +102,5 @@ Before a step counts as done:
 - Reviewer briefing template: `assets/reviewer-brief.md`
 - Worktree lifecycle script: `scripts/worktree.sh`
 - The gate itself: `review` skill · test discipline: `test` skill · human-gated variant: `build` skill
+- Global plan config: `~/.agents/plans.config.md`
+- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
