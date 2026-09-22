@@ -29,7 +29,7 @@ the agent filling the template contract; see ADR rationale in the plan's
 ## Procedure
 
 ### 1. Locate the plan directory
-With a `<task-name>` argument, the directory is `<repo>/.plans/<branch>/<task-name>/`. Without one, list the `.plans/<branch>/` candidates and ask which to render. Stop if the directory is missing or holds neither `FLOW.md` nor a PRD Steps index; there is nothing to render.
+With a `<task-name>` argument, the directory is `<repo>/.plans/<task-name>/`. Without one, list the `.plans/` candidates and ask which to render. Stop if the directory is missing or holds neither `FLOW.md` nor a PRD Steps index; there is nothing to render.
 
 ### 2. Read the inputs (read-only)
 Read `FLOW.md` (flow table rows and the branched-or-linear rule), every `NNN-*.md` step file (cards and status badges), and `PRD.md` (key decisions and risks). When `FLOW.md` is absent (plans made before the flow format), derive the flow rows from `PRD.md`'s Steps index plus each step file, and state the fallback in the page footer. Nothing else is needed; do not invent sections.

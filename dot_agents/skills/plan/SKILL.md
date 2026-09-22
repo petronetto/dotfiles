@@ -34,7 +34,7 @@ Steps are written for the reviewer, not for the planner:
 
 ## Available scripts
 
-- **`scripts/plan-dir.sh`** — Computes the plan directory path for the current repo, branch, and task name, so it always matches `spec`'s.
+- **`scripts/plan-dir.sh`** — Computes the plan directory path for the current repo and task name, so it always matches `spec`'s.
 
 ## Procedure
 
@@ -46,7 +46,7 @@ Steps are written for the reviewer, not for the planner:
 ### 2. Locate or create the plan directory
 Run `scripts/plan-dir.sh <task-name>` to compute:
 ```
-<project-full-path>/.plans/<branch>/<task-name>/
+<project-full-path>/.plans/<task-name>/
 ```
 Read `PRD.md` there for the spec, and `CONTEXT.md` for the discovery findings and provenance that back its decisions. Read any `ADR-NNN-*.md` for the cross-cutting decisions they record. If `PRD.md` is missing, stop and ask the user to run `spec` first (or offer to produce a minimal PRD inline); don't plan onto an undefined spec. If the directory holds unfinished steps, ask whether to resume or start a new plan (see Gotchas). Ask these per `~/.agents/references/question-format.md`, appending each answer to the directory's `decisions.md`, each with an `**Evidence:**` line back to `CONTEXT.md`.
 
@@ -55,7 +55,7 @@ Break the PRD into tiny, independently-reviewable steps. Each has one responsibi
 
 ### 4. Write one file per step
 ```
-<project-full-path>/.plans/<branch>/<task-name>/NNN-<step-name>.md
+<project-full-path>/.plans/<task-name>/NNN-<step-name>.md
 ```
 Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000), following the Writing rules.
 
