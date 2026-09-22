@@ -18,33 +18,51 @@ the agent filling the template contract; see ADR rationale in the plan's
 - The page is self-contained: inline CSS, one inline vanilla-JS chunk converter only, no external scripts, no network requests; it must open offline.
 - Data comes only from the plan files. If a file does not say it, the page does not show it; files win over the page when they disagree, and a mismatch is reported, not papered over.
 - Ask before overwriting an existing `visual-review.html`.
-- Never commit; the page lives under gitignored `.plans/` and is ephemeral.
+- Never commit; the page is an ephemeral local artifact.
 
 ## Gotchas
 
-- `.plans/` is gitignored, so the page is a local artifact: regenerating after plan changes is normal behavior, but the existing page is still overwritten only after asking.
+- The page is an ephemeral local artifact: regenerating after plan changes is normal behavior, but the existing page is still overwritten only after asking.
 - The status badge class comes from each step file's `Status` field, never from FLOW.md or from guesswork.
 - A linear plan omits the whole graph section even though the template contains it; a branched plan must include it (same rule as FLOW.md).
+
+## Plan adapter
+
+- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
+  active plan adapter. Every plan-file operation in this skill follows the
+  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
+  (`list`, `read`); no step inlines a plan path. `spec` and `plan`, which
+  produced the plan, read the same config, so every skill always agrees on
+  the location.
 
 ## Procedure
 
 ### 1. Locate the plan directory
-With a `<task-name>` argument, the directory is `<repo>/.plans/<task-name>/`. Without one, list the `.plans/` candidates and ask which to render. Stop if the directory is missing or holds neither `FLOW.md` nor a PRD Steps index; there is nothing to render.
+Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
+plan adapter. Follow `~/.agents/plan-adapters/<adapter>/list.md` to
+enumerate the task directories. With a `<task-name>` argument, pick the
+listed entry ending in `/<task-name>`; without one, ask which listed task
+to render. Call the chosen entry `<location>` for the rest of this run.
+Stop if the entry is missing or holds neither `FLOW.md` nor a PRD Steps
+index; there is nothing to render.
 
 ### 2. Read the inputs (read-only)
-Read `FLOW.md` (flow table rows and the branched-or-linear rule), every `NNN-*.md` step file (cards and status badges), and `PRD.md` (key decisions and risks). When `FLOW.md` is absent (plans made before the flow format), derive the flow rows from `PRD.md`'s Steps index plus each step file, and state the fallback in the page footer. Nothing else is needed; do not invent sections.
+Follow `~/.agents/plan-adapters/<adapter>/read.md` on `<location>/FLOW.md`
+(flow table rows and the branched-or-linear rule), every
+`<location>/NNN-*.md` step file (cards and status badges), and
+`<location>/PRD.md` (key decisions and risks). When `FLOW.md` is absent (plans made before the flow format), derive the flow rows from `PRD.md`'s Steps index plus each step file, and state the fallback in the page footer. Nothing else is needed; do not invent sections.
 
 ### 3. Generate the page
-Fill `assets/viewer-template.html` per its contract comments: one flow-table row per step, one step card per step file with its Status badge, the dependencies section only when dependencies branch, and PRD decisions and risks verbatim. Embed each step's Implementation-chunks section VERBATIM in the card's `<script type="text/markdown">` block (code blocks included); never condense, truncate, or summarize chunk text. A step with a Chunks table renders that table instead. Write the result as `<plan-dir>/visual-review.html`.
+Fill `assets/viewer-template.html` per its contract comments: one flow-table row per step, one step card per step file with its Status badge, the dependencies section only when dependencies branch, and PRD decisions and risks verbatim. Embed each step's Implementation-chunks section VERBATIM in the card's `<script type="text/markdown">` block (code blocks included); never condense, truncate, or summarize chunk text. A step with a Chunks table renders that table instead. Write the result as `<location>/visual-review.html`.
 
 ### 4. Open
-Run `open <plan-dir>/visual-review.html` and report the path. Do not modify the page further unless asked; regeneration goes through this procedure again.
+Run `open <location>/visual-review.html` and report the path. Do not modify the page further unless asked; regeneration goes through this procedure again.
 
 ## Verification
 
 Before reporting done, confirm:
 - [ ] Exactly one file was written; the plan directory is otherwise untouched.
-- [ ] `rg -n "https?://|<script src" <plan-dir>/visual-review.html` returns nothing.
+- [ ] `rg -n "https?://|<script src" <location>/visual-review.html` returns nothing.
 - [ ] Every step in FLOW.md appears as a flow-table row and a step card, with a badge matching that step file's Status.
 - [ ] The graph section exists only when dependencies branch.
 - [ ] Key decisions and risks match PRD.md verbatim.
