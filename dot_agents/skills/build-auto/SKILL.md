@@ -35,7 +35,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 ## Procedure
 
 ### 1. Locate the plan
-Plans live in `.plans/<branch>/<task-name>/`. Find the most recent `<task-name>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous—the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
+Plans live in `.plans/<task-name>/`. Find the most recent `<task-name>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous—the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
 
 ### 2. Loop over steps
 Repeat until no `pending` steps remain (independent steps may run through this loop in parallel):

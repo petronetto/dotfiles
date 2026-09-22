@@ -19,7 +19,7 @@ C) ...
 
 ## Recording
 
-Append each entry to `<project-full-path>/.plans/<branch>/<task-name>/decisions.md` as soon as it is answered:
+Append each entry to `<project-full-path>/.plans/<task-name>/decisions.md` as soon as it is answered:
 
 ```markdown
 ## QX: <Question>
