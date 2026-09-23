@@ -1,7 +1,6 @@
 ---
 name: spec
 description: Write a PRD for a feature or fix before coding, by interviewing the user one question at a time until shared understanding. Trigger on "spec", "requirements", "design the work", "scope it first". Produces the PRD that `plan` decomposes; outputs Markdown only, never code.
-argument-hint: "<feature or fix description>"
 ---
 
 # Spec
