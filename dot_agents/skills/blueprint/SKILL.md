@@ -25,10 +25,20 @@ Turn a project idea into a charter and an epic roadmap, so every later `spec` â†
 - If an epic is still too large to spec in one cycle, split it into sibling epics; do not nest roadmaps. Go as deep as the context problem requires, no deeper.
 - The roadmap task is not branch-scoped. Its task name is always `roadmap`, never a branch-derived slug.
 
-## Plan adapter
+## Plan CLI
 
-- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
-- Never inline a plan path: every plan-file operation goes through a protocol recipe.
+- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
+  operation goes through it, never through a hand-built path: `init
+  <task-name>` (prints the task's `<location>`, idempotent), `read
+  <location> <file>`, `write <location> <file>` and `append <location>
+  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
+  line), `set-status <location> (--step <file> | --entry <id>) --status
+  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
+  with `blocked`), and `path <location>` (the `<location>`'s on-disk
+  directory).
+- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
+  live in `~/.agents/plans.config.md`. Every `<location>` comes from
+  `init` or `list` output.
 
 ## Procedure
 
@@ -37,14 +47,11 @@ Turn a project idea into a charter and an epic roadmap, so every later `spec` â†
 - Record findings as you go. They land in the charter's Research and Assumptions sections: the charter is the project-level provenance record that every epic's PRD inherits from.
 
 ### 2. Decide the plan directory
-Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
-plan adapter. The roadmap task name is `roadmap`, fixed and
-branch-independent. Follow
-`~/.agents/plan-adapters/<adapter>/init.md` with the task name `roadmap`,
-and call the resolved directory `<location>` for the rest of this run.
-Follow `~/.agents/plan-adapters/<adapter>/read.md` on
-`<location>/CHARTER.md`; if the file exists, ask whether to re-plan the
-remaining epics or start a new charter (see Gotchas), per
+The roadmap task name is `roadmap`, fixed and branch-independent. Run
+`plan-cli init roadmap` (idempotent) and call the printed directory
+`<location>` for the rest of this run. Run
+`plan-cli read <location> CHARTER.md`; if the file exists, ask whether to
+re-plan the remaining epics or start a new charter (see Gotchas), per
 `~/.agents/references/question-format.md`.
 
 ### 3. Interview the user
@@ -105,5 +112,5 @@ Before handing off:
 - Charter template: `assets/charter-file.md`
 - Roadmap template: `assets/roadmap-file.md`
 - ADR template (owned by `spec`): `../spec/assets/adr-file.md`
-- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
+- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
 - Per-epic pipeline: `spec` (PRD), `plan` (steps), `build` (implementation)

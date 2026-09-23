@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# plan — the plan-file CLI. Dispatches one operation to the active backend.
+#
+# Usage: plan <op> [args]
+#   init <task-name>       create the task's plan directory, print its location
+#   read <location> <file> print one plan file
+#   write <location> <file>        write one plan file, content on stdin
+#   append <location> <file>       append to one plan file, content on stdin
+#   list                   list task locations, one per line
+#   set-status <location> (--step <file> | --entry <id>) --status <status>
+#           [--reason <text>]
+#   path <location>        print the location's on-disk directory
+#
+# PLAN_BACKEND selects the backend (default: disk); backends/ next to this
+# script holds one <name>.sh per backend, implementing the six ops as
+# <name>_<op> functions. PLAN_BACKENDS_DIR overrides the backends directory.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+
+BACKEND="${PLAN_BACKEND:-disk}"
+case "$BACKEND" in
+  '' | *[!a-z0-9-]*) die "invalid PLAN_BACKEND: '$BACKEND' (lowercase letters, digits, hyphens)" ;;
+esac
+
+BACKENDS_DIR="${PLAN_BACKENDS_DIR:-${SCRIPT_DIR}/backends}"
+backend_file="${BACKENDS_DIR}/${BACKEND}.sh"
+[[ -f "$backend_file" ]] || die "unknown backend: '$BACKEND' (no ${backend_file})"
+# shellcheck source=backends/disk.sh
+source "$backend_file"
+
+OPS=(init read write append list set_status path)
+
+op="${1:-}"
+[[ -n "$op" ]] || die "usage: plan <op> [args] — ops: init, read, write, append, list, set-status, path"
+shift
+op="${op//-/_}"
+
+known=0
+for candidate in "${OPS[@]}"; do
+  if [[ "$candidate" == "$op" ]]; then known=1; fi
+done
+if [[ "$known" -ne 1 ]]; then
+  die "unknown op: '$op' (expected one of: init, read, write, append, list, set-status, path)"
+fi
+
+# Interface check: a backend must implement every op, even the ones this
+# call does not use, so a half-written backend fails on first contact.
+for required in "${OPS[@]}"; do
+  declare -F "${BACKEND}_${required}" >/dev/null \
+    || die "backend '$BACKEND' is missing the '${required//_/-}' op"
+done
+
+"${BACKEND}_${op}" "$@"

@@ -31,10 +31,20 @@ Steps are written for the reviewer, not for the planner:
 - "Start a new plan" means picking a different `<task-name>` slug (running `spec` for it if no PRD exists yet) — never overwriting an existing plan's step files, per the hard rule against deleting one.
 - A step that only adds scaffolding (a type or enum nothing consumes yet) isn't valid — every step must deliver a working, testable change on its own.
 
-## Plan adapter
+## Plan CLI
 
-- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
-- Never inline a plan path: every plan-file operation goes through a protocol recipe.
+- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
+  operation goes through it, never through a hand-built path: `init
+  <task-name>` (prints the task's `<location>`, idempotent), `read
+  <location> <file>`, `write <location> <file>` and `append <location>
+  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
+  line), `set-status <location> (--step <file> | --entry <id>) --status
+  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
+  with `blocked`), and `path <location>` (the `<location>`'s on-disk
+  directory).
+- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
+  live in `~/.agents/plans.config.md`. Every `<location>` comes from
+  `init` or `list` output.
 
 ## Procedure
 
@@ -44,18 +54,18 @@ Steps are written for the reviewer, not for the planner:
 - Prefer quality and simplicity over development cost.
 
 ### 2. Locate or create the plan directory
-Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
-plan adapter. Follow `~/.agents/plan-adapters/<adapter>/init.md` with
-`<task-name>` (idempotent), and call the resolved directory `<location>`
-for the rest of this run. Follow `~/.agents/plan-adapters/<adapter>/read.md`
-on `<location>/PRD.md` for the spec, and on `<location>/CONTEXT.md` for the
-discovery findings and provenance that back its decisions. Read any
-`<location>/ADR-NNN-*.md` for the cross-cutting decisions they record. If
-`PRD.md` is missing, stop and ask the user to run `spec` first (or offer to
-produce a minimal PRD inline); don't plan onto an undefined spec. If the
-directory holds unfinished steps, ask whether to resume or start a new plan
-(see Gotchas). Ask these per `~/.agents/references/question-format.md`,
-appending each answer to the directory's `decisions.md`, each with an
+Run `plan-cli init <task-name>` (idempotent) and call the printed
+directory `<location>` for the rest of this run. Run
+`plan-cli read <location> PRD.md` for the spec, and
+`plan-cli read <location> CONTEXT.md` for the discovery findings and
+provenance that back its decisions. Run `plan-cli read <location>
+ADR-NNN-*.md` for each ADR the PRD links, for the cross-cutting decisions
+they record. If `PRD.md` is missing, stop and ask the user to run `spec`
+first (or offer to produce a minimal PRD inline); don't plan onto an
+undefined spec. If the directory holds unfinished steps, ask whether to
+resume or start a new plan (see Gotchas). Ask these per
+`~/.agents/references/question-format.md`, appending each answer to the
+directory's `decisions.md` via `plan-cli append`, each with an
 `**Evidence:**` line back to `CONTEXT.md`.
 
 ### 3. Decompose into ordered steps
@@ -65,7 +75,7 @@ Break the PRD into tiny, independently-reviewable steps. Each has one responsibi
 ```
 <location>/NNN-<step-name>.md
 ```
-Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000), following the Writing rules.
+Fill the template at `assets/step-file.md` for each step (NNN = zero-padded ordinal from 000), following the Writing rules. Write each step file via `plan-cli write <location> NNN-<step-name>.md`.
 
 ### 5. Write the flow overview
 Fill the template at `assets/flow-file.md` into `FLOW.md` in the plan directory: one row per step, generated from the step files. Keep it in sync whenever steps are added, split, or reordered. Include the flow graph only when dependencies branch; omit it for strictly linear plans.
@@ -111,4 +121,4 @@ Before handing off to `build`, confirm:
 - Step file template: `assets/step-file.md`
 - Flow overview template: `assets/flow-file.md`
 - PRD template (owned by `spec`): `../spec/assets/prd-file.md`
-- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
+- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)

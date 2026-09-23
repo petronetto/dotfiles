@@ -22,17 +22,27 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 
 - A chunk that only adds scaffolding (an enum, a type, a stub nothing consumes yet) doesn't count as a chunk — every chunk must leave the codebase working end-to-end, however small.
 
-## Plan adapter
+## Plan CLI
 
-- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
-- Never inline a plan path: every plan-file operation goes through a protocol recipe.
+- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
+  operation goes through it, never through a hand-built path: `init
+  <task-name>` (prints the task's `<location>`, idempotent), `read
+  <location> <file>`, `write <location> <file>` and `append <location>
+  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
+  line), `set-status <location> (--step <file> | --entry <id>) --status
+  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
+  with `blocked`), and `path <location>` (the `<location>`'s on-disk
+  directory).
+- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
+  live in `~/.agents/plans.config.md`. Every `<location>` comes from
+  `init` or `list` output.
 
 ## Procedure
 
 ### 1. Locate the plan
-- Read `~/.agents/plans.config.md` once: its `adapter:` key names the active plan adapter. Follow `~/.agents/plan-adapters/<adapter>/list.md` to enumerate the task directories; each listed entry is that task's `<location>`. Follow `~/.agents/plan-adapters/<adapter>/read.md` on each candidate's step files and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps — `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
+- Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> FLOW.md` to get its step file names, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps: `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
-- Follow `~/.agents/plan-adapters/<adapter>/read.md` on `<location>/PRD.md` for the plan's problem, approach, and key decisions.
+- Run `plan-cli read <location> PRD.md` for the plan's problem, approach, and key decisions.
 
 ### 2. Run the loop
 For each step (lowest `NNN` not yet `Status: done`):
@@ -41,18 +51,18 @@ For each step (lowest `NNN` not yet `Status: done`):
 - If `Status: blocked`, a prior `build-auto` run left it unresolved. Show the step file's `Blocked` reason and review log, then work it through the same loop below until it resolves.
 - If `Status: pending`, proceed as normal below.
 
-**Announce** — State the step and goal. Follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: in-progress`.
+**Announce** — State the step and goal. Run `plan-cli set-status <location> --step <step-file> --status in-progress`.
 
 **Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `~/.agents/references/code-quality.md`. Run new code through the reuse/YAGNI gate (`~/.agents/references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
 
 **Stop for review** — Stop when complete. Do not commit. Do not start the next step.
 
 **Handle response**
-- Modifications requested: append to the review log (following `~/.agents/plan-adapters/<adapter>/append.md`) in the `assets/review-log-entry.md` format, implement the changes as small chunks, stop again. Repeat as needed.
-- Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Follow `~/.agents/plan-adapters/<adapter>/set-status.md` to set `Status: done`, record the final message under `Commit`, move to the next step.
+- Modifications requested: append to the review log (`plan-cli append <location> <step-file>`) in the `assets/review-log-entry.md` format, implement the changes as small chunks, stop again. Repeat as needed.
+- Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Run `plan-cli set-status <location> --step <step-file> --status done`, then record the final commit message under the step file's `Commit` section: `plan-cli read` the file, fill the section, write it back via `plan-cli write`. Move to the next step.
 
 ### 3. Finish
-When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, follow `~/.agents/plan-adapters/<adapter>/set-status.md` with the `roadmap` task's `<location>` — its entry from step 1's enumeration — to set that entry's `Status` to `done` before reporting.
+When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
 
 ## Rationalizations
 
@@ -89,4 +99,4 @@ Before a step counts as done:
 - Question format and decision log: `~/.agents/references/question-format.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill
-- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
+- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
