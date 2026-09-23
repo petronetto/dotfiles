@@ -18,7 +18,7 @@ plan <op> [args]
 | `write`     | `plan write <location> <file>`                   | Replace one plan file with the content on stdin (heredoc); content is the entire file. |
 | `append`    | `plan append <location> <file>`                  | Append stdin to one plan file, creating it when absent; one blank line separates existing content from the appended block. |
 | `list`      | `plan list`                                      | Print every task's `<location>`, one per line, sorted; no tasks prints nothing. |
-| `set-status`| `plan set-status <location> (--step <file> \| --entry <id>) --status <status> [--reason <text>]` | Change a step header's `Status` row (or a roadmap entry's `Status` cell) and nothing else; the step's `Blocked` row moves in lockstep with `blocked`. Step statuses: `pending`, `in-progress`, `done`, `blocked`; roadmap statuses: `planned`, `in-progress`, `done`, `deferred`. `--reason` is required exactly when the new status is `blocked`. |
+| `set-status`| `plan set-status <location> (--step <file> \| --entry <id>) --status <status> [--reason <text>]` | Change a step header's `Status` row (or a roadmap entry's `Status` cell) and nothing else; the step's `Blocked` row moves in lockstep with `blocked`. Step statuses: `pending`, `in-progress`, `done`, `blocked`; roadmap statuses: `planned`, `in-progress`, `done`, `deferred`. `--reason` is required exactly when the new status is `blocked`, and must be a single line without `|`. |
 | `path`      | `plan path <location>`                           | Print the `<location>`'s on-disk directory (for opening files, not for plan-file operations). |
 
 Common rules:
@@ -26,7 +26,8 @@ Common rules:
 - Data goes to stdout, errors to stderr with a nonzero exit.
 - Never inline a plan path: every `<location>` comes from `init` or `list`
   output, and every operation goes through this CLI. That invariant is what
-  keeps the whole skill suite in agreement on the location.
+  keeps the whole skill suite in agreement on the location. Backends enforce
+  it: a `<location>` outside the backend's plans root is rejected.
 
 ## Backends
 
@@ -73,6 +74,10 @@ ops as `<name>_<op>` functions (hyphenless: `set_status`). The dispatcher:
    `plan_append_file`, `plan_set_status_in`).
 3. Checks the backend implements the full interface before dispatch, so a
    half-written backend fails on first contact, with the missing op named.
+
+`PLAN_BACKENDS_DIR` overrides the `backends/` directory the dispatcher
+sources from (mainly for testing). The backend name validation still
+applies, but the directory itself is trusted like `PATH`.
 
 To add a backend: implement the seven functions in
 `backends/<name>.sh`, reuse `lib/common.sh` instead of re-deriving config

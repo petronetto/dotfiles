@@ -49,9 +49,13 @@ plan_config_get() {
 # plan_subst_repo_name <value>
 # Print value with every <repo-name> replaced by the repo's directory name.
 plan_subst_repo_name() {
-  local value="$1"
+  # Runs inside command substitutions, where errexit is not inherited
+  # (inherit_errexit is off): every capturing assignment is guarded so a
+  # failure still aborts this shell and propagates to the caller.
+  local value="$1" repo
   if [[ "$value" == *"<repo-name>"* ]]; then
-    value="${value//<repo-name>/$(basename "$(plan_repo_root)")}"
+    repo="$(plan_repo_root)" || exit 1
+    value="${value//<repo-name>/$(basename "$repo")}"
   fi
   printf '%s\n' "$value"
 }
@@ -134,6 +138,8 @@ plan_parse_set_status() {
   if [[ "$PLAN_SS_STATUS" == "blocked" ]]; then
     [[ -n "$PLAN_SS_REASON" ]] || die "--reason is required when --status is blocked"
     [[ "$PLAN_SS_REASON" != *"|"* ]] || die "--reason must not contain '|'"
+    [[ "$PLAN_SS_REASON" != *$'\n'* && "$PLAN_SS_REASON" != *$'\r'* ]] \
+      || die "--reason must be a single line"
   else
     [[ -z "$PLAN_SS_REASON" ]] || die "--reason is only valid when --status is blocked"
   fi
@@ -250,8 +256,9 @@ plan_append_file() {
 
 # plan_set_status_in <dir>
 # Apply the parsed set-status (plan_parse_set_status must have run) to the
-# plan file inside <dir>. The rewrite goes through a temp file, so a
-# malformed target is never touched.
+# plan file inside <dir>. The rewrite goes through a temp file created next
+# to the target: a malformed target is never touched, and the final
+# replace is an atomic rename on the same filesystem.
 plan_set_status_in() {
   local dir="$1" path tmp
   if [[ "$PLAN_SS_MODE" == "step" ]]; then
@@ -260,12 +267,14 @@ plan_set_status_in() {
     path="$dir/ROADMAP.md"
   fi
   [[ -f "$path" ]] || die "plan file not found: $path"
-  tmp="$(mktemp)"
+  tmp="$(mktemp "${path%/*}/.plan-set-status.XXXXXX")"
   if ! plan_apply_status "$PLAN_SS_MODE" "$PLAN_SS_STATUS" "$PLAN_SS_REASON" "$PLAN_SS_ENTRY" \
     < "$path" > "$tmp"; then
     rm -f "$tmp"
     exit 1
   fi
-  cat "$tmp" > "$path"
-  rm -f "$tmp"
+  if ! mv -f -- "$tmp" "$path"; then
+    rm -f "$tmp"
+    die "could not update plan file: $path"
+  fi
 }

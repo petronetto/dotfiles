@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Obsidian backend: plan notes inside an Obsidian vault.
-# Sourced by the plan dispatcher; implements the six ops as obsidian_*
+# Sourced by the plan dispatcher; implements the seven ops as obsidian_*
 # functions. All ops but init and list take a <location>: the task's
 # vault-relative subfolder, as printed by init and listed by list.
 #
@@ -18,42 +18,65 @@
 # obsidian_vault: print the configured vault name.
 obsidian_vault() {
   local vault
-  vault="$(plan_config_get obsidian vault)"
+  vault="$(plan_config_get obsidian vault)" || exit 1
   [[ -n "$vault" ]] || die "obsidian.vault is empty in the plans config"
   printf '%s\n' "$vault"
 }
 
 # obsidian_folder: print the vault-relative plans folder.
 obsidian_folder() {
+  # Runs inside command substitutions, where errexit is not inherited: every
+  # capturing assignment is guarded so a failure still aborts this shell.
   local folder
-  folder="$(plan_config_get obsidian folder)"
+  folder="$(plan_config_get obsidian folder)" || exit 1
   folder="${folder%/}"
   [[ -n "$folder" ]] || die "obsidian.folder is empty in the plans config"
+  case "$folder" in
+    /*) die "obsidian.folder must be vault-relative, not absolute: $folder" ;;
+    ..|../?*|?*/..|?*/../?*)
+      die "obsidian.folder must not contain '..': $folder"
+      ;;
+  esac
   plan_subst_repo_name "$folder"
+}
+
+# obsidian_validate_location <location>
+# Every location is the vault's plans folder plus one subfolder name,
+# exactly as init prints and list lists: no operation path can escape the
+# plans folder.
+obsidian_validate_location() {
+  local location="${1%/}" folder prefix task
+  folder="$(obsidian_folder)"
+  prefix="${folder}/"
+  task="${location#"$prefix"}"
+  [[ "$task" != "$location" ]] || die "location is outside the plans folder: $location"
+  [[ -n "$task" && "$task" != */* && "$task" != "." && "$task" != ".." ]] \
+    || die "invalid location: $location (expected a task subfolder from init or list)"
 }
 
 # obsidian_run <args...>
 # Run the CLI for the configured vault and print its combined output.
 obsidian_run() {
   local vault
-  vault="$(obsidian_vault)"
+  vault="$(obsidian_vault)" || exit 1
   command -v obsidian >/dev/null 2>&1 || die "the obsidian CLI is not installed"
   local tmp msg
   tmp="$(mktemp)"
-  if ! obsidian "vault=$vault" "$@" > "$tmp" 2>&1; then
+  if obsidian "vault=$vault" "$@" > "$tmp" 2>&1; then
+    cat "$tmp"
+    rm -f -- "$tmp"
+  else
     msg="$(cat "$tmp")"
-    rm -f "$tmp"
+    rm -f -- "$tmp"
     die "obsidian CLI call failed${msg:+: $msg}"
   fi
-  cat "$tmp"
-  rm -f "$tmp"
 }
 
 # obsidian_vault_path: print the vault's on-disk path.
 obsidian_vault_path() {
   local vault out
-  vault="$(obsidian_vault)"
-  out="$(obsidian_run vault info=path)"
+  vault="$(obsidian_vault)" || exit 1
+  out="$(obsidian_run vault info=path)" || exit 1
   case "$out" in
     "Vault not found."*) die "obsidian CLI: no vault named '$vault'" ;;
     "Error:"*) die "obsidian CLI: $out" ;;
@@ -89,12 +112,17 @@ obsidian_init() {
     "Error:"* | "Vault not found."*) die "obsidian CLI: $out" ;;
   esac
   out="$(obsidian_run folder "path=$location")"
-  [[ "$out" != "Error:"* ]] || die "obsidian CLI: could not create folder '$location'"
+  case "$out" in
+    "Error:"* | "Vault not found."*)
+      die "obsidian CLI: could not create folder '$location'"
+      ;;
+  esac
   printf '%s\n' "$location"
 }
 
 obsidian_read() {
   [[ $# -eq 2 ]] || die "usage: plan read <location> <file>"
+  obsidian_validate_location "$1"
   plan_validate_file "$2"
   local path
   path="$(obsidian_vault_path)/$1/$2"
@@ -104,6 +132,7 @@ obsidian_read() {
 
 obsidian_write() {
   [[ $# -eq 2 ]] || die "usage: plan write <location> <file>"
+  obsidian_validate_location "$1"
   plan_validate_file "$2"
   local dir
   dir="$(obsidian_vault_path)/$1"
@@ -115,6 +144,7 @@ obsidian_write() {
 
 obsidian_append() {
   [[ $# -eq 2 ]] || die "usage: plan append <location> <file>"
+  obsidian_validate_location "$1"
   plan_validate_file "$2"
   local dir
   dir="$(obsidian_vault_path)/$1"
@@ -139,6 +169,7 @@ obsidian_list() {
 
 obsidian_path() {
   [[ -n "${1:-}" ]] || die "usage: plan path <location>"
+  obsidian_validate_location "$1"
   local dir
   dir="$(obsidian_vault_path)/$1"
   [[ -d "$dir" ]] || die "plan folder not found: $1"
@@ -147,5 +178,8 @@ obsidian_path() {
 
 obsidian_set_status() {
   plan_parse_set_status "$@"
-  plan_set_status_in "$(obsidian_vault_path)/$PLAN_SS_LOCATION"
+  obsidian_validate_location "$PLAN_SS_LOCATION"
+  local dir
+  dir="$(obsidian_vault_path)/$PLAN_SS_LOCATION"
+  plan_set_status_in "$dir"
 }

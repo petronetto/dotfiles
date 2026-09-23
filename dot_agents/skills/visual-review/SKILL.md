@@ -34,7 +34,8 @@ the agent filling the template contract; see ADR rationale in the plan's
   <location> <file>`, `write <location> <file>` and `append <location>
   <file>` (content on stdin, via heredoc), `list` (one `<location>` per
   line), `set-status <location> (--step <file> | --entry <id>) --status
-  <status> [--reason <text>]`, and `path <location>` (the `<location>`'s
+  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
+  with `blocked`), and `path <location>` (the `<location>`'s
   on-disk directory).
 - `PLAN_BACKEND` selects the backend (`disk` by default); its settings
   live in `~/.agents/plans.config.md`. Every `<location>` comes from
