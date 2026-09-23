@@ -10,6 +10,9 @@ export BAT_THEME="ansi"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 
+# Plans
+export PLAN_BACKEND='obsidian'
+
 # Completion options
 setopt MENU_COMPLETE        # Automatically highlight first element of completion menu
 setopt AUTO_LIST            # Automatically list choices on ambiguous completion
