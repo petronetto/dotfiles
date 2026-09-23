@@ -1,7 +1,6 @@
 ---
 name: build
 description: Implement an existing plan one step at a time in small chunks, stopping after each step for explicit approval. Trigger on "build", "implement", "resume". Reads `plan`'s step files and runs the review-gated, test-driven loop.
-argument-hint: "[task-name]"
 ---
 
 # Build

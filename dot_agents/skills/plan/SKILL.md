@@ -1,7 +1,6 @@
 ---
 name: plan
 description: Decompose a PRD into small, ordered, reviewable step files before coding. Trigger on "plan", "break down", "decompose the spec". Reads the PRD (`PRD.md` from `spec`) and writes per-step files only, never code.
-argument-hint: "[task-name]"
 ---
 
 # Plan

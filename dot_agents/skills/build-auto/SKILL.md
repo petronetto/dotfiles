@@ -1,7 +1,6 @@
 ---
 name: build-auto
 description: Autonomously drive an existing plan to completion using isolated builder and reviewer sub-agents per step, build, review via `review`, fix, commit, repeat, with no human checkpoint between steps. Trigger on "build-auto", "autopilot", "ship the plan", "run the plan".
-argument-hint: "[task-name]"
 ---
 
 # Build Auto
