@@ -33,9 +33,9 @@
     "reserveTokens": 16384,
     "keepRecentTokens": 20000
   },
-  "defaultProvider": "cline-pass",
-  "defaultModel": "cline-pass/glm-5.3-flash",
-  "lastChangelogVersion": "0.85.1",
+  "defaultProvider": "openrouter",
+  "defaultModel": "z-ai/glm-5.3-flash",
+  "lastChangelogVersion": "0.86.1",
   "enabledModels": [
     "anthropic/claude-haiku-4-5",
     "anthropic/claude-sonnet-5",
@@ -58,7 +58,6 @@
     "openrouter/moonshotai/kimi-k3",
     "openrouter/minimax/minimax-m3",
     "openrouter/deepseek/deepseek-v4.1-flash",
-    "cline-pass/glm-5.2",
     "cline-pass/glm-5.3-flash",
     "cline-pass/glm-5.3",
     "cline-pass/kimi-k3",
