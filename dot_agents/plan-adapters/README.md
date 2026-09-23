@@ -46,11 +46,14 @@ obsidian:
 ```
 
 - `disk`: plan files under `disk.root`. Relative roots are prefixed with the
-  git repo root; absolute roots are used as-is. `<repo-name>` in the value
-  is replaced with the repo's directory name.
+  git repo root; absolute roots are used as-is. `<repo-name>` in the value is
+  replaced with the project's directory name: the git repo's top-level
+  directory when inside one, otherwise the current working directory's name.
+  A relative root still requires a git repo, because it has no other anchor.
 - `obsidian`: plan notes inside an Obsidian vault, one note per plan file.
   Requires the `obsidian` CLI and a vault it knows. `obsidian.folder` is
-  vault-relative. Content ops write to the vault's on-disk path (the CLI's
+  vault-relative and supports `<repo-name>` with the same substitution as
+  `disk.root`, so plans from different projects can live side by side. Content ops write to the vault's on-disk path (the CLI's
   `content=` argument rewrites `\n` and `\t` sequences and would corrupt
   plan files); `init` and `list` go through the CLI, whose failures are
   `Error:` output lines with exit 0, so the wrapper judges output text,

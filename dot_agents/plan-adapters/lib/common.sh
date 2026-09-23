@@ -47,15 +47,25 @@ plan_config_get() {
 }
 
 # plan_subst_repo_name <value>
-# Print value with every <repo-name> replaced by the repo's directory name.
+# Print value with every <repo-name> replaced by the project's directory
+# name: the git repo's top-level directory when the working directory is
+# inside one, otherwise the working directory's own name.
 plan_subst_repo_name() {
   # Runs inside command substitutions, where errexit is not inherited
   # (inherit_errexit is off): every capturing assignment is guarded so a
   # failure still aborts this shell and propagates to the caller.
   local value="$1" repo
   if [[ "$value" == *"<repo-name>"* ]]; then
-    repo="$(plan_repo_root)" || exit 1
-    value="${value//<repo-name>/$(basename "$repo")}"
+    repo="$(git rev-parse --show-toplevel 2>/dev/null)" || repo=""
+    if [[ -z "$repo" ]]; then
+      # Outside a git repository: fall back to the working directory's name.
+      repo="$(pwd -P)"
+      repo="${repo%/}"
+      repo="${repo##*/}"
+      [[ -n "$repo" ]] \
+        || die "cannot derive <repo-name>: the current directory is the filesystem root"
+    fi
+    value="${value//<repo-name>/${repo##*/}}"
   fi
   printf '%s\n' "$value"
 }
