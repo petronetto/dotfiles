@@ -24,12 +24,8 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 
 ## Plan adapter
 
-- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
-  active plan adapter. Every plan-file operation in this skill follows the
-  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
-  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
-  a plan path. `spec` and `plan`, which produced the plan, read the same
-  config, so every skill always agrees on the location.
+- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
+- Never inline a plan path: every plan-file operation goes through a protocol recipe.
 
 ## Procedure
 
@@ -93,5 +89,4 @@ Before a step counts as done:
 - Question format and decision log: `~/.agents/references/question-format.md`
 - Review log entry template: `assets/review-log-entry.md`
 - Test discipline: `test` skill · autonomous variant: `build-auto` skill
-- Global plan config: `~/.agents/plans.config.md`
-- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
+- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`

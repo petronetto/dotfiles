@@ -33,12 +33,8 @@ Steps are written for the reviewer, not for the planner:
 
 ## Plan adapter
 
-- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
-  active plan adapter. Every plan-file operation in this skill follows the
-  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
-  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
-  a plan path. `spec` reads the same config, so both skills always agree on
-  the location.
+- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
+- Never inline a plan path: every plan-file operation goes through a protocol recipe.
 
 ## Procedure
 
@@ -115,5 +111,4 @@ Before handing off to `build`, confirm:
 - Step file template: `assets/step-file.md`
 - Flow overview template: `assets/flow-file.md`
 - PRD template (owned by `spec`): `../spec/assets/prd-file.md`
-- Global plan config: `~/.agents/plans.config.md`
-- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
+- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
