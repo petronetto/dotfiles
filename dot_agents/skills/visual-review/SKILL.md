@@ -18,11 +18,11 @@ the agent filling the template contract; see ADR rationale in the plan's
 - The page is self-contained: inline CSS, one inline vanilla-JS chunk converter only, no external scripts, no network requests; it must open offline.
 - Data comes only from the plan files. If a file does not say it, the page does not show it; files win over the page when they disagree, and a mismatch is reported, not papered over.
 - Ask before overwriting an existing `visual-review.html`.
-- Never commit; the page is an ephemeral local artifact.
+- Never commit the page.
 
 ## Gotchas
 
-- The page is an ephemeral local artifact: regenerating after plan changes is normal behavior, but the existing page is still overwritten only after asking.
+- Regenerating after plan changes is normal behavior, but the existing page is still overwritten only after asking.
 - The status badge class comes from each step file's `Status` field, never from FLOW.md or from guesswork.
 - A linear plan omits the whole graph section even though the template contains it; a branched plan must include it (same rule as FLOW.md).
 

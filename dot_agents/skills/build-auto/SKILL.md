@@ -19,7 +19,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 - Reviewer only judges—it runs `review`, no `--fix`/`--comment`, never edits files.
 - Each step's new or changed behavior has a test that failed before and passes after; the reviewer confirms this. Apply the `test` skill's discipline.
 - Max **3** build-to-review cycles per step. Still unresolved after 3 -> `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
-- Commit only after the reviewer `APPROVE`. One commit per step, only that step's files, in the project's own style. Never reference the plan, step, or chunk in the commit message or in code comments (plans are not committed); describe the actual change.
+- Commit only after the reviewer `APPROVE`. One commit per step, only that step's files, in the project's own style. Never reference the plan, step, or chunk in the commit message or in code comments; describe the actual change.
 - Never expand scope beyond the step file. Preserve existing behavior unless the step requires otherwise.
 
 ## Gotchas

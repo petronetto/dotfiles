@@ -15,13 +15,12 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 - Test behavior, not implementation (AAA, mock external dependencies). Add or update tests per each step's Verification before considering it done; run the project's tests and linters where available. The discipline lives in the `test` skill.
 - Stop after every step. Do not continue on your own.
 - Never commit without explicit, unambiguous approval (per step).
-- Never reference the plan, steps, or chunks in commit messages or code comments; plans are not committed, so the reference is meaningless.
+- Never reference the plan, steps, or chunks in commit messages or code comments; describe the actual change so the message stands alone.
 - Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`). Ask multi-option decisions (which plan to resume, resume vs restart a step) per `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`.
 - Preserve existing behavior unless the step requires changing it.
 
 ## Gotchas
 
-- Never reference the plan, step, or chunk in a commit message or code comment — plan files are not committed to the repo, so the reference means nothing to anyone reading the commit later. Describe the actual change instead.
 - A chunk that only adds scaffolding (an enum, a type, a stub nothing consumes yet) doesn't count as a chunk — every chunk must leave the codebase working end-to-end, however small.
 
 ## Plan adapter
