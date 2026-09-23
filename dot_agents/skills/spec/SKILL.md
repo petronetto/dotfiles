@@ -21,10 +21,20 @@ Specify what to build and why before any code. Interview the user one question a
 
 - "Start a new one" means picking a different `<task-name>` slug — never overwriting or reusing an existing PRD's directory for unrelated work, even when the user says "start fresh."
 
-## Plan adapter
+## Plan CLI
 
-- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
-- Never inline a plan path: every plan-file operation goes through a protocol recipe.
+- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
+  operation goes through it, never through a hand-built path: `init
+  <task-name>` (prints the task's `<location>`, idempotent), `read
+  <location> <file>`, `write <location> <file>` and `append <location>
+  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
+  line), `set-status <location> (--step <file> | --entry <id>) --status
+  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
+  with `blocked`), and `path <location>` (the `<location>`'s on-disk
+  directory).
+- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
+  live in `~/.agents/plans.config.md`. Every `<location>` comes from
+  `init` or `list` output.
 
 ## Procedure
 
@@ -37,14 +47,11 @@ Specify what to build and why before any code. Interview the user one question a
   record is committed to disk in step 2 as `CONTEXT.md`.
 
 ### 2. Decide the plan directory
-Read `~/.agents/plans.config.md` once: its `adapter:` key names the active
-plan adapter. `<task-name>` is a short git-safe slug (lowercase letters,
-digits, hyphens). Follow
-`~/.agents/plan-adapters/<adapter>/init.md` with `<task-name>`, and call
-the resolved directory `<location>` for the rest of this run. Follow
-`~/.agents/plan-adapters/<adapter>/read.md` on `<location>/PRD.md`; if the
-file exists and holds an unfinished PRD, ask whether to resume or start a
-new one (see Gotchas).
+`<task-name>` is a short git-safe slug (lowercase letters, digits,
+hyphens). Run `plan-cli init <task-name>` (idempotent) and call the
+printed directory `<location>` for the rest of this run. Run
+`plan-cli read <location> PRD.md`; if the file exists and holds an
+unfinished PRD, ask whether to resume or start a new one (see Gotchas).
 
 ### 3. Write `CONTEXT.md`
 Fill the template at `assets/context-file.md` into
@@ -86,11 +93,12 @@ Fill the template at `assets/prd-file.md` into `<location>/PRD.md`. This is the 
 
 ### 9. Present and stop
 Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in the roadmap task's
-`ROADMAP.md`, follow `~/.agents/plan-adapters/<adapter>/set-status.md`
-with the `roadmap` task's location to set that entry's `Status` to
-`in-progress`, and follow the same adapter's `read.md` then `write.md` on
-that `ROADMAP.md` to fill the entry's `PRD` column with this task's
-`<location>`. Do not implement. Hand off to `plan` only after approval.
+`ROADMAP.md`, run
+`plan-cli set-status <roadmap-location> --entry <id> --status in-progress`
+(`<roadmap-location>` from `plan-cli init roadmap` or `plan-cli list`),
+then fill that entry's `PRD` column with this task's `<location>` via
+`plan-cli read` then `plan-cli write` on that `ROADMAP.md`. Do not
+implement. Hand off to `plan` only after approval.
 
 ## Rationalizations
 
@@ -132,4 +140,4 @@ Before handing off to `plan`, confirm:
 - PRD template: `assets/prd-file.md`
 - Context (discovery) template: `assets/context-file.md`
 - ADR template: `assets/adr-file.md`
-- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
+- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
