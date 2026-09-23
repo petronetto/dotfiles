@@ -12,7 +12,7 @@
 #   path <location>        print the location's on-disk directory
 #
 # PLAN_BACKEND selects the backend (default: disk); backends/ next to this
-# script holds one <name>.sh per backend, implementing the six ops as
+# script holds one <name>.sh per backend, implementing the seven ops as
 # <name>_<op> functions. PLAN_BACKENDS_DIR overrides the backends directory.
 set -euo pipefail
 
