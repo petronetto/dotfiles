@@ -23,12 +23,8 @@ Specify what to build and why before any code. Interview the user one question a
 
 ## Plan adapter
 
-- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
-  active plan adapter. Every plan-file operation in this skill follows the
-  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
-  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
-  a plan path. `plan` reads the same config, so both skills always agree on
-  the location.
+- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
+- Never inline a plan path: every plan-file operation goes through a protocol recipe.
 
 ## Procedure
 
@@ -136,5 +132,4 @@ Before handing off to `plan`, confirm:
 - PRD template: `assets/prd-file.md`
 - Context (discovery) template: `assets/context-file.md`
 - ADR template: `assets/adr-file.md`
-- Global plan config: `~/.agents/plans.config.md`
-- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
+- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`

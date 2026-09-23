@@ -28,12 +28,8 @@ the agent filling the template contract; see ADR rationale in the plan's
 
 ## Plan adapter
 
-- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
-  active plan adapter. Every plan-file operation in this skill follows the
-  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
-  (`list`, `read`); no step inlines a plan path. `spec` and `plan`, which
-  produced the plan, read the same config, so every skill always agrees on
-  the location.
+- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
+- Never inline a plan path: every plan-file operation goes through a protocol recipe.
 
 ## Procedure
 

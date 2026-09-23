@@ -33,12 +33,8 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 
 ## Plan adapter
 
-- Read `~/.agents/plans.config.md` once per run: its `adapter:` key names the
-  active plan adapter. Every plan-file operation in this skill follows the
-  matching recipe in `~/.agents/plan-adapters/<adapter>/<operation>.md`
-  (`init`, `read`, `write`, `append`, `list`, `set-status`); no step inlines
-  a plan path. `spec`, `plan`, and `build` read the same config, so every
-  skill always agrees on the location.
+- Read `~/.agents/plans.config.md` and `~/.agents/plan-adapters/PROTOCOL.md` once per run, before any plan-file operation. Every plan-aware skill follows the same protocol, so all agree on the location.
+- Never inline a plan path: every plan-file operation goes through a protocol recipe.
 
 ## Procedure
 
@@ -101,5 +97,4 @@ Before a step counts as done:
 - Reviewer briefing template: `assets/reviewer-brief.md`
 - Worktree lifecycle script: `scripts/worktree.sh`
 - The gate itself: `review` skill · test discipline: `test` skill · human-gated variant: `build` skill
-- Global plan config: `~/.agents/plans.config.md`
-- Plan adapter operations: `~/.agents/plan-adapters/<adapter>/<operation>.md`
+- Plan protocol (config and adapter recipes): `~/.agents/plan-adapters/PROTOCOL.md`
