@@ -10,7 +10,7 @@ Specify what to build and why before any code. Interview the user one question a
 ## Hard rules
 
 - Never write or edit code—output is Markdown only.
-- Interview one question at a time using the format in `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`. If the codebase answers it, read instead of asking.
+- Interview one question at a time using the format in `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`. If the harness or environment provides a tool for asking the user questions, use it instead of plain text. If the codebase answers it, read instead of asking.
 - Keep a discovery record: from the first exploration, record what you investigated, where, with which tools, what you found, and which findings informed which decisions in the plan directory's `CONTEXT.md`. It is the provenance layer that makes the PRD debuggable.
 - Surface assumptions explicitly and have the user correct them before proceeding.
 - Resolve every open question and design decision with the user. Never proceed on a guess.
