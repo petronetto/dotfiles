@@ -35,7 +35,7 @@
   },
   "defaultProvider": "openrouter",
   "defaultModel": "z-ai/glm-5.3-flash",
-  "lastChangelogVersion": "0.86.1",
+  "lastChangelogVersion": "0.87.1",
   "enabledModels": [
     "anthropic/claude-haiku-4-5",
     "anthropic/claude-sonnet-5",
