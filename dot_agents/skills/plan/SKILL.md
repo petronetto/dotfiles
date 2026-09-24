@@ -65,7 +65,8 @@ they record. If `PRD.md` is missing, stop and ask the user to run `spec`
 first (or offer to produce a minimal PRD inline); don't plan onto an
 undefined spec. If the directory holds unfinished steps, ask whether to
 resume or start a new plan (see Gotchas). Ask these per
-`~/.agents/references/question-format.md`, appending each answer to the
+`~/.agents/references/question-format.md` (or the harness's question tool,
+when it provides one), appending each answer to the
 directory's `decisions.md` via `plan-cli append`, each with an
 `**Evidence:**` line back to `CONTEXT.md`.
 
