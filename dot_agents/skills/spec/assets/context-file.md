@@ -47,15 +47,16 @@ what is still open.
 
 Status values: `validated` (confirmed against code/user), `corrected` (user
 overrode it), `accepted` (taken as-is), `open` (still unresolved, blocks the
-PRD).
+PRD). At freeze time no row may stay `open`; resolve or delete it.
 
 ## Constraints discovered
 Technical or business limits found in the code, docs, or environment
 (versions, API surfaces, performance budgets, platform restrictions).
 
 ## Open questions / knowledge gaps
-What is still unknown and feeds the interview. Each gap becomes a question in
-`decisions.md` until resolved.
+Working list only: what is still unknown and feeds the interview. Each gap
+becomes a question in `decisions.md` until resolved. Empty at freeze time; a
+frozen CONTEXT.md contains no open questions.
 
 ## Provenance map
 The audit link: which findings informed which decisions. This is the core of

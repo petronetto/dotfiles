@@ -60,5 +60,7 @@ them.
 | -- | -------- | --------- | ------------ |
 | D1 | <…>     | <one line> | Q3 / ADR-001 / CONTEXT.md › <topic> |
 
-## Risks & open questions
-Known risks or deferred questions that could affect later steps, if any.
+## Risks
+Known risks that could affect later steps, if any. An approved PRD has no
+open questions and no unresolved assumptions: resolve them in the interview
+or the PRD is not done.

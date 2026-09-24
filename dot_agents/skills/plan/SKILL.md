@@ -15,6 +15,7 @@ Turn a PRD into tiny, reviewable step files. Plans only; implementation is separ
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing plan. Ask before resuming or starting a new one.
 - Reviewability is a hard requirement: follow the Writing rules below, and split any step that cannot stay within them.
+- Step files never carry open questions or assumptions; resolve them with the user before writing the step.
 
 ## Writing rules
 
@@ -111,6 +112,7 @@ Before handing off to `build`, confirm:
 - [ ] Step verification criteria account for the Definition of Done (`~/.agents/references/definition-of-done.md`), not just each step's own acceptance criteria.
 - [ ] Dependencies are recorded; independent steps are marked as parallelizable.
 - [ ] No step is scaffolding-only.
+- [ ] No step file contains an open question or an unresolved assumption.
 - [ ] The user reviewed and approved the plan.
 
 ## References
