@@ -14,6 +14,7 @@ Specify what to build and why before any code. Interview the user one question a
 - Keep a discovery record: from the first exploration, record what you investigated, where, with which tools, what you found, and which findings informed which decisions in the plan directory's `CONTEXT.md`. It is the provenance layer that makes the PRD debuggable.
 - Surface assumptions explicitly and have the user correct them before proceeding.
 - Resolve every open question and design decision with the user. Never proceed on a guess.
+- The finished docs contain no open questions and no unresolved assumptions. If one exists, the spec is not done.
 - Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
 - Never delete an existing PRD. Ask before resuming a PRD that already has unfinished work or starting a new one.
 
@@ -130,6 +131,7 @@ Before handing off to `plan`, confirm:
 - [ ] Every interview question and answer is logged in `decisions.md`, each entry carrying an `**Evidence:**` (or `**Promoted to:** ADR-NNN`) line.
 - [ ] Cross-cutting decisions with real alternatives were promoted to `ADR-NNN-*.md`; the corresponding `decisions.md` entries note the promotion.
 - [ ] Assumptions were surfaced and either corrected or accepted.
+- [ ] `PRD.md` and `CONTEXT.md` contain no open questions and no `open` assumptions.
 - [ ] `PRD.md` is saved under `<location>/`.
 - [ ] If the PRD traces to a roadmap entry, that entry's `Status` is `in-progress` and its `PRD` link points here.
 
