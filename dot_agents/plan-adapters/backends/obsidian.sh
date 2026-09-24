@@ -62,7 +62,7 @@ obsidian_run() {
   command -v obsidian >/dev/null 2>&1 || die "the obsidian CLI is not installed"
   local tmp msg
   tmp="$(mktemp)"
-  if obsidian "vault=$vault" "$@" > "$tmp" 2>&1; then
+  if obsidian "vault=$vault" "$@" < /dev/null > "$tmp" 2>&1; then
     cat "$tmp"
     rm -f -- "$tmp"
   else
