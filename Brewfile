@@ -4,35 +4,38 @@
 # =============================================================================
 #
 # Consumed by: run_onchange_after_install-packages.sh.tmpl (scripts/install-packages)
+#
+# Grouped by category, not by install type:
+#   brew "x"  -> formulae (CLI tools, libraries, runtimes)
+#   cask "x"  -> GUI applications
 # =============================================================================
-
-# --------------------------------------------------------------------------
-# Formulae (CLI tools, libraries, runtimes) — brew install
-# --------------------------------------------------------------------------
 
 # --- Core shell & system utilities ---
 brew "bash"         # newer Bash (macOS ships 3.2)
 brew "curl"         # modern curl (HTTP/2, current SSL)
 brew "openssl"      # TLS / crypto libraries
-brew "httpie"       # human-friendly HTTP client
 brew "pam-reattach" # Touch ID for sudo inside tmux (used by /etc/pam.d/sudo_local)
 brew "chezmoi"      # manage your dotfiles across multiple machines
+brew "dockutil"     # scriptable Dock management
 
-# --- Version control & hosting CLIs ---
-brew "git"
-brew "git-delta"    # Syntax-highlighting for git and diff output
-brew "gh"           # GitHub CLI
+# --- Shell prompt & history ---
+brew "antidote"     # fast Zsh plugin manager
+brew "starship"     # cross-shell prompt
+brew "atuin"        # synced, searchable shell history
 
-# --- Editor & terminal multiplexer ---
+# --- Terminal, editors & multiplexer ---
 brew "neovim"
 brew "tmux"
 brew "herdr"
+cask "ghostty"      # terminal emulator
+cask "zed"          # Zed editor
 
-# --- Zsh framework & prompt ---
-brew "antidote"     # fast Zsh plugin manager
-brew "starship"     # cross-shell prompt
+# --- Version control & hosting CLIs ---
+brew "git"
+brew "git-delta"    # syntax-highlighting for git and diff output
+brew "gh"           # GitHub CLI
 
-# --- Modern CLI utilities (coreutils replacements / quality of life) ---
+# --- Modern CLI utilities (replacements / quality of life) ---
 brew "bat"          # cat with syntax highlighting
 brew "fd"           # find replacement
 brew "lsd"          # ls replacement (nerd-font icons)
@@ -40,32 +43,31 @@ brew "zoxide"       # cd replacement (frecency-based)
 brew "fzf"          # fuzzy finder
 brew "ripgrep"      # grep replacement
 brew "ast-grep"     # AST-based structural code search (used by agent skills)
-brew "atuin"        # synced, searchable shell history
 brew "procs"        # ps replacement
 brew "tlrc"         # community-driven, simplified man pages
 brew "jq"           # JSON processor
 brew "gum"          # modern CLI prompts & menus
+brew "httpie"       # human-friendly HTTP client
 brew "todoist-cli"  # command-line client for Todoist
 
-# --- Cloud & API CLIs ---
-brew "ansible"      # automation & provisioning
-brew "awscli"       # AWS CLI v2
-
-# --- AI coding agents & LLM tooling ---
+# --- AI coding agents & desktop clients ---
 brew "ollama"
 brew "pi-coding-agent"
 brew "agent-browser"
+cask "claude"       # Claude desktop app
+cask "claude-code"  # Claude Code CLI
+cask "fluidvoice"   # on-device voice dictation with AI enhancement
 
-# --- Media ---
-brew "ffmpeg"         # multimedia processing (transcode, extract, etc.)
-brew "yt-dlp"         # YouTube / streaming video downloader
-brew "openai-whisper" # speech-to-text transcription (OpenAI Whisper)
-brew "pocket-tts"     # text-to-speech synthesis
+# --- Security & passwords ---
+cask "1password-cli" # `op` CLI for scripting 1Password
+cask "1password"
 
-# --- System monitoring ---
-brew "btop"           # resource monitor (htop/btop++)
+# --- Productivity & communication ---
+cask "obsidian"     # notes & knowledge base
+cask "todoist-app"  # task manager
+cask "slack"        # team communication
 
-# --- Languages & runtimes ---
+# --- Development: languages & runtimes ---
 brew "rust"
 brew "go"
 brew "node"
@@ -75,56 +77,37 @@ brew "lua"
 brew "luarocks"
 brew "sqlite"
 
-# --- Language tooling & package managers ---
+# --- Development: language tooling & package managers ---
 brew "pyenv"        # Python version manager
 brew "pipx"         # install Python CLI apps in isolated envs
 brew "composer"     # PHP dependency manager
 
-# --- Networking & local dev infrastructure ---
+# --- Development: APIs, containers & local infrastructure ---
 brew "dnsmasq"      # local DNS for dev domains
 brew "mkcert"       # locally-trusted HTTPS certificates
+cask "bruno"        # open-source API client (Postman alternative)
+cask "docker-desktop"
 
-# --- macOS utilities & system management ---
-brew "dockutil"     # scriptable Dock management
+# --- Cloud & infrastructure CLIs ---
+brew "ansible"      # automation & provisioning
+brew "awscli"       # AWS CLI v2
+
+# --- Media (local AI pipelines included) ---
+brew "ffmpeg"         # multimedia processing (transcode, extract, etc.)
+brew "yt-dlp"         # YouTube / streaming video downloader
+brew "openai-whisper" # speech-to-text transcription (OpenAI Whisper)
+brew "pocket-tts"     # text-to-speech synthesis
+
+# --- System monitoring & maintenance ---
+brew "btop"         # resource monitor (htop/btop++)
 brew "mole"         # deep clean and Mac optimization tool
-
-# --------------------------------------------------------------------------
-# Casks (GUI applications) — brew install --cask
-# --------------------------------------------------------------------------
-
-# --- Terminal emulator ---
-cask "ghostty"
-
-# --- Editors & IDEs ---
-cask "zed"                  # Zed editor
 
 # --- Browsers ---
 cask "brave-browser"
 
-# --- Communication ---
-cask "slack"
-
-# --- Security & passwords ---
-cask "1password"
-cask "1password-cli"  # `op` CLI for scripting 1Password
-
-# --- API & dev tools ---
-cask "bruno"          # open-source API client (Postman alternative)
-
-# --- AI desktop clients ---
-cask "claude"
-cask "claude-code"
-
-# --- Productivity ---
-cask "obsidian"
-cask "todoist-app"
-
-# --- Utilities ---
-cask "rectangle"            # window management & snapping
-cask "vorssaint"            # menu bar system utilities
-
-# --- Containers ---
-cask "docker-desktop"
+# --- GUI utilities ---
+cask "rectangle"    # window management & snapping
+cask "vorssaint"    # menu bar system utilities
 
 # --- Fonts (Nerd Fonts — terminal icons & Powerline glyphs) ---
 cask "font-fira-code-nerd-font"
