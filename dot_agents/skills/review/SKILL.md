@@ -27,6 +27,7 @@ Review implementation quality and codebase health, not just correctness. Be **am
 9. **Atomicity.** Flag avoidable sequential orchestration and partial-update state.
 10. **The best comment is no comment.** Code must speak for itself. Comment only when the code cannot express the reason.
 11. **No unverifiable references.** Never cite context the reader cannot see: anything not in the repo. If the code needs that context to make sense, the code is wrong.
+12. **Boundaries are contract.** When a charter or PRD on disk defines Always / Ask first / Never boundaries, review the change against them; crossing one is a violation, not a style nit.
 
 ## Deep-Module Lens
 
@@ -59,7 +60,7 @@ Label every finding so the author knows what is mandatory versus optional. Lead 
 
 ## Approval Bar
 
-Block on: unjustified structural regression, a visible code-judo path left untaken, files crossing 1000 lines, ad-hoc branching, scattered feature checks, unnecessary wrapper/cast churn, canonical-helper duplication, an obvious decomposition left undone. Don't approve on "behavior seems correct" alone.
+Block on: unjustified structural regression, a visible code-judo path left untaken, files crossing 1000 lines, ad-hoc branching, scattered feature checks, unnecessary wrapper/cast churn, canonical-helper duplication, an obvious decomposition left undone, an Always / Ask first / Never boundary (charter or PRD) crossed without approval. Don't approve on "behavior seems correct" alone.
 
 ## Rationalizations
 
@@ -88,6 +89,7 @@ Block on: unjustified structural regression, a visible code-judo path left untak
 
 Before approving, confirm:
 - [ ] All **Critical** and required findings are resolved, or explicitly deferred with a tracked reason.
+- [ ] Always / Ask first / Never boundaries from the charter or PRD were checked when present; crossings are a required finding, not a Nit.
 - [ ] Where a code-judo path existed, the change reduced rather than relocated complexity.
 - [ ] Tests pass, the build is clean, and the verification story is documented.
 - [ ] No security issue, dead code, or un-scoped change was left in place.
