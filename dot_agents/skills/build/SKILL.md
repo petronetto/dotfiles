@@ -62,7 +62,11 @@ For each step (lowest `NNN` not yet `Status: done`):
 - Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Run `plan-cli set-status <location> --step <step-file> --status done`, then record the final commit message under the step file's `Commit` section: `plan-cli read` the file, fill the section, write it back via `plan-cli write`. Move to the next step.
 
 ### 3. Finish
-When all steps are `Status: done`, report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
+When all steps are `Status: done`, run the acceptance audit before reporting:
+
+**Audit the delivered work against the PRD** — Re-read the PRD's goals and scenarios and check each against the code as delivered, not the step logs: completion claims are not evidence. Classify every gap as `missing` (required work absent), `partial` (present but short of the scenario), `contradicts` (conflicts with the PRD or a boundary), or `unrequested` (work the PRD never asked for; surface it for review, don't delete it). Work gaps through the same loop as review modifications: move the affected step back to `in-progress` (`plan-cli set-status <location> --step <step-file> --status in-progress`), append to its review log, implement as small chunks, stop for approval, repeat until no gap remains. A pure refactor (`No behavior change`) audits against preserved behavior instead.
+
+Then report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
 
 ## Rationalizations
 
@@ -72,6 +76,7 @@ When all steps are `Status: done`, report: summary of changes, rationale, and su
 | "It's faster to do it all at once." | It feels faster until something breaks and you can't tell which change did it. |
 | "This chunk is too small to keep separate." | Small, working chunks are free. A big, messy one hides bugs and makes rollback painful. |
 | "I'll add the regression test later." | A bug fix without a reproduction test is not a fix. Add it now (see `test`). |
+| "All steps passed, so the PRD is satisfied." | Per-step verification proves each step, not the whole contract; the acceptance audit closes the loop between spec and implementation. |
 
 ## Red flags
 
@@ -80,6 +85,7 @@ When all steps are `Status: done`, report: summary of changes, rationale, and su
 - Committing without unambiguous per-step approval.
 - Step changes that don't carry a passing test.
 - Unrelated cleanup or refactors snuck into a step.
+- Reporting all steps done without auditing the delivered work against the PRD.
 
 ## Verification
 
@@ -89,6 +95,9 @@ Before a step counts as done:
 - [ ] Scope was held to the step file; no unrelated changes.
 - [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied, not just the step's own acceptance criteria.
 - [ ] The user approved the step, and it was committed with only its files staged.
+
+Before the plan counts as finished:
+- [ ] The acceptance audit ran; the delivered work matches the PRD's goals and scenarios with no `missing`, `partial`, `contradicts`, or `unrequested` gap outstanding.
 
 ## References
 

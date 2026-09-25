@@ -21,6 +21,7 @@ Specify what to build and why before any code. Interview the user one question a
 ## Gotchas
 
 - "Start a new one" means picking a different `<task-name>` slug — never overwriting or reusing an existing PRD's directory for unrelated work, even when the user says "start fresh."
+- Scale the ceremony to the stakes: a trivial fix needs a minimal PRD (problem, one goal with its scenario, boundaries), not full sections or none; a pure refactor states `No behavior change` as its goal and skips scenarios instead of inventing requirements.
 
 ## Plan CLI
 
@@ -90,7 +91,7 @@ write a new ADR that supersedes it. Most specs produce zero to two ADRs;
 skip the ceremony for decisions with no real alternatives.
 
 ### 8. Write the PRD
-Fill the template at `assets/prd-file.md` into `<location>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it.
+Fill the template at `assets/prd-file.md` into `<location>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it. State each goal as observable behavior with at least one verification scenario concrete enough to become a test (GIVEN/WHEN/THEN or equivalent); `plan` traces step verification back to these.
 
 ### 9. Present and stop
 Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in the roadmap task's
@@ -106,6 +107,7 @@ implement. Hand off to `plan` only after approval.
 | Excuse | Reality |
 | --- | --- |
 | "This is simple, no spec needed." | Simple work still needs a few lines of acceptance criteria and boundaries. A two-line PRD is fine. |
+| "It's a trivial fix; full PRD sections are overkill." | Scale depth to stakes: a minimal PRD (problem, one goal with its scenario, boundaries) still forces the "done" question; skipping it doesn't. |
 | "I'll write the spec after the code." | That's documentation, not specification. The PRD's value is forcing clarity before code exists. |
 | "The user knows what they want." | Even clear requests carry implicit assumptions. Surfacing them up front is the whole point. |
 | "It's one big feature; I'll keep it as one PRD." | If acceptance criteria cluster into independently testable groups, a monolithic PRD forces every step to reason over the whole contract. A small capability map is the cheap alternative. |
@@ -124,6 +126,10 @@ implement. Hand off to `plan` only after approval.
 Before handing off to `plan`, confirm:
 - [ ] The user reviewed and approved the PRD.
 - [ ] Problem, goals, and non-goals are concrete.
+- [ ] Every goal is observable behavior with at least one verification scenario concrete enough to become a test (a pure refactor states `No behavior change` instead).
+- [ ] No vague adjective survives unquantified: "fast", "robust", "intuitive" carries a number or a check.
+- [ ] Edge and error paths are named, not only the happy path.
+- [ ] One canonical term per concept; no terminology drift between sections.
 - [ ] Boundaries (Always / Ask first / Never) are written.
 - [ ] The project's build/test/lint commands are recorded.
 - [ ] Key decisions are recorded with a one-line rationale and a traceability link each.

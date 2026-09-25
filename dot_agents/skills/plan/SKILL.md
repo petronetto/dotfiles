@@ -25,12 +25,14 @@ Steps are written for the reviewer, not for the planner:
 - Write outcomes, not design summaries: a chunk row states what must be observably true when it is done. Mechanics go in "Done when" only where they are non-obvious; rationale lives in `decisions.md`, never in the step file.
 - One sentence per table cell; no inline pseudo-code unless the algorithm is itself the deliverable.
 - Say it once: behavior lives in Chunks, commands in Verify, conditions in Acceptance. A fact appears in exactly one section.
+- Verify commands trace to the PRD's goals and scenarios; a step cannot pass against a contract the PRD does not state.
 - At most ~30 content lines per step file (Review log and Commit excluded). Split the step instead of growing the file.
 
 ## Gotchas
 
 - "Start a new plan" means picking a different `<task-name>` slug (running `spec` for it if no PRD exists yet) — never overwriting an existing plan's step files, per the hard rule against deleting one.
 - A step that only adds scaffolding (a type or enum nothing consumes yet) isn't valid — every step must deliver a working, testable change on its own.
+- Scale the ceremony to the stakes: trivial work may collapse to a single step file; don't invent steps to fill the flow table.
 
 ## Plan CLI
 
@@ -69,6 +71,9 @@ resume or start a new plan (see Gotchas). Ask these per
 when it provides one), appending each answer to the
 directory's `decisions.md` via `plan-cli append`, each with an
 `**Evidence:**` line back to `CONTEXT.md`.
+If the roadmap task exists (`plan-cli list` shows a `roadmap` location), also run
+`plan-cli read <roadmap-location> CHARTER.md` and keep every step inside the
+charter's project-wide boundaries (Always / Ask first / Never).
 
 ### 3. Decompose into ordered steps
 Break the PRD into tiny, independently-reviewable steps. Each has one responsibility, can be reverted alone, and leaves the codebase working. Keep independent steps independent and record real dependencies in `Depends`; steps with no dependency between them can be built in parallel. Every step must deliver a working change on its own, no scaffolding-only chunks (e.g. enums or types nothing consumes yet).
@@ -105,6 +110,8 @@ Present the plan for review by showing FLOW.md's table in the reply (that table 
 
 Before handing off to `build`, confirm:
 - [ ] The PRD (`PRD.md`) is approved.
+- [ ] Every step's Verify commands trace to the PRD's goals and scenarios.
+- [ ] Steps stay inside the charter's project-wide boundaries (Always / Ask first / Never), when a charter exists.
 - [ ] Every step file has Delivers, Out of scope, a Chunks table with files and "Done when" on every row, and Acceptance criteria.
 - [ ] No fact is restated across sections; each appears once (spot-check one step).
 - [ ] `FLOW.md` exists with one row per step and matches the step files.

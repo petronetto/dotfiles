@@ -13,7 +13,11 @@
 What's broken, missing, or requested, and why it matters. 2-4 sentences.
 
 ## Goals
-What this plan must achieve for it to count as done. Concrete and testable.
+What this plan must achieve for it to count as done. State each goal as
+observable behavior with at least one verification scenario concrete enough
+to become a test (GIVEN/WHEN/THEN or equivalent); `plan` traces step
+verification back to these. For a pure refactor, state `No behavior change`
+and skip scenarios instead of inventing requirements.
 
 ## Non-goals
 Explicitly excluded work that looks related but is out of scope for this plan.

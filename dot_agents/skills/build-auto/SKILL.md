@@ -67,7 +67,9 @@ Repeat until no `pending` steps remain (independent steps may run through this l
 **e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. Run `plan-cli set-status <location> --step <step-file> --status done`, then record the commit message under the step file's `Commit` section: `plan-cli read` the file, fill the section, write it back via `plan-cli write`. Move on.
 
 ### 3. Finish
-Report steps completed (with commits), steps `blocked` (with why), and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md` and every step of that PRD's plan is `done`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
+**Audit the delivered work against the PRD** — Spawn a fresh-context auditor sub-agent briefed with the PRD and the step files' acceptance criteria: it checks the delivered code against the PRD's goals and scenarios (not the step logs; completion claims are not evidence) and classifies every gap as `missing`, `partial`, `contradicts`, or `unrequested` (surfaced in the report, never deleted). Work each gap through the affected step's own loop — builder, reviewer, commit, same 3-cycle cap; a gap unresolved after 3 cycles marks that step `Status: blocked`, never done. A pure refactor (`No behavior change`) audits against preserved behavior instead.
+
+Then report steps completed (with commits), steps `blocked` (with why), gaps left by the audit, and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md` and every step of that PRD's plan is `done`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
 
 ## Rationalizations
 
@@ -78,6 +80,7 @@ Report steps completed (with commits), steps `blocked` (with why), and suggested
 | "Let me commit before review passes." | A pre-approval commit breaks the clean per-step rollback and bypasses the gate. |
 | "I'll fold the other step in too." | One commit per step, only its files, is what makes each step independently reversible. |
 | "It's faster to inline the sub-agent." | Fresh contexts are the point; inline reuse leaks one step's noise into another. |
+| "The steps all passed review, so the PRD is satisfied." | Per-step review proves each step, not the whole contract; the audit closes the loop between spec and implementation. |
 
 ## Red flags
 
@@ -86,6 +89,7 @@ Report steps completed (with commits), steps `blocked` (with why), and suggested
 - Orchestrator context carrying full diffs or build logs instead of just verdicts/findings.
 - A briefing missing `PRD.md`, the step file, or the reuse gate.
 - `blocked` reported as `done`, or scope expanding past the step file.
+- An audit gap silently dropped instead of looped or reported as `blocked`.
 
 ## Verification
 
@@ -96,6 +100,9 @@ Before a step counts as done:
 - [ ] No `blocked` step was treated as complete, and no step was built while its `Depends` step was `blocked`.
 - [ ] Parallel steps were each built in their own worktree, not the shared working tree.
 - [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied; the reviewer confirmed it, not just the step's acceptance criteria.
+
+Before the plan counts as finished:
+- [ ] The acceptance audit ran against the PRD's goals and scenarios; every gap was either resolved through the loop or reported as `blocked`, never silently dropped.
 
 ## References
 
