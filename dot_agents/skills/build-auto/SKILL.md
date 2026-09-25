@@ -25,7 +25,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 
 - Two builders sharing the main working tree corrupts both diffs — concurrent uncommitted edits, staging, and commits collide. Parallel steps must each get their own git worktree (`scripts/worktree.sh create`); a step running alone may use the shared tree directly.
 - The reviewer only judges — it never fixes, comments, or edits files. Handing it fix authority collapses the independent audit the whole loop depends on.
-- Commit messages and code comments must never reference the plan, step, or chunk — plans aren't committed, so the reference is meaningless to a later reader.
+- Commit messages and code comments must never reference the plan, step, or chunk.
 
 ## Available scripts
 
