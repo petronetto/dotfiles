@@ -25,6 +25,8 @@ Review implementation quality and codebase health, not just correctness. Be **am
 7. **Clean boundaries.** Question casts, `any`, optionality where a clearer type could exist.
 8. **Canonical layer.** Feature logic stays out of shared paths; reuse existing helpers.
 9. **Atomicity.** Flag avoidable sequential orchestration and partial-update state.
+10. **The best comment is no comment.** Code must speak for itself. Comment only when the code cannot express the reason.
+11. **No unverifiable references.** Never cite context the reader cannot see: anything not in the repo. If the code needs that context to make sense, the code is wrong.
 
 ## Deep-Module Lens
 
@@ -32,7 +34,7 @@ From `codebase-design`: **depth** (interface hides implementation vs. shallow wr
 
 ## Flag Aggressively
 
-Cleaner reframing available · files past 1000 lines · conditionals bolted onto unrelated paths · feature logic leaking into shared modules · thin/identity wrappers · unnecessary casts/optionality · copy-paste over extraction · "temporary" branching · duplicated canonical helpers · avoidable sequential orchestration · non-atomic partial updates.
+Cleaner reframing available · files past 1000 lines · conditionals bolted onto unrelated paths · feature logic leaking into shared modules · thin/identity wrappers · unnecessary casts/optionality · copy-paste over extraction · "temporary" branching · duplicated canonical helpers · avoidable sequential orchestration · non-atomic partial updates · comments that explain what the code cannot say for itself · comments citing unverifiable context.
 
 ## Preferred Remedies
 
@@ -68,6 +70,7 @@ Block on: unjustified structural regression, a visible code-judo path left untak
 | "We'll clean it up later." | Later rarely comes. The review is the quality gate; use it. |
 | "The tests pass, so it's good." | Necessary but not sufficient: tests miss structural, security, and readability issues. |
 | "Moving the code makes it cleaner." | Relocating complexity isn't reducing it; find the version where branches disappear. |
+| "A comment will make it clear." | A comment explains what is; restructuring changes what is. If a reader needs the comment, the code is the problem. |
 
 ## Red flags
 
@@ -77,6 +80,8 @@ Block on: unjustified structural regression, a visible code-judo path left untak
 - A refactor that moves code without shrinking the concepts a reader must hold.
 - A change that grows an already-large file instead of decomposing it.
 - Findings with no severity label, so the author can't tell what's required.
+- Proposing "add a comment" as the fix for illegible code instead of restructuring it.
+- A comment citing context not present in the repo.
 - Accepting "I'll fix it later" without a tracked follow-up.
 
 ## Verification
