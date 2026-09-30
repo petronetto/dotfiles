@@ -7,6 +7,13 @@ description: Write a PRD for a feature or fix before coding, by interviewing the
 
 Specify what to build and why before any code. Interview the user one question at a time until you reach shared understanding, surface assumptions explicitly, and write the PRD that `plan` decomposes into steps. The PRD lives on disk and is the shared source of truth. Output is Markdown only; implementation is separate (`build`).
 
+## Stance
+
+- Curious, not prescriptive: follow the threads the request opens; reframe the problem when the evidence points elsewhere.
+- Open threads, not interrogations: surface interesting directions and let the user pick what resonates.
+- Grounded: explore the actual codebase before theorizing.
+- Visual: sketch structure (architecture, options, state) in plain ASCII (borders `+ - |`, arrows `-->`); Unicode box glyphs drift across terminals.
+
 ## Hard rules
 
 - Never write or edit code—output is Markdown only.
