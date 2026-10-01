@@ -60,8 +60,10 @@
     "trust_all_worktrees": true
   },
   "agent": {
+    "threads_sidebar": {
+      "position": "right"
+    },
     "dock": "right",
-    "sidebar_side": "right",
     "show_turn_stats": true,
     "enable_feedback": false,
     "default_profile": "ask",
