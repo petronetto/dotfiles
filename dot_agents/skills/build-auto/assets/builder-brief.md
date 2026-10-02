@@ -6,8 +6,11 @@ You are implementing exactly one step of an existing plan, in a fresh context wi
 - Path: <repo-full-path>
 - Branch: <branch>
 
-## PRD (problem, approach, key decisions — if present)
+## PRD (problem, approach, key decisions)
 <full contents of PRD.md>
+
+## SPEC (required behavior and test scenarios)
+<full contents of SPEC.md>
 
 ## Step to implement
 <full contents of the NNN-<step-name>.md file>
@@ -28,7 +31,7 @@ The previous attempt at this step was reviewed and changes were requested:
 ## Your task
 - Implement only the chunk rows in the step's Chunks table — do not expand scope beyond it.
 - Run every piece of new code through the reuse/YAGNI gate before writing it.
-- Add/update tests per the step's "Verification" section; run the project's tests and linters, piping long output.
+- Add or update tests per the step's Verify section and linked SPEC requirement and scenario IDs. Run the project's tests and linters, piping long output.
 - Hold the result to the Definition of Done above, not just the step's acceptance criteria.
 - Do NOT commit. Do NOT stage files.
 - If something in the step is ambiguous, contradictory, or you cannot complete it (missing credentials, conflicting requirements, etc.), stop and report yourself blocked with the specific reason rather than guessing.

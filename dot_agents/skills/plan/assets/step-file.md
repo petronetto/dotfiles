@@ -1,4 +1,4 @@
-# NNN — <Task Title>
+# NNN - <Task Title>
 
 | Field   | Value                             |
 | ------- | ---------------------------------- |
@@ -7,12 +7,14 @@
 | Depends | <previous step file(s), or none>   |
 | Blocked | <reason, only if Status is blocked>|
 
-Status values: `pending` → `in-progress` → `done`, or `blocked` if still unresolved after review cycles.
+Status values: `pending` --> `in-progress` --> `done`, or `blocked` if still unresolved after review cycles.
+
+Write in ASD-STE100 Simplified Technical English. Use common words and
+define necessary technical terms. Remove template instructions when done.
 
 ## Delivers
-One sentence: what this step changes, and why it sits at this position in the
-flow. Link to `PRD.md` and `decisions.md` for the rationale; never restate
-them.
+One sentence: what this step changes. Link to the `PRD.md` goal and
+`decisions.md` for the reason; do not repeat them.
 
 ## Out of scope
 One line: what this step must NOT touch, including boundaries to preserve.
@@ -22,14 +24,15 @@ One line: what this step must NOT touch, including boundaries to preserve.
 | - | ------------------------------- | ----- | --------- |
 | 1 | <verb-first instruction>        | <file(s) touched> | <observable outcome> |
 
-One action per row, one sentence per cell. "Done when" states what must be
-observably true; put mechanics here only where they are non-obvious. Rationale
-lives in `decisions.md`, not in this file.
+Use one action per row and one sentence per cell. "Done when" states a result
+that can be checked. Explain how only if needed. Keep reasons in `decisions.md`.
 
 ## Verify
-Commands to run and their expected results. Manual checks only when no machine
-can check them: write exactly what to look at and what to expect. Test
-behavior, not implementation. Use AAA and mock external dependencies.
+Link checks to `SPEC.md` requirement and scenario IDs (or preservation checks
+for a pure refactor). Give commands and expected results. Use manual checks
+only when automated checks are not possible; state what to check and expect.
+Test behavior, not implementation. Use Arrange, Act, Assert (AAA) and replace
+external dependencies with test doubles.
 
 ## Acceptance
 - [ ] Concrete, checkable condition for "done".

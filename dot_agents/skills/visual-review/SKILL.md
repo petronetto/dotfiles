@@ -1,6 +1,6 @@
 ---
 name: visual-review
-description: Render a plan directory as one self-contained HTML page so the flow, steps, decisions, risks, and status are reviewable at a glance. Trigger on "visual-review", "show the plan visually", "visual plan review", "review the plan visually". Reads FLOW.md, the step files, and PRD.md; writes a single offline HTML page into the plan dir; read-only on plan files.
+description: Render a plan directory as one self-contained HTML page so the flow, steps, decisions, risks, and status are reviewable at a glance. Trigger on "visual-review", "show the plan visually", "visual plan review", "review the plan visually". Reads PRD.md, SPEC.md, and the step files; writes a single offline HTML page into the plan dir; read-only on plan files.
 argument-hint: "[task-name]"
 ---
 
@@ -23,8 +23,8 @@ the agent filling the template contract; see ADR rationale in the plan's
 ## Gotchas
 
 - Regenerating after plan changes is normal behavior, but the existing page is still overwritten only after asking.
-- The status badge class comes from each step file's `Status` field, never from FLOW.md or from guesswork.
-- A linear plan omits the whole graph section even though the template contains it; a branched plan must include it (same rule as FLOW.md).
+- The status badge class comes from each step file's `Status` field, never from the PRD's Steps table or from guesswork.
+- Copy the PRD's `Visualize` section, preserving ASCII diagrams in `<pre>` blocks. A linear plan can still have useful system or behavior diagrams. Do not add a step dependency graph if the PRD does not contain one.
 
 ## Plan CLI
 
@@ -48,17 +48,19 @@ Run `plan-cli list` to enumerate the task directories. With a
 `<task-name>` argument, pick the listed entry ending in `/<task-name>`;
 without one, ask which listed task to render. Call the chosen entry
 `<location>` for the rest of this run. Stop if the entry is missing or
-holds neither `FLOW.md` nor a PRD Steps index (check via `plan-cli read`);
-there is nothing to render.
+has no populated PRD Steps table or no SPEC (check via `plan-cli read`).
+Ask the user to update an older plan through `spec` and `plan`; do not
+change its files or guess missing content.
 
 ### 2. Read the inputs (read-only)
-Run `plan-cli read <location> FLOW.md` (flow table rows and the
-branched-or-linear rule), then `plan-cli read` every step file it names
-(cards and status badges), and `plan-cli read <location> PRD.md` (key
-decisions and risks). When `FLOW.md` is absent (plans made before the flow format), derive the flow rows from `PRD.md`'s Steps index plus each step file, and state the fallback in the page footer. Nothing else is needed; do not invent sections.
+Run `plan-cli read <location> PRD.md` for the Steps table, Visualize section,
+key decisions, and risks. Read each step file named in the table for its
+card and status badge. Read `SPEC.md` for requirements and scenarios, or
+preserved behavior for a pure refactor. Report any conflicts between these
+files; do not invent or silently change content.
 
 ### 3. Generate the page
-Fill `assets/viewer-template.html` per its contract comments: one flow-table row per step, one step card per step file with its Status badge, the dependencies section only when dependencies branch, and PRD decisions and risks verbatim. Embed each step's Implementation-chunks section VERBATIM in the card's `<script type="text/markdown">` block (code blocks included); never condense, truncate, or summarize chunk text. A step with a Chunks table renders that table instead. Write the result via `plan-cli write <location> visual-review.html`.
+Fill `assets/viewer-template.html` per its contract comments: one overview row per PRD Steps row, one card per step file with its Status badge, and PRD Visualize content, decisions, and risks verbatim. Include SPEC requirements and scenarios verbatim, with their IDs (or preserved behavior for a pure refactor). Escape HTML special characters in all copied text, including diagrams, while keeping the displayed text unchanged. Embed each step's Implementation-chunks section VERBATIM in the card's `<script type="text/markdown">` block (code blocks included); never condense, truncate, or summarize chunk text. A step with a Chunks table renders that table instead. Write the result via `plan-cli write <location> visual-review.html`.
 
 ### 4. Open
 Run `open "$(plan-cli path <location>)"/visual-review.html` and report the path. Do not modify the page further unless asked; regeneration goes through this procedure again.
@@ -68,12 +70,14 @@ Run `open "$(plan-cli path <location>)"/visual-review.html` and report the path.
 Before reporting done, confirm:
 - [ ] Exactly one file was written; the plan directory is otherwise untouched.
 - [ ] `rg -n "https?://|<script src" "$(plan-cli path <location>)"/visual-review.html` returns nothing.
-- [ ] Every step in FLOW.md appears as a flow-table row and a step card, with a badge matching that step file's Status.
-- [ ] The graph section exists only when dependencies branch.
+- [ ] Every step in the PRD's Steps table appears as an overview row and a step card, with a badge matching that step file's Status.
+- [ ] Visualize content matches PRD.md; ASCII diagrams keep their spacing and characters.
+- [ ] Requirements and scenarios (or preserved behavior) match SPEC.md, with no missing IDs.
 - [ ] Key decisions and risks match PRD.md verbatim.
 
 ## References
 
 - Page contract: `assets/viewer-template.html`
-- Input format (owned by `plan`): `~/.agents/skills/plan/SKILL.md`, templates `~/.agents/skills/plan/assets/flow-file.md` and `~/.agents/skills/plan/assets/step-file.md`
-- PRD template (owned by `spec`): `~/.agents/skills/spec/assets/prd-file.md`
+- Step format: `~/.agents/skills/plan/SKILL.md` and `~/.agents/skills/plan/assets/step-file.md`
+- PRD template: `~/.agents/skills/spec/assets/prd-file.md`
+- SPEC template: `~/.agents/skills/spec/assets/spec-file.md`

@@ -1,158 +1,143 @@
 ---
 name: spec
-description: Write a PRD for a feature or fix before coding, by interviewing the user one question at a time until shared understanding. Trigger on "spec", "requirements", "design the work", "scope it first". Produces the PRD that `plan` decomposes; outputs Markdown only, never code.
+description: Write PRD.md and SPEC.md for a feature or fix before coding. Ask the user one question at a time to agree on goals and behavior. Trigger on "spec", "requirements", "design the work", "scope it first". Produces plain-language goals, ASCII diagrams, requirements, and test scenarios for `plan`; outputs Markdown only, never code.
 ---
 
 # Spec
 
-Specify what to build and why before any code. Interview the user one question at a time until you reach shared understanding, surface assumptions explicitly, and write the PRD that `plan` decomposes into steps. The PRD lives on disk and is the shared source of truth. Output is Markdown only; implementation is separate (`build`).
+Agree on what to build and why before writing code. Write `PRD.md` (product requirements document) for goals and approach. Write `SPEC.md` (behavior specification) for required behavior and test scenarios. `plan` uses both files to write steps. Output is Markdown only; `build` handles implementation.
 
-## Stance
+## Writing rules
 
-- Curious, not prescriptive: follow the threads the request opens; reframe the problem when the evidence points elsewhere.
-- Open threads, not interrogations: surface interesting directions and let the user pick what resonates.
-- Grounded: explore the actual codebase before theorizing.
-- Visual: sketch structure (architecture, options, state) in plain ASCII (borders `+ - |`, arrows `-->`); Unicode box glyphs drift across terminals.
+Apply these rules to all documents, questions, and summaries:
+
+- Write in ASD-STE100 Simplified Technical English. Use short sentences, active voice, and one main idea per sentence.
+- Use common words. Write "use", not "leverage"; "evidence", not "provenance"; "affects several steps", not "cross-cutting".
+- Keep technical terms only when they add precision. Define each necessary term or abbreviation at first use. Keep exact code names, paths, commands, and required format labels.
+- Use one term for each concept. Avoid metaphors, idioms, vague claims, and long groups of nouns.
+- State what changes, who or what acts, and the expected result. Do not make a simple task sound complex.
+- Do not use em or en dashes. Use commas, colons, parentheses, or separate sentences.
+- Use plain ASCII in diagrams and aligned tables. Follow the PRD template's `Visualize` instructions.
 
 ## Hard rules
 
-- Never write or edit code—output is Markdown only.
-- Interview one question at a time using the format in `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`. If the harness or environment provides a tool for asking the user questions, use it instead of plain text. If the codebase answers it, read instead of asking.
-- Keep a discovery record: from the first exploration, record what you investigated, where, with which tools, what you found, and which findings informed which decisions in the plan directory's `CONTEXT.md`. It is the provenance layer that makes the PRD debuggable.
-- Surface assumptions explicitly and have the user correct them before proceeding.
-- Resolve every open question and design decision with the user. Never proceed on a guess.
-- The finished docs contain no open questions and no unresolved assumptions. If one exists, the spec is not done.
-- Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
-- Never delete an existing PRD. Ask before resuming a PRD that already has unfinished work or starting a new one.
+- Never write or edit code; output is Markdown only.
+- Ask one question at a time. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Read the code instead of asking questions it can answer.
+- Record each answer in the plan directory's `decisions.md`.
+- From the first investigation, record paths, tools, findings, and their effect on decisions in `CONTEXT.md`. This evidence explains why the requirements exist.
+- List assumptions and resolve them with the user before proceeding. Never guess at a requirement or design decision.
+- Finished documents contain no open questions or unresolved assumptions.
+- Prefer a simpler problem or solution over added complexity. Follow `~/.agents/references/code-quality.md`.
+- Never delete an existing PRD, SPEC, or plan. Ask before resuming unfinished work or starting a new task.
 
 ## Gotchas
 
-- "Start a new one" means picking a different `<task-name>` slug — never overwriting or reusing an existing PRD's directory for unrelated work, even when the user says "start fresh."
-- Scale the ceremony to the stakes: a trivial fix needs a minimal PRD (problem, one goal with its scenario, boundaries), not full sections or none; a pure refactor states `No behavior change` as its goal and skips scenarios instead of inventing requirements.
+- A new task needs a new `<task-name>` slug. Do not reuse another task's directory, even if the user says "start fresh".
+- Match document length to the task. A small fix still needs a short PRD (problem, goal, boundaries) and a SPEC with one requirement and scenario.
+- For a pure refactor, state `No behavior change` in both files. Name the existing behavior and checks to preserve; do not invent new requirements or scenarios.
 
 ## Plan CLI
 
-- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
-  operation goes through it, never through a hand-built path: `init
-  <task-name>` (prints the task's `<location>`, idempotent), `read
-  <location> <file>`, `write <location> <file>` and `append <location>
-  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
-  line), `set-status <location> (--step <file> | --entry <id>) --status
-  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
-  with `blocked`), and `path <location>` (the `<location>`'s on-disk
-  directory).
-- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
-  live in `~/.agents/plans.config.md`. Every `<location>` comes from
-  `init` or `list` output.
+- `plan-cli` means `~/.agents/plan-adapters/plan`. Use it for every plan-file operation, not a hand-built path.
+- `init <task-name>` creates or finds the task and prints its `<location>`.
+- `read <location> <file>` reads a file. `write <location> <file>` and `append <location> <file>` take content on stdin, via a heredoc.
+- `list` prints one `<location>` per line. `path <location>` prints its on-disk directory.
+- `set-status <location> (--step <file> | --entry <id>) --status <status> [--reason <text>]` updates status. The step's `Blocked` row changes with the `blocked` status.
+- `PLAN_BACKEND` selects the backend (`disk` by default). Settings live in `~/.agents/plans.config.md`. Get each `<location>` from `init` or `list`.
 
 ## Procedure
 
 ### 1. Establish context
-- Get repo path, branch, and commit style from git.
-- Use sub-agents to explore the codebase enough to plan responsibly.
+
+- Get the repo path, branch, and commit style from git.
+- Use sub-agents to explore enough of the codebase to plan responsibly.
 - Prefer quality and simplicity over development cost.
-- Begin the discovery record now: capture every investigation (path, tool,
-  finding, implication) so nothing is lost to the session transcript. The
-  record is committed to disk in step 2 as `CONTEXT.md`.
+- Record each investigation now: path, tool, finding, and effect on the work. Save this record in step 3.
 
-### 2. Decide the plan directory
-`<task-name>` is a short git-safe slug (lowercase letters, digits,
-hyphens). Run `plan-cli init <task-name>` (idempotent) and call the
-printed directory `<location>` for the rest of this run. Run
-`plan-cli read <location> PRD.md`; if the file exists and holds an
-unfinished PRD, ask whether to resume or start a new one (see Gotchas).
+### 2. Choose the plan directory
 
-### 3. Write `CONTEXT.md`
-Fill the template at `assets/context-file.md` into
-`<location>/CONTEXT.md` with the discovery record begun in
-step 1: the request in the user's terms, the codebase exploration, external
-research, the assumptions table, constraints discovered, open gaps, and a
-provenance map linking findings to the decisions they will inform. Refine it
-as understanding grows; freeze it when the PRD is approved. This is the
-provenance layer that lets a human debug why the PRD says what it says.
+Use a short git-safe `<task-name>` (lowercase letters, digits, hyphens). Run `plan-cli init <task-name>` and call its output `<location>`. Read any existing `PRD.md` and `SPEC.md` with `plan-cli read`. If the task has unfinished work, ask whether to resume or start a new task.
 
-### 4. Surface assumptions
-Before interviewing, list what you are assuming (platform, data model,
-auth, target environment, dependencies) and write each into `CONTEXT.md`'s
-Assumptions table with status `open` or `accepted`. Ask the user to correct
-any of them before you proceed; move corrected ones to `validated` or
-`corrected`. Don't silently fill ambiguous requirements.
+### 3. Write CONTEXT.md
 
-### 5. Route before interviewing
-Most requests are one capability; skip this. Two exceptions:
+Fill `assets/context-file.md` into `<location>/CONTEXT.md` via `plan-cli write`. Include the request, code findings, external research, assumptions, limits, unknowns, and an evidence map that links findings to decisions. Update it as understanding grows. Mark it done when PRD and SPEC are approved.
 
-- **Greenfield**: the request is a whole new project built from scratch, with no meaningful codebase to explore. Stop and hand off to `blueprint`: it writes the project charter (stack, boundaries, constraints) and the epic roadmap, and each epic returns here afterwards as a normal request.
-- **Multi-capability**: one request bundles several independently testable capabilities that could ship and be verified separately. First propose a small capability map (module ids, dependency direction with no cycles, build order), get it approved, then write a PRD per module in dependency order. Keep it to a module table and a build order, not a project plan.
+### 4. Check assumptions
+
+List assumptions about the platform, data, access control, target environment, and dependencies. Record them in the Assumptions table with status `open` or `accepted`. Ask the user to correct them. Update each status to `validated`, `corrected`, or `accepted` after resolution. Do not silently fill gaps.
+
+### 5. Check the scope before the interview
+
+Most requests cover one feature. Handle these exceptions first:
+
+- **A whole new project:** stop and hand off to `blueprint`. It writes the project charter and roadmap. Each roadmap item returns here as a separate request.
+- **Several independent features:** propose a small module table with dependencies and build order. Dependencies must have no cycles. Get approval, then write a PRD and SPEC per module in dependency order. Do not turn the table into a second project plan.
 
 ### 6. Interview the user
-Interview until you reach shared understanding, walking each design branch one question at a time per `~/.agents/references/question-format.md`, appending each answer to `<location>/decisions.md`. Every entry carries an `**Evidence:**` line linking back to the `CONTEXT.md` topic or provenance row that informed it; omit it only for pure user preferences with no supporting finding (per `question-format.md`). Never proceed with unresolved decisions.
 
-### 7. Promote cross-cutting decisions to ADRs
-For each decision that meets both tests, (a) two or more real alternatives
-were considered and (b) it constrains more than one plan step, promote the
-`decisions.md` entry into a standalone ADR by filling
-`assets/adr-file.md` as `ADR-NNN-<slug>.md` in the plan directory
-(NNN = next free ordinal). Add `**Promoted to:** ADR-NNN` to the original
-`decisions.md` entry. ADRs are immutable once Accepted; to change one,
-write a new ADR that supersedes it. Most specs produce zero to two ADRs;
-skip the ceremony for decisions with no real alternatives.
+Ask one question at a time until all requirements and decisions are clear. Follow `~/.agents/references/question-format.md`. Append each answer to `<location>/decisions.md` via `plan-cli append`. Include an `**Evidence:**` line that links to the relevant `CONTEXT.md` topic or evidence row. Omit it only for user preferences with no supporting finding.
 
-### 8. Write the PRD
-Fill the template at `assets/prd-file.md` into `<location>/PRD.md`. This is the PRD for the work. Cover, at minimum, problem and goals, non-goals, boundaries (Always / Ask first / Never), approach, the project commands, and the key decisions table with one-line rationale and a traceability link (`Q#` / `ADR-NNN` / `CONTEXT.md` topic) per decision. Step files link back to it instead of restating it. State each goal as observable behavior with at least one verification scenario concrete enough to become a test (GIVEN/WHEN/THEN or equivalent); `plan` traces step verification back to these.
+### 7. Record decisions that affect several steps
+
+Create an architecture decision record (ADR) only when both conditions hold:
+
+1. Two or more real alternatives were considered.
+2. The decision affects more than one plan step.
+
+Fill `assets/adr-file.md` into `ADR-NNN-<slug>.md`, using the next free number. Add `**Promoted to:** ADR-NNN` to the original `decisions.md` entry. Do not change an accepted decision in place. Write a replacement ADR and mark the old one superseded. Most tasks need zero to two ADRs.
+
+### 8. Write the PRD and SPEC
+
+Fill `assets/prd-file.md` into `<location>/PRD.md` and `assets/spec-file.md` into `<location>/SPEC.md` via `plan-cli write`.
+
+- The PRD explains the problem, goals, excluded work, boundaries (Always / Ask first / Never), approach, commands, decisions, and risks. Give each goal an ID (`G1`, `G2`) and link it to requirements in `SPEC.md`. Keep detailed scenarios in SPEC, not in both files.
+- Add a `Visualize` section to the PRD. Use ASCII diagrams freely to explain the system, states, data flow, design, or dependencies. Use comparison tables when useful. Replace the template example with task-specific content. For a small task where a diagram adds no information, state that briefly instead of adding decoration.
+- SPEC defines observable behavior. Use `Purpose`, applicable `ADDED Requirements`, `MODIFIED Requirements`, or `REMOVED Requirements`, then `Requirement` and `Scenario` headings. Use stable requirement and scenario IDs.
+- Use `SHALL` for a required result and `SHALL NOT` for a forbidden result. These mean "must" and "must not". Keep the rest of each sentence plain and direct.
+- Give each requirement at least one concrete `WHEN`/`THEN` scenario. Add `GIVEN` when a starting condition matters. Cover relevant success, error, and edge cases. For modified behavior, state the full new rule. For removed behavior, state what replaces it or what callers should observe instead.
+- Link each requirement to a PRD goal. Link each key decision to its evidence (`Q#`, `ADR-NNN`, or a `CONTEXT.md` topic). Resolve conflicts between files with the user before approval.
+- Leave the PRD's Steps table for `plan` to fill. Do not create a separate flow document or delete old plan files.
 
 ### 9. Present and stop
-Summarize the PRD and list the files created (`PRD.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`). If the PRD's Roadmap field names an entry in the roadmap task's
-`ROADMAP.md`, run
-`plan-cli set-status <roadmap-location> --entry <id> --status in-progress`
-(`<roadmap-location>` from `plan-cli init roadmap` or `plan-cli list`),
-then fill that entry's `PRD` column with this task's `<location>` via
-`plan-cli read` then `plan-cli write` on that `ROADMAP.md`. Do not
-implement. Hand off to `plan` only after approval.
 
-## Rationalizations
+Summarize the PRD and SPEC. List the files created: `PRD.md`, `SPEC.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`. Do not implement. Hand off to `plan` only after the user approves both PRD and SPEC.
 
-| Excuse | Reality |
-| --- | --- |
-| "This is simple, no spec needed." | Simple work still needs a few lines of acceptance criteria and boundaries. A two-line PRD is fine. |
-| "It's a trivial fix; full PRD sections are overkill." | Scale depth to stakes: a minimal PRD (problem, one goal with its scenario, boundaries) still forces the "done" question; skipping it doesn't. |
-| "I'll write the spec after the code." | That's documentation, not specification. The PRD's value is forcing clarity before code exists. |
-| "The user knows what they want." | Even clear requests carry implicit assumptions. Surfacing them up front is the whole point. |
-| "It's one big feature; I'll keep it as one PRD." | If acceptance criteria cluster into independently testable groups, a monolithic PRD forces every step to reason over the whole contract. A small capability map is the cheap alternative. |
-| "It's a whole new project; one PRD covers it." | A project is many epics with their own cycles. `blueprint` writes the charter and roadmap first; each epic then comes back here as a normal request. |
-| "Planning is overhead." | Planning is the task. A 15-minute PRD prevents hours of rework. |
+If the PRD's Roadmap field names an entry, get `<roadmap-location>` from `plan-cli init roadmap` or `plan-cli list`. Run `plan-cli set-status <roadmap-location> --entry <id> --status in-progress`. Read that `ROADMAP.md`, fill the entry's `PRD` column with this task's `<location>`, and write it back via `plan-cli write`.
 
 ## Red flags
 
-- Starting to code while requirements are still loose or assumed.
-- Asking "should I just start building?" before "done" is clear.
-- An unresolved question or decision passed by instead of resolved.
-- One PRD whose scope spans several independently testable capabilities with no capability map.
+- Writing code before the requirements are approved.
+- Treating a small task as a reason to skip requirements.
+- Passing an unresolved question or assumption to `plan`.
+- Putting several independent features in one PRD without an approved module table.
+- Repeating requirements in both PRD and SPEC, where they can disagree later.
 
 ## Verification
 
 Before handing off to `plan`, confirm:
-- [ ] The user reviewed and approved the PRD.
-- [ ] Problem, goals, and non-goals are concrete.
-- [ ] Every goal is observable behavior with at least one verification scenario concrete enough to become a test (a pure refactor states `No behavior change` instead).
-- [ ] No vague adjective survives unquantified: "fast", "robust", "intuitive" carries a number or a check.
-- [ ] Edge and error paths are named, not only the happy path.
-- [ ] One canonical term per concept; no terminology drift between sections.
-- [ ] Boundaries (Always / Ask first / Never) are written.
-- [ ] The project's build/test/lint commands are recorded.
-- [ ] Key decisions are recorded with a one-line rationale and a traceability link each.
-- [ ] `CONTEXT.md` captures the request, codebase exploration (with provenance), external research, assumptions, constraints, gaps, and the provenance map.
-- [ ] Every interview question and answer is logged in `decisions.md`, each entry carrying an `**Evidence:**` (or `**Promoted to:** ADR-NNN`) line.
-- [ ] Cross-cutting decisions with real alternatives were promoted to `ADR-NNN-*.md`; the corresponding `decisions.md` entries note the promotion.
-- [ ] Assumptions were surfaced and either corrected or accepted.
-- [ ] `PRD.md` and `CONTEXT.md` contain no open questions and no `open` assumptions.
-- [ ] `PRD.md` is saved under `<location>/`.
-- [ ] If the PRD traces to a roadmap entry, that entry's `Status` is `in-progress` and its `PRD` link points here.
+
+- [ ] The user approved both `PRD.md` and `SPEC.md`.
+- [ ] All documents use ASD-STE100 Simplified Technical English; necessary technical terms are defined at first use.
+- [ ] Problem, goals, and excluded work are concrete. Words such as "fast" have a number or check.
+- [ ] Each PRD goal links to SPEC requirements, and each requirement links back to a goal.
+- [ ] Each requirement and scenario has a stable ID. Scenarios are concrete enough to become tests and cover relevant errors and edge cases.
+- [ ] A pure refactor states `No behavior change` and names preservation checks instead of new requirements.
+- [ ] The PRD has a `Visualize` section with useful task-specific content or a brief reason why no diagram is needed. All diagram characters are ASCII.
+- [ ] Boundaries and the project's build, test, and lint commands are recorded.
+- [ ] Key decisions have a one-line reason and an evidence link.
+- [ ] `CONTEXT.md` records the request, investigations, assumptions, limits, and evidence map.
+- [ ] Every interview answer is in `decisions.md`, with `**Evidence:**` where applicable. Entries moved to ADRs have `**Promoted to:**` links.
+- [ ] Decisions with real alternatives that affect several steps have ADRs.
+- [ ] PRD, SPEC, and CONTEXT agree and contain no open questions or `open` assumptions.
+- [ ] Both `PRD.md` and `SPEC.md` are saved under `<location>/`.
+- [ ] Any linked roadmap entry is `in-progress` and its PRD link points here.
 
 ## References
 
-- Question format and decision log: `~/.agents/references/question-format.md`
+- Question format: `~/.agents/references/question-format.md`
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - PRD template: `assets/prd-file.md`
-- Context (discovery) template: `assets/context-file.md`
+- Behavior specification template: `assets/spec-file.md`
+- Discovery record template: `assets/context-file.md`
 - ADR template: `assets/adr-file.md`
-- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
+- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; settings: `~/.agents/plans.config.md`)

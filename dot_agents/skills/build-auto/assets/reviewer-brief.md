@@ -6,8 +6,11 @@ You are reviewing exactly one step of an existing plan, in a fresh context with 
 - Path: <repo-full-path>
 - Branch: <branch>
 
-## PRD (problem, approach, key decisions — if present)
+## PRD (problem, approach, key decisions)
 <full contents of PRD.md>
+
+## SPEC (required behavior and test scenarios)
+<full contents of SPEC.md>
 
 ## Step being reviewed (scope & acceptance criteria)
 <full contents of the NNN-<step-name>.md file>
@@ -29,7 +32,7 @@ You are reviewing exactly one step of an existing plan, in a fresh context with 
 
 ## Your task
 1. Invoke the `review` skill against the current diff, at medium effort. Do not pass `--fix` or `--comment` — you only judge, you never edit files, and there is no PR to comment on.
-2. In addition to review's own findings, check the diff against the reuse/YAGNI gate, the Definition of Done, and the step's scope and acceptance criteria above — flag scope creep, an unmet acceptance criterion, or an unmet Definition of Done item even if review doesn't surface them. Use the PRD's non-goals and key decisions to judge borderline cases, not the step file alone.
+2. In addition to review's own findings, check the diff against the reuse/YAGNI gate, the Definition of Done, and the step's scope and acceptance criteria above — flag scope creep, an unmet acceptance criterion, or an unmet Definition of Done item even if review doesn't surface them. Check behavior and tests against the linked SPEC requirements and scenarios. Use the PRD's non-goals and key decisions to judge borderline cases, not the step file alone.
 3. Report back with a verdict as the very first line, exactly one of:
    - `VERDICT: APPROVE`
    - `VERDICT: CHANGES_REQUESTED`

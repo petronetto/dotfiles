@@ -1,16 +1,15 @@
-# ADR-NNN — <Decision title>
+# ADR-NNN - <Decision title>
 
-A standalone record for a durable, cross-cutting decision that constrains
-multiple plan steps and had real alternatives worth recording. Promote a
-`decisions.md` entry into an ADR only when the decision meets both tests:
-(a) two or more genuine alternatives were considered, and (b) it affects more
-than one step. Otherwise the decision stays a `decisions.md` entry; the PRD's
-"Key decisions" links to the Q-number directly.
+An architecture decision record (ADR) explains a choice that affects more
+than one step and had at least two real alternatives. Otherwise, keep the
+choice in `decisions.md` and link to its Q-number from the PRD.
 
-Immutable once Accepted except for the Status and Superseded-by fields; to
-change the decision, write a new ADR that supersedes this one, then mark this
-one superseded. Number ADRs sequentially from the highest existing ADR-NNN
-in the directory.
+Do not change an accepted decision in place. Write a replacement ADR, then
+update this record's Status and Superseded by fields. Use the next free
+ADR-NNN number in the directory.
+
+Write in ASD-STE100 Simplified Technical English. Use common words and
+define necessary technical terms. Remove template instructions when done.
 
 | Field    | Value                 |
 | -------- | --------------------- |
@@ -23,9 +22,9 @@ in the directory.
 | Superseded by | <ADR-NNN, or none> |
 
 ## Context
-The forces that necessitate this decision: the problem, constraints, and
-relevant findings from `CONTEXT.md` (link the specific topic/provenance row).
-Do not restate the whole PRD; link to it.
+State the problem, limits, and relevant findings from `CONTEXT.md`.
+Link to the specific topic or evidence row. Link to the PRD rather than
+repeating it.
 
 ## Decision
 The choice, in one active-voice sentence. State what was chosen, not what was
@@ -35,13 +34,12 @@ rejected.
 Each real alternative with a one-line summary and why it was rejected. These
 must be genuine options that were on the table, not strawmen.
 
-- **Alternative A — <…>** Rejected because <…>.
-- **Alternative B — <…>** Rejected because <…>.
+- **Alternative A: <option>** Rejected because <reason>.
+- **Alternative B: <option>** Rejected because <reason>.
 
 ## Consequences
-Positive and negative impacts, trade-offs accepted, and risks introduced.
-Include anything a future maintainer would need to know before reverting or
-extending this decision.
+State benefits, drawbacks, and new risks. Include what a maintainer needs
+to know before changing or reversing this decision.
 
 ## Related
 Links to the `decisions.md` Q-number(s) this promotes, the `CONTEXT.md`
