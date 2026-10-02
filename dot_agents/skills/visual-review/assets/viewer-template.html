@@ -3,18 +3,17 @@
   viewer-template.html: the page contract for the visual-review skill.
 
   The agent fills this template with real data from a plan directory
-  (FLOW.md, the step files, PRD.md) and writes the result as
+  (PRD.md, SPEC.md, and the step files) and writes the result as
   `visual-review.html` in that plan directory. The result must stay a
-  single self-contained file: inline CSS only, zero JavaScript, zero
-  external URLs, works offline.
+  single self-contained file: inline CSS, the chunk converter only,
+  zero external URLs, works offline.
 
   Contract rules (violating any of these fails the skill's checklist):
   1. Keep the <style> block exactly as-is; extend it only with new classes
      the data genuinely needs.
-  2. One <tr> per step in the flow table, in FLOW.md order. When FLOW.md is
-     absent (plans made before the flow format), derive the rows from the
-     PRD's Steps index plus the step files, and state the fallback in the
-     page footer meta line.
+  2. One <tr> per step in the overview table, in PRD.md Steps order.
+     Copy the index from PRD and the details from the step files.
+     Stop and report missing inputs or conflicts; do not guess.
   3. One <article class="step"> per step file, in step order, carrying that
      file's Status value as the badge class (pending | in-progress | done |
      blocked). Chunk content renders VERBATIM: a Chunks table renders as a
@@ -22,10 +21,12 @@
      <script type="text/markdown"> block inside the card, rendered by the
      inline converter at the end of the page. Never condense, truncate, or
      skip chunk text or code blocks.
-  4. The <section class="graph"> ships in every generated page ONLY when
-     dependencies branch; omit the whole section for linear plans.
-  5. Decisions and risks come from PRD.md verbatim; do not restate or
-     invent content.
+  4. Copy PRD.md's Visualize section verbatim. Put ASCII diagrams in <pre>
+     blocks; preserve their spacing. Do not replace them with Unicode arrows.
+  5. Decisions and risks come from PRD.md verbatim. Requirements and scenarios
+     (or preserved behavior) come from SPEC.md verbatim, with all IDs.
+     Escape HTML special characters in copied text without changing what
+     the reader sees. Do not restate or invent content.
   6. No data may be invented: if a file does not say it, the page does not
      show it.
   7. Inline vanilla JS is allowed only for the chunk converter at the end
@@ -98,14 +99,7 @@
     background: var(--head); border: 1px solid var(--border); border-radius: 6px;
     padding: .15rem .4rem; display: inline-block; margin: .1rem 0;
   }
-  .graph { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-  .node {
-    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: .5rem .75rem; font-size: .85rem;
-  }
-  .node .id { color: var(--muted); font-size: .75rem; display: block; }
-  .arrow { color: var(--muted); font-size: 1.1rem; }
-  .branch-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; width: 100%; margin-left: 2rem; }
+  .visualize pre { overflow-x: auto; white-space: pre; }
   .risk { color: var(--blocked); font-weight: 600; }
   footer { margin-top: 2.5rem; color: var(--muted); font-size: .8rem; }
 </style>
@@ -114,7 +108,7 @@
 
 <h1>Plan review — <task-name></h1>
 <p class="meta">
-  <project-path> · branch <branch> · generated YYYY-MM-DD from FLOW.md, step files, and PRD.md
+  <project-path> · branch <branch> · generated YYYY-MM-DD from PRD.md, SPEC.md, and step files
 </p>
 
 <!-- STATUS SUMMARY: one badge per status value present, with a count. -->
@@ -124,8 +118,8 @@
 </p>
 
 <section>
-  <h2>Flow</h2>
-  <!-- One row per step, in FLOW.md order. Columns: #, Step, Delivers, Files, Depends, Verify. -->
+  <h2>Step overview</h2>
+  <!-- One row per PRD Steps row. Columns: #, Step, Delivers, Files, Depends, Verify. -->
   <table>
     <thead>
       <tr><th>#</th><th>Step</th><th>Delivers</th><th>Files</th><th>Depends</th><th>Verify</th></tr>
@@ -133,7 +127,7 @@
     <tbody>
       <tr>
         <td>000</td><td>example-step</td>
-        <td>One sentence from FLOW.md's Delivers cell.</td>
+        <td>One sentence from the PRD Steps table's Delivers cell.</td>
         <td class="files">file(s) touched</td>
         <td class="depends">none</td>
         <td>verification method</td>
@@ -142,22 +136,26 @@
   </table>
 </section>
 
-<!-- GRAPH SECTION: include this whole section only when dependencies branch.
-     Chain linear branches in one .graph row with .arrow separators between
-     .node elements. For parallel groups, wrap the parallel nodes of one depth
-     level in a .branch-row so they sit on their own line. -->
+<section class="visualize">
+  <h2>Visualize</h2>
+  <!-- Copy the PRD Visualize section. Escape HTML, preserve ASCII and spacing.
+       Render each diagram in a pre block and each comparison table as a table.
+       If the PRD explains why no diagram is needed, show that text instead. -->
+  <pre>ASCII diagram from PRD.md</pre>
+</section>
+
 <section>
-  <h2>Dependencies</h2>
-  <div class="graph">
-    <span class="node"><span class="id">000</span>example-a</span>
-    <span class="arrow">&#8594;</span>
-    <span class="branch-row">
-      <span class="node"><span class="id">001</span>example-b1</span>
-      <span class="node"><span class="id">002</span>example-b2</span>
-    </span>
-    <span class="arrow">&#8594;</span>
-    <span class="node"><span class="id">003</span>example-c</span>
-  </div>
+  <h2>Behavior specification</h2>
+  <!-- Copy SPEC.md's purpose, requirements, and scenarios, preserving IDs.
+       Render headings and GIVEN/WHEN/THEN lists without summarizing them.
+       For a pure refactor, show its Preserved behavior section instead. -->
+  <h3>Requirement: R1 - Example behavior</h3>
+  <p>Required behavior from SPEC.md.</p>
+  <h4>Scenario: R1.1 - Example result</h4>
+  <ul>
+    <li><strong>WHEN</strong> action from SPEC.md</li>
+    <li><strong>THEN</strong> result from SPEC.md</li>
+  </ul>
 </section>
 
 <section>
@@ -200,17 +198,17 @@
 
 <section>
   <h2>Key decisions</h2>
-  <!-- From PRD.md's Key decisions table, verbatim, traceability column included. -->
+  <!-- From PRD.md's Key decisions table, verbatim, including evidence links. -->
   <table>
-    <thead><tr><th>#</th><th>Decision</th><th>Rationale</th><th>Traceability</th></tr></thead>
+    <thead><tr><th>#</th><th>Decision</th><th>Reason</th><th>Evidence</th></tr></thead>
     <tbody>
-      <tr><td>D1</td><td>Example decision</td><td>One-line rationale</td><td>ADR-001</td></tr>
+      <tr><td>D1</td><td>Example decision</td><td>One-line reason</td><td>ADR-001</td></tr>
     </tbody>
   </table>
 </section>
 
 <section>
-  <h2>Risks and open questions</h2>
+  <h2>Risks</h2>
   <!-- From PRD.md's Risks section; render each risk as a list item. -->
   <ul>
     <li><span class="risk">Risk:</span> example risk from the PRD.</li>

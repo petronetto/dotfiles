@@ -40,9 +40,10 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 ## Procedure
 
 ### 1. Locate the plan
-- Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> FLOW.md` to get its step file names, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps: `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
+- Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> PRD.md` to get step filenames from its Steps table, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps: `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
 - If multiple candidates exist, ask which to resume. Confirm before starting.
-- Run `plan-cli read <location> PRD.md` for the plan's problem, approach, and key decisions.
+- Read the PRD's problem, approach, and key decisions. Run `plan-cli read <location> SPEC.md` for required behavior and scenarios. Use the step's linked requirement and scenario IDs when writing tests.
+- If SPEC or the PRD's Steps table is missing, stop and ask the user to update the older plan through `spec` and `plan`. Do not guess requirements or delete old plan files.
 
 ### 2. Run the loop
 For each step (lowest `NNN` not yet `Status: done`):
@@ -64,7 +65,7 @@ For each step (lowest `NNN` not yet `Status: done`):
 ### 3. Finish
 When all steps are `Status: done`, run the acceptance audit before reporting:
 
-**Audit the delivered work against the PRD** — Re-read the PRD's goals and scenarios and check each against the code as delivered, not the step logs: completion claims are not evidence. Classify every gap as `missing` (required work absent), `partial` (present but short of the scenario), `contradicts` (conflicts with the PRD or a boundary), or `unrequested` (work the PRD never asked for; surface it for review, don't delete it). Work gaps through the same loop as review modifications: move the affected step back to `in-progress` (`plan-cli set-status <location> --step <step-file> --status in-progress`), append to its review log, implement as small chunks, stop for approval, repeat until no gap remains. A pure refactor (`No behavior change`) audits against preserved behavior instead.
+**Audit the delivered work against PRD and SPEC:** Re-read the PRD's goals and SPEC's requirements and scenarios. Check each against the delivered code, not the step logs: completion claims are not evidence. Classify every gap as `missing` (required work absent), `partial` (present but short of the scenario), `contradicts` (conflicts with PRD, SPEC, or a boundary), or `unrequested` (work outside the approved scope; report it for review, do not delete it). Work gaps through the same loop as review modifications: move the affected step back to `in-progress` (`plan-cli set-status <location> --step <step-file> --status in-progress`), append to its review log, implement as small chunks, stop for approval, repeat until no gap remains. A pure refactor (`No behavior change`) audits against preserved behavior instead.
 
 Then report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
 
@@ -85,7 +86,7 @@ Then report: summary of changes, rationale, and suggested improvements. If the P
 - Committing without unambiguous per-step approval.
 - Step changes that don't carry a passing test.
 - Unrelated cleanup or refactors snuck into a step.
-- Reporting all steps done without auditing the delivered work against the PRD.
+- Reporting all steps done without auditing the delivered work against PRD and SPEC.
 
 ## Verification
 
@@ -97,7 +98,7 @@ Before a step counts as done:
 - [ ] The user approved the step, and it was committed with only its files staged.
 
 Before the plan counts as finished:
-- [ ] The acceptance audit ran; the delivered work matches the PRD's goals and scenarios with no `missing`, `partial`, `contradicts`, or `unrequested` gap outstanding.
+- [ ] The acceptance audit ran; the delivered work matches the PRD's goals and SPEC's requirements and scenarios with no `missing`, `partial`, `contradicts`, or `unrequested` gap outstanding.
 
 ## References
 

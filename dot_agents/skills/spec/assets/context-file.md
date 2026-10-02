@@ -1,72 +1,63 @@
-# Context — <Task Title>
+# Context - <Task Title>
 
-This file is the discovery and provenance record behind the PRD. It captures
-what was investigated, where, with which tools, what was found, and which
-findings informed which decisions, so a human (or a fresh agent) debugging the
-PRD can trace every requirement back to its evidence. Written during discovery
-(step 1 of `spec`), refined as understanding grows, and frozen when the PRD is
-approved.
+Record the evidence behind PRD.md and SPEC.md. State what was checked,
+where, with which tools, what was found, and which decisions used it.
+Start this record during discovery. Update it as understanding grows.
+Mark it done when PRD and SPEC are approved.
 
-| Field   | Value                 |
-| ------- | --------------------- |
-| Date    | YYYY-MM-DD             |
-| Project | <project-full-path>    |
-| Branch  | <branch>               |
-| Task    | <task-name>            |
-| Status  | in-progress / done       |
+Write in ASD-STE100 Simplified Technical English. Use common words and
+define necessary technical terms. Remove template instructions when done.
+
+| Field | Value |
+| ----- | ----- |
+| Date | YYYY-MM-DD |
+| Project | <project-full-path> |
+| Branch | <branch> |
+| Task | <task-name> |
+| Status | in-progress / done |
 
 ## Request
-The feature or fix in the user's own terms, paraphrased into one paragraph.
-This is the raw input before it is sharpened into the PRD's Problem.
+Restate the user's request in one short paragraph, using their terms.
 
 ## Codebase exploration
-A topic-ordered record of what was investigated in the repo, with provenance.
-Repeat the block below per topic.
+Group findings by topic. Repeat this block for each topic.
 
-### <Topic A — e.g. "how auth is wired">
-- Looked at: <paths/files, with line ranges when relevant>
+### <Topic, such as how sign-in works>
+- Looked at: <paths and files, with line ranges when useful>
 - Tool: <sub-agent name / rg / grep / read>
-- Found: <factual findings, no interpretation>
-- Implication: <what this means for the work>
-
-### <Topic B>
-- ...
+- Found: <facts, not guesses>
+- Effect on the work: <what the finding means for this task>
 
 ## External research
-Sources consulted outside the repo, each with a one-line takeaway and URL.
-- [<short title>] <url> — <takeaway>
+List sources from outside the repo, with a short finding and URL.
+- <source title>: <URL>, <finding>
 
 ## Assumptions
-Surfaced during exploration. Each has a status so a human can see at a glance
-what is still open.
+Record assumptions and update their status as they are resolved.
 
-| #  | Assumption | Status    | Resolved by |
-| -- | ---------- | --------- | ----------- |
-| A1 | <…>        | validated | Q3          |
-| A2 | <…>        | open      | —           |
+| # | Assumption | Status | Resolved by |
+| - | ---------- | ------ | ----------- |
+| A1 | <assumption> | validated | Q3 |
+| A2 | <assumption> | open | none |
 
-Status values: `validated` (confirmed against code/user), `corrected` (user
-overrode it), `accepted` (taken as-is), `open` (still unresolved, blocks the
-PRD). At freeze time no row may stay `open`; resolve or delete it.
+Status values: `validated` (confirmed by code or the user), `corrected`
+(changed by the user), `accepted` (accepted as stated), `open` (unresolved).
+Resolve all `open` rows before approval.
 
 ## Constraints discovered
-Technical or business limits found in the code, docs, or environment
-(versions, API surfaces, performance budgets, platform restrictions).
+Record technical or business limits found in code, docs, or the environment.
+Examples: supported versions, response-time limits, or platform restrictions.
 
 ## Open questions / knowledge gaps
-Working list only: what is still unknown and feeds the interview. Each gap
-becomes a question in `decisions.md` until resolved. Empty at freeze time; a
-frozen CONTEXT.md contains no open questions.
+List unknowns during discovery. Turn each into a question in `decisions.md`.
+Resolve them before marking this file done; no open questions may remain.
 
-## Provenance map
-The audit link: which findings informed which decisions. This is the core of
-the file — it is what makes the PRD debuggable.
+## Evidence map
+Link findings to the decisions they support.
 
-| Finding | → Decision |
-| ------- | ---------- |
-| <e.g. No existing revocation list (Topic A)> | Q5 (denylist table) |
-| <…> | <Q# or ADR-NNN> |
+| Finding | Decision |
+| ------- | -------- |
+| <finding and topic link> | <Q# or ADR-NNN> |
 
 ## Notes
-Anything else useful for traceability that does not fit above (e.g. prior art,
-rejected directions, deferred investigations).
+Record other useful evidence, rejected options, or work left for later.

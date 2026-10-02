@@ -14,7 +14,7 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 - A step whose `Depends` step is `Status: blocked` is not built. Mark it `Status: blocked` too (reason: "blocked by <dependency step>"), log it, and move to the next step.
 - Builder and reviewer each run in their own fresh sub-agent—never inline in the orchestrator's context.
 - Keep every context clean: the orchestrator carries only plan state and the current step's verdict/findings, not full diffs or build logs. Sub-agent briefings carry only what that agent needs—no orchestrator history, no other steps' detail.
-- Every briefing includes: the plan's `PRD.md`, the step file, `~/.agents/references/code-quality.md`, `~/.agents/references/reuse-checklist.md`, `~/.agents/references/definition-of-done.md`. The reviewer's briefing additionally includes the project standards gathered once in step 1.
+- Every briefing includes: the plan's `PRD.md`, `SPEC.md`, the step file, `~/.agents/references/code-quality.md`, `~/.agents/references/reuse-checklist.md`, `~/.agents/references/definition-of-done.md`. The reviewer's briefing additionally includes the project standards gathered once in step 1.
 - Reviewer only judges—it runs `review`, no `--fix`/`--comment`, never edits files.
 - Each step's new or changed behavior has a test that failed before and passes after; the reviewer confirms this. Apply the `test` skill's discipline.
 - Max **3** build-to-review cycles per step. Still unresolved after 3 -> `Status: blocked`, log why, move on. Don't stop to ask the human mid-run.
@@ -49,7 +49,9 @@ Drive a plan from `plan` to completion. Per step: a fresh-context **builder** su
 ## Procedure
 
 ### 1. Locate the plan
-Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> FLOW.md` to get its step file names, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous: the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
+Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> PRD.md` to get step filenames from its Steps table, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress` (an earlier run was interrupted mid-step), or `blocked` (unresolved after 3 cycles) steps. Ask which to run if ambiguous: the one point worth pausing for, since it sets the scope of an otherwise unattended run. For an `in-progress` step, inspect the working tree for partial changes before briefing a builder — treat them as the builder's starting point, not as contamination to discard. Also gather the project standards (PRD's Commands section, plus any linter/CI config or conventions found via the `test` skill's "discover the stack" step) once here, and reuse them in every reviewer briefing for this run.
+
+Read `SPEC.md` via `plan-cli read` before briefing any builder or reviewer. Use its requirement and scenario IDs to check tests and coverage. If SPEC or the PRD's Steps table is missing, stop before launching children and ask the user to update the older plan through `spec` and `plan`. Do not guess requirements or delete old plan files.
 
 ### 2. Loop over steps
 Repeat until no `pending` steps remain (independent steps may run through this loop in parallel):
@@ -67,7 +69,7 @@ Repeat until no `pending` steps remain (independent steps may run through this l
 **e. Commit** — Stage only this step's files, commit per project style, no scope/step wording, no co-author trailer. If built in an isolated worktree, run `scripts/worktree.sh finish <worktree-path> <plan-branch>` to merge the step branch into the plan branch and remove the worktree. Run `plan-cli set-status <location> --step <step-file> --status done`, then record the commit message under the step file's `Commit` section: `plan-cli read` the file, fill the section, write it back via `plan-cli write`. Move on.
 
 ### 3. Finish
-**Audit the delivered work against the PRD** — Spawn a fresh-context auditor sub-agent briefed with the PRD and the step files' acceptance criteria: it checks the delivered code against the PRD's goals and scenarios (not the step logs; completion claims are not evidence) and classifies every gap as `missing`, `partial`, `contradicts`, or `unrequested` (surfaced in the report, never deleted). Work each gap through the affected step's own loop — builder, reviewer, commit, same 3-cycle cap; a gap unresolved after 3 cycles marks that step `Status: blocked`, never done. A pure refactor (`No behavior change`) audits against preserved behavior instead.
+**Audit the delivered work against PRD and SPEC:** Spawn a fresh-context auditor sub-agent briefed with PRD, SPEC, and the step files' acceptance criteria. It checks the delivered code against the PRD's goals and SPEC's requirements and scenarios (not the step logs; completion claims are not evidence) and classifies every gap as `missing`, `partial`, `contradicts`, or `unrequested` (surfaced in the report, never deleted). Work each gap through the affected step's own loop — builder, reviewer, commit, same 3-cycle cap; a gap unresolved after 3 cycles marks that step `Status: blocked`, never done. A pure refactor (`No behavior change`) audits against preserved behavior instead.
 
 Then report steps completed (with commits), steps `blocked` (with why), gaps left by the audit, and suggested follow-ups. Never treat `blocked` as done. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md` and every step of that PRD's plan is `done`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
 
@@ -87,7 +89,7 @@ Then report steps completed (with commits), steps `blocked` (with why), gaps lef
 - Committing a step whose reviewer did not `APPROVE`.
 - A step advancing with failing or missing tests.
 - Orchestrator context carrying full diffs or build logs instead of just verdicts/findings.
-- A briefing missing `PRD.md`, the step file, or the reuse gate.
+- A briefing missing `PRD.md`, `SPEC.md`, the step file, or the reuse gate.
 - `blocked` reported as `done`, or scope expanding past the step file.
 - An audit gap silently dropped instead of looped or reported as `blocked`.
 
@@ -102,7 +104,7 @@ Before a step counts as done:
 - [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied; the reviewer confirmed it, not just the step's acceptance criteria.
 
 Before the plan counts as finished:
-- [ ] The acceptance audit ran against the PRD's goals and scenarios; every gap was either resolved through the loop or reported as `blocked`, never silently dropped.
+- [ ] The acceptance audit ran against the PRD's goals and SPEC's requirements and scenarios; every gap was either resolved through the loop or reported as `blocked`, never silently dropped.
 
 ## References
 
