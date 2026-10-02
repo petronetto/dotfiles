@@ -26,6 +26,36 @@ the agent filling the template contract; see ADR rationale in the plan's
 - The status badge class comes from each step file's `Status` field, never from the PRD's Steps table or from guesswork.
 - Copy the PRD's `Visualize` section, preserving ASCII diagrams in `<pre>` blocks. A linear plan can still have useful system or behavior diagrams. Do not add a step dependency graph if the PRD does not contain one.
 
+## Visualize
+
+Use ASCII diagrams liberally when the plan files contain them. Keep their
+content and spacing unchanged. Do not invent diagrams or add this example
+to the generated page unless it is part of the plan files.
+
+```text
++------------------------------------------+
+|     Use ASCII diagrams liberally         |
++------------------------------------------+
+|                                          |
+|   [State A] -------> [State B]           |
+|       |                                  |
+|       v                                  |
+|   [State C]                              |
+|                                          |
+|   System diagrams, state machines,       |
+|   data flows, architecture sketches,     |
+|   dependency graphs, comparison tables   |
+|                                          |
++------------------------------------------+
+```
+
+Draw with plain ASCII only: borders `+ - |`, arrows `--> <-- ^ v`, and
+markers `* x`. Keep every diagram character ASCII. Unicode diagram glyphs
+can have different widths across terminals, fonts, and locales. This can
+move box borders and table columns out of alignment. In the HTML page,
+use `<pre>` blocks to preserve diagram spacing and escape HTML characters
+without changing the displayed text.
+
 ## Plan CLI
 
 - `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file

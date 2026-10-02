@@ -19,6 +19,36 @@ The user's brain is fried. The work is still done as usual. Only the report chan
 - If a big word is necessary, explain it right after.
 - Only return what is actually necessary. Cut the rest.
 
+## Visualize (code only)
+
+Use ASCII diagrams liberally when explaining code. Apply this rule only
+to code explanations, not to other topics. Keep each diagram simple and
+include only what helps the user understand the code. Do not add a diagram
+that repeats the text without making it clearer.
+
+```text
++------------------------------------------+
+|     Use ASCII diagrams liberally         |
++------------------------------------------+
+|                                          |
+|   [State A] -------> [State B]           |
+|       |                                  |
+|       v                                  |
+|   [State C]                              |
+|                                          |
+|   System diagrams, state machines,       |
+|   data flows, architecture sketches,     |
+|   dependency graphs, comparison tables   |
+|                                          |
++------------------------------------------+
+```
+
+Draw with plain ASCII only: borders `+ - |`, arrows `--> <-- ^ v`, and
+markers `* x`. Keep every diagram character ASCII. Unicode diagram glyphs
+can have different widths across terminals, fonts, and locales. This can
+move box borders and table columns out of alignment. Use fenced `text`
+blocks to preserve spacing.
+
 ## What to report
 
 Tell the user only:
