@@ -10,7 +10,6 @@ This project is my dotfiles: a chezmoi-managed collection of configuration files
 | `.chezmoiscripts/` | Lifecycle scripts (`run_once_*`, `run_onchange_*`), executed in name order during apply |
 | `scripts/` | Repo-local helper CLIs, never deployed (`.chezmoiignore`); invoked from `.chezmoiscripts` via `{{ .chezmoi.sourceDir }}` |
 | `private/` | Local-only private repo, gitignored and chezmoi-ignored; synced to `$HOME` separately (see [private/AGENTS.md](private/AGENTS.md)) |
-| `.plans/`, `images/` | Repo-only working assets, never deployed |
 | `Brewfile`, `bootstrap.sh` | Package manifest and one-shot installer; repo-only but watched by `run_onchange` scripts |
 | `.chezmoi.toml.tmpl` | chezmoi config template; template data (e.g. `git_email`, prompted once at init) |
 
