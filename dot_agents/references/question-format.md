@@ -7,19 +7,24 @@ How skills (`spec`, `plan`, `build`) present questions to the user and record th
 One question per message, numbered sequentially:
 
 ```
+<Brief Context of the Question>
 QX: <Question>
 A) (Recommended) <option A> — <one-line reason>
 B) <option B>
 C) ...
 ```
 
-- Exactly one `(Recommended)`, always option A.
-- The user answers with a letter or free text; free text wins.
-- If the codebase, PRD, or a prior answer settles it, read instead of asking.
+- Write in ASD-STE100 Simplified Technical English.
+- Ensure that the questions and options are meaningful and not just filler. Review and refine the options before asking the user.
+- Include exactly one `(Recommended)` option, and it must always be option A.
+- If the harness provides a tool for asking questions, use it.
+- When using a tool to ask questions, do not repeat sections. Use the tool appropriately and keep the output clean.
+- The user may answer with a letter or free text; free text takes precedence.
+- If a question can be answered by exploring the codebase, do that instead.
 
 ## Recording
 
-Append each entry to `<project-full-path>/.plans/<task-name>/decisions.md` as soon as it is answered:
+Append each entry to `decisions.md` as soon as it is answered:
 
 ```markdown
 ## QX: <Question>
