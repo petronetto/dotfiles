@@ -4,7 +4,8 @@ The project-level constitution: what this project is, the decisions that
 constrain every epic, and the provenance behind them. Written by `blueprint`
 before any epic is specified. Every epic's PRD inherits from this file and
 narrows its boundaries; it never widens them. Living document: changed
-decisions are superseded by new ADRs, never by silent edits.
+decisions are superseded by new architecture decision record (ADR) entries
+in `CONTEXT.md`, never by silent edits.
 
 | Field   | Value                 |
 | ------- | --------------------- |
@@ -32,12 +33,13 @@ licenses, performance budgets, supported versions.
 
 ## Stack decisions
 The choices that constrain every epic. Each entry carries a one-line
-rationale; decisions with real alternatives and cross-epic reach are promoted
-to `ADR-NNN-*.md` next to this file and linked here.
+rationale; decisions with real alternatives that constrain several epics
+are recorded in the `Architecture decision records` section of `CONTEXT.md`
+next to this file. Link to their stable headings, not to separate ADR files.
 
 | #  | Decision | Choice | Rationale | Traceability |
 | -- | -------- | ------ | --------- | ------------ |
-| S1 | <…>      | <…>    | <one line> | Q# / ADR-NNN |
+| S1 | <…>      | <…>    | <one line> | Q# link / [ADR-001](CONTEXT.md#adr-001) |
 
 ## Project boundaries
 Three tiers, project-wide. Each epic's PRD narrows these; it never widens them.

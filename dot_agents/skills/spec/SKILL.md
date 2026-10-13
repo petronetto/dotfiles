@@ -25,6 +25,7 @@ Apply these rules to all documents, questions, and summaries:
 - Ask one question at a time. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Read the code instead of asking questions it can answer.
 - Record each answer in the plan directory's `decisions.md`.
 - From the first investigation, record paths, tools, findings, and their effect on decisions in `CONTEXT.md`. This evidence explains why the requirements exist.
+- Keep architecture decision records (ADRs) in the optional `Architecture decision records` section of `CONTEXT.md`. Do not create separate ADR files.
 - List assumptions and resolve them with the user before proceeding. Never guess at a requirement or design decision.
 - Finished documents contain no open questions or unresolved assumptions.
 - Prefer a simpler problem or solution over added complexity. Follow `~/.agents/references/code-quality.md`.
@@ -84,7 +85,9 @@ Create an architecture decision record (ADR) only when both conditions hold:
 1. Two or more real alternatives were considered.
 2. The decision affects more than one plan step.
 
-Fill `assets/adr-file.md` into `ADR-NNN-<slug>.md`, using the next free number. Add `**Promoted to:** ADR-NNN` to the original `decisions.md` entry. Do not change an accepted decision in place. Write a replacement ADR and mark the old one superseded. Most tasks need zero to two ADRs.
+Read `CONTEXT.md` via `plan-cli read`. Add an entry from `assets/adr-file.md` under its `Architecture decision records` section, then save the full file via `plan-cli write` without removing existing content. Omit the section when no decision qualifies.
+
+Use the next free `ADR-NNN` number in this `CONTEXT.md`. Keep the heading exactly `### ADR-NNN` so links such as `[ADR-001](CONTEXT.md#adr-001)` stay stable. Add `**Promoted to:** [ADR-NNN](CONTEXT.md#adr-nnn)` to the original `decisions.md` entry, using the actual number. Do not change an accepted decision in place. Add a replacement entry in the same section, then update only the old entry's Status and Superseded by fields. Most tasks need zero to two ADRs.
 
 ### 8. Write the PRD and SPEC
 
@@ -95,12 +98,12 @@ Fill `assets/prd-file.md` into `<location>/PRD.md` and `assets/spec-file.md` int
 - SPEC defines observable behavior. Use `Purpose`, applicable `ADDED Requirements`, `MODIFIED Requirements`, or `REMOVED Requirements`, then `Requirement` and `Scenario` headings. Use stable requirement and scenario IDs.
 - Use `SHALL` for a required result and `SHALL NOT` for a forbidden result. These mean "must" and "must not". Keep the rest of each sentence plain and direct.
 - Give each requirement at least one concrete `WHEN`/`THEN` scenario. Add `GIVEN` when a starting condition matters. Cover relevant success, error, and edge cases. For modified behavior, state the full new rule. For removed behavior, state what replaces it or what callers should observe instead.
-- Link each requirement to a PRD goal. Link each key decision to its evidence (`Q#`, `ADR-NNN`, or a `CONTEXT.md` topic). Resolve conflicts between files with the user before approval.
+- Link each requirement to a PRD goal. Link each key decision to its evidence (`Q#`, an ADR heading in `CONTEXT.md`, or a `CONTEXT.md` topic). Resolve conflicts between files with the user before approval.
 - Leave the PRD's Steps table for `plan` to fill. Do not create a separate flow document or delete old plan files.
 
 ### 9. Present and stop
 
-Summarize the PRD and SPEC. List the files created: `PRD.md`, `SPEC.md`, `CONTEXT.md`, `decisions.md`, and any `ADR-NNN-*.md`. Do not implement. Hand off to `plan` only after the user approves both PRD and SPEC.
+Summarize the PRD and SPEC. List the files created: `PRD.md`, `SPEC.md`, `CONTEXT.md`, and `decisions.md`. Mention any ADR entries in `CONTEXT.md`, not as separate files. Do not implement. Hand off to `plan` only after the user approves both PRD and SPEC.
 
 If the PRD's Roadmap field names an entry, get `<roadmap-location>` from `plan-cli init roadmap` or `plan-cli list`. Run `plan-cli set-status <roadmap-location> --entry <id> --status in-progress`. Read that `ROADMAP.md`, fill the entry's `PRD` column with this task's `<location>`, and write it back via `plan-cli write`.
 
@@ -126,8 +129,8 @@ Before handing off to `plan`, confirm:
 - [ ] Boundaries and the project's build, test, and lint commands are recorded.
 - [ ] Key decisions have a one-line reason and an evidence link.
 - [ ] `CONTEXT.md` records the request, investigations, assumptions, limits, and evidence map.
-- [ ] Every interview answer is in `decisions.md`, with `**Evidence:**` where applicable. Entries moved to ADRs have `**Promoted to:**` links.
-- [ ] Decisions with real alternatives that affect several steps have ADRs.
+- [ ] Every interview answer is in `decisions.md`, with `**Evidence:**` where applicable. Entries promoted to ADRs have `**Promoted to:**` links to headings in `CONTEXT.md`.
+- [ ] Decisions with real alternatives that affect several steps have ADR entries in `CONTEXT.md`. The section is omitted when none qualify; no separate ADR files were created.
 - [ ] PRD, SPEC, and CONTEXT agree and contain no open questions or `open` assumptions.
 - [ ] Both `PRD.md` and `SPEC.md` are saved under `<location>/`.
 - [ ] Any linked roadmap entry is `in-progress` and its PRD link points here.
@@ -139,5 +142,5 @@ Before handing off to `plan`, confirm:
 - PRD template: `assets/prd-file.md`
 - Behavior specification template: `assets/spec-file.md`
 - Discovery record template: `assets/context-file.md`
-- ADR template: `assets/adr-file.md`
+- ADR section entry template: `assets/adr-file.md` (insert into `CONTEXT.md`, not a separate file)
 - Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; settings: `~/.agents/plans.config.md`)

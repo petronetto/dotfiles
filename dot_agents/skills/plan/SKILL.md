@@ -11,7 +11,7 @@ Turn approved goals and requirements into small steps that are easy to review. R
 
 - Never write or edit code; output is Markdown only.
 - Give each step one responsibility. Each step must leave the codebase working.
-- Read `CONTEXT.md` for the evidence behind decisions. Treat each linked architecture decision record (`ADR-NNN-*.md`) as the accepted record for its decision.
+- Read `CONTEXT.md` for the evidence behind decisions and its optional `Architecture decision records` section. Use accepted architecture decision record (ADR) entries, not superseded ones. Link to their stable headings, such as `[ADR-001](CONTEXT.md#adr-001)`. Do not create separate ADR files.
 - Link to goals, requirements, and decisions instead of repeating them.
 - Prefer a simpler solution over added complexity. Follow `~/.agents/references/code-quality.md`.
 - Never delete an existing plan. Ask before resuming or starting a new task.
@@ -60,11 +60,11 @@ Apply these rules to step files, PRD updates, questions, and summaries:
 
 ### 2. Locate or create the plan directory
 
-Run `plan-cli init <task-name>` and call its output `<location>`. Read `PRD.md`, `SPEC.md`, `CONTEXT.md`, and each ADR linked by the PRD through `plan-cli read`.
+Run `plan-cli init <task-name>` and call its output `<location>`. Read `PRD.md`, `SPEC.md`, and `CONTEXT.md` through `plan-cli read`, including any ADR entries linked by the PRD. A task without ADR entries needs no ADR section or extra file.
 
 If PRD or SPEC is missing or unapproved, stop and offer to run `spec`. If unfinished steps exist, ask whether to resume or start a new task. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Append answers to `decisions.md`, with an `**Evidence:**` link to `CONTEXT.md` when applicable.
 
-If `plan-cli list` shows a `roadmap` location, read its `CHARTER.md`. Keep every step inside its project-wide boundaries (Always / Ask first / Never).
+If `plan-cli list` shows a `roadmap` location, read its `CHARTER.md` and any linked ADR entries in its `CONTEXT.md`. Keep every step inside its project-wide boundaries (Always / Ask first / Never).
 
 ### 3. Break the work into ordered steps
 
@@ -97,6 +97,7 @@ Show the PRD's Steps table for review, then list the files created or updated. D
 Before handing off to `build`, confirm:
 
 - [ ] Both `PRD.md` and `SPEC.md` are approved.
+- [ ] ADR links point to accepted entries in `CONTEXT.md`; no separate ADR files were created.
 - [ ] All new text follows ASD-STE100 Simplified Technical English, with necessary terms defined and unnecessary jargon removed.
 - [ ] Every step's Verify checks link to SPEC requirements and scenarios, or preservation checks for a pure refactor.
 - [ ] Every approved requirement and scenario is covered by at least one step.
