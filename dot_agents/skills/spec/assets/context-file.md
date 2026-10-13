@@ -1,7 +1,8 @@
 # Context - <Task Title>
 
-Record the evidence behind PRD.md and SPEC.md. State what was checked,
-where, with which tools, what was found, and which decisions used it.
+Record the evidence and architecture decisions behind PRD.md and SPEC.md.
+State what was checked, where, with which tools, what was found, and which
+decisions used it.
 Start this record during discovery. Update it as understanding grows.
 Mark it done when PRD and SPEC are approved.
 
@@ -57,7 +58,18 @@ Link findings to the decisions they support.
 
 | Finding | Decision |
 | ------- | -------- |
-| <finding and topic link> | <Q# or ADR-NNN> |
+| <finding and topic link> | <Q# link or [ADR-001](#adr-001)> |
+
+## Architecture decision records
+Include this section only when a decision had at least two real alternatives
+and affects more than one plan step. Omit it when no decision qualifies.
+Otherwise, insert one entry per decision from `assets/adr-file.md` here.
+Do not create separate ADR files.
+
+Use stable headings (`### ADR-001`, `### ADR-002`) and keep each title in
+the entry body. Link here from other files with `[ADR-001](CONTEXT.md#adr-001)`.
+Do not change accepted decisions in place. Add a replacement entry and mark
+the old entry superseded, with a link to its replacement.
 
 ## Notes
 Record other useful evidence, rejected options, or work left for later.

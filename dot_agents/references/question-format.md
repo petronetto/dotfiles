@@ -39,6 +39,8 @@ B) <option B>
 - The `**Evidence:**` line links the decision back to the research that
   informed it, so the PRD is traceable. Omit it only when the decision is a
   pure user preference with no supporting finding.
-- When a decision is promoted to a standalone ADR (`ADR-NNN`), keep the
-  `decisions.md` entry and add `**Promoted to:** ADR-NNN` instead of (or in
-  addition to) the Evidence line.
+- When a decision is promoted to an architecture decision record (ADR),
+  keep the `decisions.md` entry. Record the ADR in the optional
+  `Architecture decision records` section of `CONTEXT.md`, not a separate
+  file. Add `**Promoted to:** [ADR-001](CONTEXT.md#adr-001)` with the actual
+  ADR number. Keep the Evidence line when applicable.

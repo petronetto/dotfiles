@@ -37,8 +37,10 @@ List related work that this task does not include.
 
 ## Approach
 Explain the proposed solution and why it was chosen. Link to `CONTEXT.md`
-for evidence and to architecture decision records (`ADR-NNN`) for decisions
-that affect several steps. Do not repeat detailed requirements from SPEC.
+for evidence and to architecture decision record (ADR) entries in its
+`Architecture decision records` section for decisions that affect several
+steps. Use heading links such as `[ADR-001](CONTEXT.md#adr-001)`, not separate
+ADR filenames. Do not repeat detailed requirements from SPEC.
 
 ## Visualize
 Use ASCII diagrams freely when they help explain the work. Choose useful
@@ -98,7 +100,7 @@ and a link to the evidence or interview answer.
 
 | # | Decision | Reason | Evidence |
 | - | -------- | ------ | -------- |
-| D1 | <choice> | <why> | <Q3 / ADR-001 / CONTEXT.md topic> |
+| D1 | <choice> | <why> | <Q3 link / [ADR-001](CONTEXT.md#adr-001) / CONTEXT.md topic link> |
 
 ## Risks
 List known risks that could affect the work. An approved PRD has no open
