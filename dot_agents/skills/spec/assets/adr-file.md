@@ -6,7 +6,7 @@ This is an entry template for the `Architecture decision records` section
 of `CONTEXT.md`, not a standalone file. An architecture decision record
 (ADR) explains a choice that had at least two real alternatives and affects
 more than one plan step (or more than one epic for a blueprint). Otherwise,
-keep the choice in `decisions.md` and link to its Q-number from the PRD
+keep the choice in `DECISIONS.md` and link to its Q-number from the PRD
 or charter.
 
 Use the next free ADR-NNN number in this `CONTEXT.md`. Keep the heading
@@ -46,6 +46,6 @@ State benefits, drawbacks, and new risks. Include what a maintainer needs
 to know before changing or reversing this decision.
 
 #### Related
-Links to the `decisions.md` Q-number(s) this promotes, the findings that
+Links to the `DECISIONS.md` Q-number(s) this promotes, the findings that
 informed it, and any step files or other ADR entries it interacts with.
 Link to other ADR entries by their headings, not by separate filenames.

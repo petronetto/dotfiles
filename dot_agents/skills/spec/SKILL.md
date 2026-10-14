@@ -13,7 +13,7 @@ Before drafting `SPEC.md`, read `assets/writing-specs.md` for requirement and sc
 
 For `SPEC.md`, use standard technical English and the behavior-first format in `assets/spec-file.md`. Prioritize complete, readable requirements over brevity. Do not apply controlled-language or short-sentence rules to `SPEC.md`.
 
-Apply the following rules to `PRD.md`, `CONTEXT.md`, `decisions.md`, ADR entries, questions, and summaries:
+Apply the following rules to `PRD.md`, `CONTEXT.md`, `DECISIONS.md`, ADR entries, questions, and summaries:
 
 - Write in ASD-STE100 Simplified Technical English. Use short sentences, active voice, and one main idea per sentence.
 - Use common words. Write "use", not "leverage"; "evidence", not "provenance"; "affects several steps", not "cross-cutting".
@@ -27,7 +27,7 @@ Apply the following rules to `PRD.md`, `CONTEXT.md`, `decisions.md`, ADR entries
 
 - Never write or edit code; output is Markdown only.
 - Ask one question at a time. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Read the code instead of asking questions it can answer.
-- Record each answer in the plan directory's `decisions.md`.
+- Record each answer in the plan directory's `DECISIONS.md`.
 - From the first investigation, record paths, tools, findings, and their effect on decisions in `CONTEXT.md`. This evidence explains why the requirements exist.
 - Keep architecture decision records (ADRs) in the optional `Architecture decision records` section of `CONTEXT.md`. Do not create separate ADR files.
 - List assumptions and resolve them with the user before proceeding. Never guess at a requirement or design decision.
@@ -80,7 +80,7 @@ Most requests cover one feature. Handle these exceptions first:
 
 ### 6. Interview the user
 
-Ask one question at a time until all requirements and decisions are clear. Follow `~/.agents/references/question-format.md`. Append each answer to `<location>/decisions.md` via `plan-cli append`. Include an `**Evidence:**` line that links to the relevant `CONTEXT.md` topic or evidence row. Omit it only for user preferences with no supporting finding.
+Ask one question at a time until all requirements and decisions are clear. Follow `~/.agents/references/question-format.md`. Append each answer to `<location>/DECISIONS.md` via `plan-cli append`. Include an `**Evidence:**` line that links to the relevant `CONTEXT.md` topic or evidence row. Omit it only for user preferences with no supporting finding.
 
 ### 7. Record decisions that affect several steps
 
@@ -91,7 +91,7 @@ Create an architecture decision record (ADR) only when both conditions hold:
 
 Read `CONTEXT.md` via `plan-cli read`. Add an entry from `assets/adr-file.md` under its `Architecture decision records` section, then save the full file via `plan-cli write` without removing existing content. Omit the section when no decision qualifies.
 
-Use the next free `ADR-NNN` number in this `CONTEXT.md`. Keep the heading exactly `### ADR-NNN` so links such as `[ADR-001](CONTEXT.md#adr-001)` stay stable. Add `**Promoted to:** [ADR-NNN](CONTEXT.md#adr-nnn)` to the original `decisions.md` entry, using the actual number. Do not change an accepted decision in place. Add a replacement entry in the same section, then update only the old entry's Status and Superseded by fields. Most tasks need zero to two ADRs.
+Use the next free `ADR-NNN` number in this `CONTEXT.md`. Keep the heading exactly `### ADR-NNN` so links such as `[ADR-001](CONTEXT.md#adr-001)` stay stable. Add `**Promoted to:** [ADR-NNN](CONTEXT.md#adr-nnn)` to the original `DECISIONS.md` entry, using the actual number. Do not change an accepted decision in place. Add a replacement entry in the same section, then update only the old entry's Status and Superseded by fields. Most tasks need zero to two ADRs.
 
 ### 8. Write the PRD and SPEC
 
@@ -107,7 +107,7 @@ Fill `assets/prd-file.md` into `<location>/PRD.md` and `assets/spec-file.md` int
 
 ### 9. Present and stop
 
-Summarize the PRD and SPEC. List the files created: `PRD.md`, `SPEC.md`, `CONTEXT.md`, and `decisions.md`. Mention any ADR entries in `CONTEXT.md`, not as separate files. Do not implement. Hand off to `plan` only after the user approves both PRD and SPEC.
+Summarize the PRD and SPEC. List the files created: `PRD.md`, `SPEC.md`, `CONTEXT.md`, and `DECISIONS.md`. Mention any ADR entries in `CONTEXT.md`, not as separate files. Do not implement. Hand off to `plan` only after the user approves both PRD and SPEC.
 
 If the PRD's Roadmap field names an entry, get `<roadmap-location>` from `plan-cli init roadmap` or `plan-cli list`. Run `plan-cli set-status <roadmap-location> --entry <id> --status in-progress`. Read that `ROADMAP.md`, fill the entry's `PRD` column with this task's `<location>`, and write it back via `plan-cli write`.
 
@@ -134,7 +134,7 @@ Before handing off to `plan`, confirm:
 - [ ] Boundaries and the project's build, test, and lint commands are recorded.
 - [ ] Key decisions have a one-line reason and an evidence link.
 - [ ] `CONTEXT.md` records the request, investigations, assumptions, limits, and evidence map.
-- [ ] Every interview answer is in `decisions.md`, with `**Evidence:**` where applicable. Entries promoted to ADRs have `**Promoted to:**` links to headings in `CONTEXT.md`.
+- [ ] Every interview answer is in `DECISIONS.md`, with `**Evidence:**` where applicable. Entries promoted to ADRs have `**Promoted to:**` links to headings in `CONTEXT.md`.
 - [ ] Decisions with real alternatives that affect several steps have ADR entries in `CONTEXT.md`. The section is omitted when none qualify; no separate ADR files were created.
 - [ ] PRD, SPEC, and CONTEXT agree and contain no open questions or `open` assumptions.
 - [ ] Both `PRD.md` and `SPEC.md` are saved under `<location>/`.

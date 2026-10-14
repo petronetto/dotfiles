@@ -14,7 +14,7 @@ define necessary technical terms. Remove template instructions when done.
 
 ## Delivers
 One sentence: what this step changes. Link to the `PRD.md` goal and
-`decisions.md` for the reason; do not repeat them.
+`DECISIONS.md` for the reason; do not repeat them.
 
 ## Out of scope
 One line: what this step must NOT touch, including boundaries to preserve.
@@ -25,7 +25,7 @@ One line: what this step must NOT touch, including boundaries to preserve.
 | 1 | <verb-first instruction>        | <file(s) touched> | <observable outcome> |
 
 Use one action per row and one sentence per cell. "Done when" states a result
-that can be checked. Explain how only if needed. Keep reasons in `decisions.md`.
+that can be checked. Explain how only if needed. Keep reasons in `DECISIONS.md`.
 
 ## Verify
 Link checks to `SPEC.md` requirement and scenario IDs (or preservation checks

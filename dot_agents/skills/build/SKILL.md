@@ -15,7 +15,7 @@ Implement a plan from `plan`, one step at a time, under human-in-the-loop review
 - Stop after every step. Do not continue on your own.
 - Never commit without explicit, unambiguous approval (per step).
 - Never reference the plan, steps, or chunks in commit messages or code comments; describe the actual change so the message stands alone.
-- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`). Ask multi-option decisions (which plan to resume, resume vs restart a step) per `~/.agents/references/question-format.md`, appending each answer to the plan directory's `decisions.md`.
+- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`). Ask multi-option decisions (which plan to resume, resume vs restart a step) per `~/.agents/references/question-format.md`, appending each answer to the plan directory's `DECISIONS.md`.
 - Preserve existing behavior unless the step requires changing it.
 
 ## Gotchas
