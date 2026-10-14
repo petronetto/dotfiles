@@ -9,7 +9,11 @@ Agree on what to build and why before writing code. Write `PRD.md` (product requ
 
 ## Writing rules
 
-Apply these rules to all documents, questions, and summaries:
+Before drafting `SPEC.md`, read `assets/writing-specs.md` for requirement and scenario writing guidance for this skill's workflow.
+
+For `SPEC.md`, use standard technical English and the behavior-first format in `assets/spec-file.md`. Prioritize complete, readable requirements over brevity. Do not apply controlled-language or short-sentence rules to `SPEC.md`.
+
+Apply the following rules to `PRD.md`, `CONTEXT.md`, `decisions.md`, ADR entries, questions, and summaries:
 
 - Write in ASD-STE100 Simplified Technical English. Use short sentences, active voice, and one main idea per sentence.
 - Use common words. Write "use", not "leverage"; "evidence", not "provenance"; "affects several steps", not "cross-cutting".
@@ -96,8 +100,8 @@ Fill `assets/prd-file.md` into `<location>/PRD.md` and `assets/spec-file.md` int
 - The PRD explains the problem, goals, excluded work, boundaries (Always / Ask first / Never), approach, commands, decisions, and risks. Give each goal an ID (`G1`, `G2`) and link it to requirements in `SPEC.md`. Keep detailed scenarios in SPEC, not in both files.
 - Add a `Visualize` section to the PRD. Use ASCII diagrams freely to explain the system, states, data flow, design, or dependencies. Use comparison tables when useful. Replace the template example with task-specific content. For a small task where a diagram adds no information, state that briefly instead of adding decoration.
 - SPEC defines observable behavior. Use `Purpose`, applicable `ADDED Requirements`, `MODIFIED Requirements`, or `REMOVED Requirements`, then `Requirement` and `Scenario` headings. Use stable requirement and scenario IDs.
-- Use `SHALL` for a required result and `SHALL NOT` for a forbidden result. These mean "must" and "must not". Keep the rest of each sentence plain and direct.
-- Give each requirement at least one concrete `WHEN`/`THEN` scenario. Add `GIVEN` when a starting condition matters. Cover relevant success, error, and edge cases. For modified behavior, state the full new rule. For removed behavior, state what replaces it or what callers should observe instead.
+- Use RFC 2119 requirement language: `SHALL` or `MUST` for required behavior, and `SHALL NOT` or `MUST NOT` for forbidden behavior. Describe one observable behavior per requirement, with enough context to identify the actor, conditions, expected result, and relevant limits. Use complete sentences and explanatory paragraphs when needed; do not shorten the text at the expense of meaning.
+- Give each requirement at least one concrete `WHEN`/`THEN` scenario that exercises it rather than restating it. Add `GIVEN` for a relevant starting condition and `AND` for related conditions or outcomes. Cover relevant success, error, and edge cases with descriptive scenario titles. For modified behavior, include the complete updated requirement and its scenarios. For removed behavior, state the reason and migration path, including what callers should observe instead.
 - Link each requirement to a PRD goal. Link each key decision to its evidence (`Q#`, an ADR heading in `CONTEXT.md`, or a `CONTEXT.md` topic). Resolve conflicts between files with the user before approval.
 - Leave the PRD's Steps table for `plan` to fill. Do not create a separate flow document or delete old plan files.
 
@@ -120,7 +124,8 @@ If the PRD's Roadmap field names an entry, get `<roadmap-location>` from `plan-c
 Before handing off to `plan`, confirm:
 
 - [ ] The user approved both `PRD.md` and `SPEC.md`.
-- [ ] All documents use ASD-STE100 Simplified Technical English; necessary technical terms are defined at first use.
+- [ ] `SPEC.md` uses standard technical English, complete sentences, and enough context for a reader to verify behavior without reading the code. No sentence-length or controlled-language rules were applied to it.
+- [ ] Other documents use ASD-STE100 Simplified Technical English; necessary technical terms are defined at first use.
 - [ ] Problem, goals, and excluded work are concrete. Words such as "fast" have a number or check.
 - [ ] Each PRD goal links to SPEC requirements, and each requirement links back to a goal.
 - [ ] Each requirement and scenario has a stable ID. Scenarios are concrete enough to become tests and cover relevant errors and edge cases.
@@ -141,6 +146,7 @@ Before handing off to `plan`, confirm:
 - Design and code-quality standards: `~/.agents/references/code-quality.md`
 - PRD template: `assets/prd-file.md`
 - Behavior specification template: `assets/spec-file.md`
+- Spec writing guide: `assets/writing-specs.md`
 - Discovery record template: `assets/context-file.md`
 - ADR section entry template: `assets/adr-file.md` (insert into `CONTEXT.md`, not a separate file)
 - Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; settings: `~/.agents/plans.config.md`)
