@@ -50,7 +50,7 @@ Record technical or business limits found in code, docs, or the environment.
 Examples: supported versions, response-time limits, or platform restrictions.
 
 ## Open questions / knowledge gaps
-List unknowns during discovery. Turn each into a question in `decisions.md`.
+List unknowns during discovery. Turn each into a question in `DECISIONS.md`.
 Resolve them before marking this file done; no open questions may remain.
 
 ## Evidence map

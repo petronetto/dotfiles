@@ -28,7 +28,7 @@ Apply these rules to step files, PRD updates, questions, and summaries:
 - Use one term for each concept. Avoid metaphors, idioms, vague claims, and long groups of nouns.
 - Do not use em or en dashes. Use commas, colons, parentheses, or separate sentences. Use ASCII only in diagrams and aligned tables.
 - Start each Chunks row with a verb. Give it one action and name its files.
-- State an observable result, not a design summary. Put details of how it works in "Done when" only if needed. Link to `decisions.md` for reasons.
+- State an observable result, not a design summary. Put details of how it works in "Done when" only if needed. Link to `DECISIONS.md` for reasons.
 - Use one sentence per table cell. Do not add pseudo-code unless the algorithm itself is the required result.
 - State each fact once: changes in Chunks, commands in Verify, completion conditions in Acceptance. The PRD's Steps table is a short index, not a copy of step details.
 - Link Verify checks to SPEC requirement and scenario IDs and the related PRD goal. Do not invent behavior to test. For a pure refactor, link to SPEC's preservation checks.
@@ -62,7 +62,7 @@ Apply these rules to step files, PRD updates, questions, and summaries:
 
 Run `plan-cli init <task-name>` and call its output `<location>`. Read `PRD.md`, `SPEC.md`, and `CONTEXT.md` through `plan-cli read`, including any ADR entries linked by the PRD. A task without ADR entries needs no ADR section or extra file.
 
-If PRD or SPEC is missing or unapproved, stop and offer to run `spec`. If unfinished steps exist, ask whether to resume or start a new task. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Append answers to `decisions.md`, with an `**Evidence:**` link to `CONTEXT.md` when applicable.
+If PRD or SPEC is missing or unapproved, stop and offer to run `spec`. If unfinished steps exist, ask whether to resume or start a new task. Follow `~/.agents/references/question-format.md` and use the harness's question tool when available. Append answers to `DECISIONS.md`, with an `**Evidence:**` link to `CONTEXT.md` when applicable.
 
 If `plan-cli list` shows a `roadmap` location, read its `CHARTER.md` and any linked ADR entries in its `CONTEXT.md`. Keep every step inside its project-wide boundaries (Always / Ask first / Never).
 

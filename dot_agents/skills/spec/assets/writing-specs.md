@@ -150,7 +150,7 @@ what must remain untouched.
 
 Read the code and available evidence before asking questions it can answer.
 Ask the user one focused question at a time for decisions that remain
-unclear. Record each answer in `decisions.md`, and keep supporting findings
+unclear. Record each answer in `DECISIONS.md`, and keep supporting findings
 and assumptions in `CONTEXT.md`. Do not guess to finish a draft.
 
 Review the requirements for vague language, missing cases, contradictions,
