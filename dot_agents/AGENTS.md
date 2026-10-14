@@ -40,7 +40,7 @@ Follow these guidelines in every project. The instructions below are not optiona
 - Before object-oriented or structurally complex work, read `@~/.agents/references/SOLID.md`, `@~/.agents/references/clean-code.md`, and `@~/.agents/references/object-calisthenics.md`.
 
 ## Communication
-- Write in ASD-STE100 Simplified Technical English. Be concise; prefer prose, and use lists only for enumerations, rankings, or steps.
+- Write in ASD-STE100 Simplified Technical English by default. For generated documents, an explicit writing style in the document template takes precedence over this default. Be concise; prefer prose, and use lists only for enumerations, rankings, or steps.
 - Do not use em or en dashes; use commas, colons, parentheses, or restructuring.
 - Support claims, status updates, and affirmations with evidence. Show the relevant proof, such as test output, a diff, command output, or source citation.
 - Flag flawed assumptions and unsupported claims. When options exist, present them briefly and recommend one.
