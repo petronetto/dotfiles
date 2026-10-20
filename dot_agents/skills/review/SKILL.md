@@ -31,7 +31,7 @@ Review implementation quality and codebase health, not just correctness. Be **am
 
 ## Deep-Module Lens
 
-From `codebase-design`: **depth** (interface hides implementation vs. shallow wrapper), the **deletion test** (delete the module — does complexity vanish or reappear everywhere?), **seam discipline** (one adapter isn't a real seam). Use these to judge if an abstraction earns its keep.
+From `~/.agents/references/code-quality.md`: **depth** (interface hides implementation vs. shallow wrapper), the **deletion test** (delete the module — does complexity vanish or reappear everywhere?), **seam discipline** (one adapter isn't a real seam). Use these to judge if an abstraction earns its keep.
 
 ## Flag Aggressively
 
