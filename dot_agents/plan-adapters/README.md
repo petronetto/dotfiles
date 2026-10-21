@@ -1,9 +1,13 @@
 # Plan adapters
 
 The `plan` CLI and its backends: the single interface every plan-aware
-skill (`spec`, `plan`, `build`, `build-auto`, `blueprint`, `visual-review`)
+skill (`spec`, `plan`, `build`, `build-auto`, `blueprint`, `visual-review`,
+`apply-change`, `continue-change`, `explore`, `propose`, `verify-change`)
 uses to read and change plan files, so they always agree on where plans
-live and how they are manipulated.
+live and how they are manipulated. The change skills keep their own
+proposal/specs/design/tasks workflow; they do not use the PRD workflow.
+See [Change storage adapter](change-workflow.md) for their storage mapping
+and bundled schema.
 
 ## Usage
 
@@ -15,6 +19,7 @@ plan <op> [args]
 | ----------- | ------------------------------------------------ | -------- |
 | `init`      | `plan init <task-name>`                          | Create the task's directory, idempotent; print its `<location>`. Task names are git-safe slugs (lowercase letters, digits, hyphens), or the fixed name `roadmap`. |
 | `read`      | `plan read <location> <file>`                    | Print one plan file's exact content on stdout; fail when absent. |
+| `files`     | `plan files <location>`                         | Print sorted task-relative file paths recursively; fail on symlinks. Read-only, implemented by the dispatcher using the backend's `path` operation. |
 | `write`     | `plan write <location> <file>`                   | Replace one plan file with the content on stdin (heredoc); content is the entire file. |
 | `append`    | `plan append <location> <file>`                  | Append stdin to one plan file, creating it when absent; one blank line separates existing content from the appended block. |
 | `list`      | `plan list`                                      | Print every task's `<location>`, one per line, sorted; no tasks prints nothing. |
@@ -28,6 +33,11 @@ Common rules:
   output, and every operation goes through this CLI. That invariant is what
   keeps the whole skill suite in agreement on the location. Backends enforce
   it: a `<location>` outside the backend's plans root is rejected.
+- `<file>` can be a flat filename or a nested relative artifact path, such
+  as `specs/identity/user-auth/spec.md`. `write` and `append` create missing
+  parent directories. Absolute paths, empty components, `.` and `..`
+  components, and symlinks inside a task are rejected. Existing flat-file
+  operations and step/roadmap status updates keep their previous behavior.
 
 ## Backends
 
@@ -72,7 +82,8 @@ ops as `<name>_<op>` functions (hyphenless: `set_status`). The dispatcher:
    sourcing, so `PLAN_BACKEND` can never escape `backends/`.
 2. Sources `lib/common.sh`, shared by every backend: `die`, config parsing
    (`plan_config_get <section> <key>`, `$PLAN_CONFIG` overrides the path),
-   `<repo-name>` substitution, task and file name validation, set-status
+   `<repo-name>` substitution, task and relative file validation, safe
+   artifact path resolution, recursive file inventory, set-status
    argument parsing and the status rewrite (`plan_apply_status`,
    `plan_append_file`, `plan_set_status_in`).
 3. Checks the backend implements the full interface before dispatch, so a
@@ -94,7 +105,22 @@ plan-adapters/
 ├── plan            # dispatcher (deployed executable)
 ├── lib/
 │   └── common.sh   # shared helpers, sourced by dispatcher and backends
-└── backends/
-    ├── disk.sh     # local filesystem backend (default)
-    └── obsidian.sh # Obsidian vault backend
+├── backends/
+│   ├── disk.sh     # local filesystem backend (default)
+│   └── obsidian.sh # Obsidian vault backend
+├── change-workflow.md
+└── schemas/
+    └── spec-driven/
+        ├── schema.yaml
+        └── templates/
+            ├── proposal.md
+            ├── spec.md
+            ├── design.md
+            └── tasks.md
 ```
+
+## Verification
+
+Run `python3 scripts/test-plan-adapters.py` from the repository root.
+Tests use isolated storage and a fake Obsidian CLI; they do not touch a
+real vault or deploy configuration.

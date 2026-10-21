@@ -79,14 +79,45 @@ plan_validate_task() {
     || die "invalid task name: '$task' (lowercase letters, digits, hyphens)"
 }
 
-# plan_validate_file <name>
-# A plan file name inside a task directory, never a path.
+# plan_validate_file <relative-path>
+# Permit nested artifacts, but never absolute paths or traversal components.
 plan_validate_file() {
-  local file="$1"
-  if [[ "$file" == "." || "$file" == ".." ]]; then
-    die "invalid plan file name: '$file'"
-  fi
-  [[ "$file" =~ ^[A-Za-z0-9_.-]+$ ]] || die "invalid plan file name: '$file'"
+  local file="$1" component rest="$1"
+  [[ "$file" =~ ^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$ ]] \
+    || die "invalid plan file name: '$file'"
+  while [[ -n "$rest" ]]; do
+    component="${rest%%/*}"
+    [[ "$component" != "." && "$component" != ".." ]] \
+      || die "invalid plan file name: '$file'"
+    [[ "$rest" == */* ]] || break
+    rest="${rest#*/}"
+  done
+}
+
+# plan_file_path <task-directory> <relative-path>
+# Reject symlinks at the task root, in parents, and at the file itself.
+plan_file_path() {
+  local dir="${1%/}" file="$2" component rest="$2"
+  plan_validate_file "$file"
+  [[ ! -L "$dir" ]] || die "symlink plan directory is not allowed: $dir"
+  while [[ -n "$rest" ]]; do
+    component="${rest%%/*}"
+    dir="$dir/$component"
+    [[ ! -L "$dir" ]] || die "symlink plan path is not allowed: $dir"
+    [[ "$rest" == */* ]] || break
+    rest="${rest#*/}"
+  done
+  printf '%s\n' "$dir"
+}
+
+# plan_files_in <task-directory>
+# Return relative artifact names, not filesystem paths or symlink targets.
+plan_files_in() {
+  local dir="$1" links
+  [[ ! -L "$dir" ]] || die "symlink plan directory is not allowed: $dir"
+  links="$(find "$dir" -type l -print)" || die "could not inspect plan directory: $dir"
+  [[ -z "$links" ]] || die "symlink plan paths are not allowed: $links"
+  (cd -- "$dir" && find . -type f -print) | LC_ALL=C sort | cut -c 3-
 }
 
 # plan_parse_set_status <location> [--step <file> | --entry <id>] --status <status> [--reason <text>]
@@ -276,6 +307,7 @@ plan_set_status_in() {
   else
     path="$dir/ROADMAP.md"
   fi
+  path="$(plan_file_path "$dir" "${path#"$dir/"}")" || exit 1
   [[ -f "$path" ]] || die "plan file not found: $path"
   tmp="$(mktemp "${path%/*}/.plan-set-status.XXXXXX")"
   if ! plan_apply_status "$PLAN_SS_MODE" "$PLAN_SS_STATUS" "$PLAN_SS_REASON" "$PLAN_SS_ENTRY" \

@@ -123,9 +123,9 @@ obsidian_init() {
 obsidian_read() {
   [[ $# -eq 2 ]] || die "usage: plan read <location> <file>"
   obsidian_validate_location "$1"
-  plan_validate_file "$2"
-  local path
-  path="$(obsidian_vault_path)/$1/$2"
+  local dir path
+  dir="$(obsidian_vault_path)/$1" || exit 1
+  path="$(plan_file_path "$dir" "$2")" || exit 1
   [[ -f "$path" ]] || die "plan note not found: $1/$2"
   cat -- "$path"
 }
@@ -133,23 +133,22 @@ obsidian_read() {
 obsidian_write() {
   [[ $# -eq 2 ]] || die "usage: plan write <location> <file>"
   obsidian_validate_location "$1"
-  plan_validate_file "$2"
-  local dir
-  dir="$(obsidian_vault_path)/$1"
-  # Writing a note materializes its parent subfolder: write alone covers an
-  # un-run init.
-  mkdir -p -- "$dir"
-  cat > "$dir/$2"
+  local dir path
+  dir="$(obsidian_vault_path)/$1" || exit 1
+  path="$(plan_file_path "$dir" "$2")" || exit 1
+  # Writing a note materializes its parent subfolder and nested artifacts.
+  mkdir -p -- "${path%/*}"
+  cat > "$path"
 }
 
 obsidian_append() {
   [[ $# -eq 2 ]] || die "usage: plan append <location> <file>"
   obsidian_validate_location "$1"
-  plan_validate_file "$2"
-  local dir
-  dir="$(obsidian_vault_path)/$1"
-  mkdir -p -- "$dir"
-  plan_append_file "$dir/$2"
+  local dir path
+  dir="$(obsidian_vault_path)/$1" || exit 1
+  path="$(plan_file_path "$dir" "$2")" || exit 1
+  mkdir -p -- "${path%/*}"
+  plan_append_file "$path"
 }
 
 obsidian_list() {
@@ -159,11 +158,12 @@ obsidian_list() {
   out="$(obsidian_run folders "folder=$folder")"
   case "$out" in
     "Vault not found."*) die "obsidian CLI: no vault named '$vault'" ;;
+    "Error: Folder "*"not found."*) return 0 ;;
+    "Error:"*) die "obsidian CLI: $out" ;;
   esac
   # The CLI prints the plans folder itself, its direct children, and all
   # deeper descendants: keep only the direct children, one task per line.
-  # A missing plans folder surfaces as an Error: line, filtered out like
-  # any other non-child line: empty output means no tasks.
+  # Only a missing plans folder is an empty inventory, not other CLI errors.
   awk -v p="$folder/" 'index($0, p) == 1 && substr($0, length(p) + 1) !~ /\//' <<< "$out" | LC_ALL=C sort
 }
 
