@@ -51,8 +51,8 @@ disk_init() {
 disk_read() {
   [[ $# -eq 2 ]] || die "usage: plan read <location> <file>"
   disk_validate_location "$1"
-  plan_validate_file "$2"
-  local path="$1/$2"
+  local path
+  path="$(plan_file_path "$1" "$2")" || exit 1
   [[ -f "$path" ]] || die "plan file not found: $path"
   cat -- "$path"
 }
@@ -60,19 +60,21 @@ disk_read() {
 disk_write() {
   [[ $# -eq 2 ]] || die "usage: plan write <location> <file>"
   disk_validate_location "$1"
-  plan_validate_file "$2"
-  local location="$1"
+  local location="$1" path
+  path="$(plan_file_path "$location" "$2")" || exit 1
   [[ -d "$location" ]] || die "plan directory not found: $location (run init first)"
-  cat > "$location/$2"
+  mkdir -p -- "${path%/*}"
+  cat > "$path"
 }
 
 disk_append() {
   [[ $# -eq 2 ]] || die "usage: plan append <location> <file>"
   disk_validate_location "$1"
-  plan_validate_file "$2"
-  local location="$1"
+  local location="$1" path
+  path="$(plan_file_path "$location" "$2")" || exit 1
   [[ -d "$location" ]] || die "plan directory not found: $location (run init first)"
-  plan_append_file "$location/$2"
+  mkdir -p -- "${path%/*}"
+  plan_append_file "$path"
 }
 
 disk_list() {

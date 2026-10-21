@@ -7,6 +7,7 @@
 #   write <location> <file>        write one plan file, content on stdin
 #   append <location> <file>       append to one plan file, content on stdin
 #   list                   list task locations, one per line
+#   files <location>       list relative artifact paths inside a task
 #   set-status <location> (--step <file> | --entry <id>) --status <status>
 #           [--reason <text>]
 #   path <location>        print the location's on-disk directory
@@ -32,18 +33,19 @@ backend_file="${BACKENDS_DIR}/${BACKEND}.sh"
 source "$backend_file"
 
 OPS=(init read write append list set_status path)
+DISPATCH_OPS=("${OPS[@]}" files)
 
 op="${1:-}"
-[[ -n "$op" ]] || die "usage: plan <op> [args] — ops: init, read, write, append, list, set-status, path"
+[[ -n "$op" ]] || die "usage: plan <op> [args] — ops: init, read, write, append, list, files, set-status, path"
 shift
 op="${op//-/_}"
 
 known=0
-for candidate in "${OPS[@]}"; do
+for candidate in "${DISPATCH_OPS[@]}"; do
   if [[ "$candidate" == "$op" ]]; then known=1; fi
 done
 if [[ "$known" -ne 1 ]]; then
-  die "unknown op: '$op' (expected one of: init, read, write, append, list, set-status, path)"
+  die "unknown op: '$op' (expected one of: init, read, write, append, list, files, set-status, path)"
 fi
 
 # Interface check: a backend must implement every op, even the ones this
@@ -52,5 +54,12 @@ for required in "${OPS[@]}"; do
   declare -F "${BACKEND}_${required}" >/dev/null \
     || die "backend '$BACKEND' is missing the '${required//_/-}' op"
 done
+
+if [[ "$op" == "files" ]]; then
+  [[ $# -eq 1 ]] || die "usage: plan files <location>"
+  directory="$("${BACKEND}_path" "$1")" || exit 1
+  plan_files_in "$directory"
+  exit 0
+fi
 
 "${BACKEND}_${op}" "$@"
