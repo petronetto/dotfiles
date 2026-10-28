@@ -40,6 +40,15 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
    Treat apply state and instruction as context, not a verification verdict. Do not implement tasks, update checkboxes or metadata, or archive during verification.
 
+   **Load engineering guidelines for the checks that apply.** Resolve these references relative to this skill's directory; reuse them once read:
+   - [clean-code.md](../../references/clean-code.md): readability, naming, focused responsibilities, and error handling in changed code
+   - [code-quality.md](../../references/code-quality.md): simplification, module depth, interfaces, and seam discipline in the implemented design
+   - [SOLID.md](../../references/SOLID.md): class or module responsibilities, interfaces, substitution, and dependency direction when those decisions are involved
+   - [writing-tests.md](../../references/writing-tests.md): meaningful behavior and application-flow coverage, test reliability, and redundant or implementation-coupled tests
+   - [writing-comments.md](../../references/writing-comments.md): necessary, accurate, self-contained comments, including nearby comments invalidated by the change and valid issue-link exceptions
+
+   Apply these within the existing verification dimensions and evidence limits, not as new artifact requirements or permission to fix code. Use the detailed testing and comment references to interpret the shorter rules in the general references. Keep the review scoped to changed or directly affected code, tests, and comments; do not demand unrelated cleanup or abstractions, tests, or comments without a concrete need.
+
 4. **Initialize verification report structure**
 
    Use three dimensions:
@@ -107,8 +116,10 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
    - On divergence, add WARNING: "Implementation may diverge from spec: <details>" with a recommendation to check a specific file/line range against the named requirement
 
    **Scenario Coverage:**
-   - For each `#### Scenario:` under ADDED or MODIFIED, check whether its conditions are handled in code and whether tests cover them
-   - If apparently uncovered, add WARNING: "Scenario not covered: <name>" and recommend the specific test or implementation needed
+   - For each `#### Scenario:` under ADDED or MODIFIED, check whether its conditions are handled in code and whether tests exercise the application behavior and assert the required observable outcome. A test that only asserts a mocked SDK return value, DTO mechanics, config declarations, or source text is not evidence of application behavior
+   - Reuse existing behavioral coverage regardless of test filename or level; do not require a separate test per scenario when one test meaningfully covers several. Distinguish static declarations from application-owned validation, mapping, configuration effects, and integration contracts
+   - If apparently uncovered, add WARNING: "Scenario not covered: <name>" and identify the concrete failure and smallest useful test extension or implementation correction. Do not recommend duplicate tests or tests of dependency mechanics
+   - State whether test evidence was inspected or executed. Never present source inspection as a passing test run
    - Skip scenarios under REMOVED requirements; that behavior is meant to be gone
 
 7. **Verify Coherence**
@@ -121,8 +132,11 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
    **Code Pattern Consistency:**
    - If implementation changes cannot be identified, mark not verified and explain the missing evidence
-   - Otherwise review new code against project naming, structure, and style patterns
-   - For significant deviation, add SUGGESTION: "Code pattern deviation: <details>" with a specific existing pattern to follow
+   - Otherwise review changed code against applicable engineering guidelines and valid project patterns. Check focused responsibilities, clear naming, error handling, small interfaces, and justified dependencies. Apply SOLID pragmatically; do not demand inheritance, interfaces, or extra layers merely to satisfy a principle
+   - Review changed tests for distinct behavioral value, realistic application flows, meaningful assertions, and reliability. Flag tests that only mirror implementation, retest dependencies, or duplicate coverage without protecting another risk. Multiple assertions for one behavior are valid; test count or coverage percentage alone does not establish quality
+   - Review changed comments and nearby comments affected by the implementation. Flag noise, change narration, references to deleted code, unsupported claims, and obsolete workarounds. Do not demand comments where the code is clear or reject useful issue-linked context
+   - Do not copy or recommend a flawed existing pattern just for consistency. Tie findings to a concrete correctness, maintenance, or test-confidence risk, with file/line evidence; do not turn this into an unrelated refactor
+   - For significant deviation, add SUGGESTION: "Code pattern deviation: <details>" with a specific guideline or valid existing pattern to follow. Use WARNING for a demonstrated material maintenance or test-confidence risk; report missing required behavior under the corresponding completeness or correctness check instead of duplicating the finding
 
 8. **Generate Verification Report**
 
@@ -143,7 +157,7 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
    **Issues by Priority:**
    1. **CRITICAL** (must fix before archival): Incomplete tasks, missing requirement implementations, removed behavior still present, or lost renamed behavior. Give specific actionable recommendations
-   2. **WARNING** (should fix): Spec/design divergences or missing scenario coverage. Give specific recommendations
+   2. **WARNING** (should fix): Spec/design divergences, missing scenario coverage, or demonstrated material maintenance or test-confidence risks. Give specific recommendations
    3. **SUGGESTION** (nice to fix): Pattern inconsistencies or minor improvements. Give specific recommendations
 
    **Final Assessment:**
