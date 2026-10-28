@@ -37,11 +37,11 @@
   "disable_ai": false,
   "edit_predictions": {
     "mode": "subtle",
-    "allow_data_collection": "no",
+    "allow_data_collection": "no"{{ if eq .chezmoi.os "darwin" }},
     "ollama": {
       "model": "qwen2.5-coder:14b"
     },
-    "provider": "ollama"
+    "provider": "ollama"{{ end }}
   },
   "telemetry": {
     "diagnostics": false,
@@ -58,7 +58,7 @@
     "dock": "right",
     "show_turn_stats": true,
     "enable_feedback": false,
-    "default_profile": "ask",
+    "default_profile": "ask",{{ if eq .chezmoi.os "darwin" }}
     "default_model": {
       "provider": "ollama",
       "model": "qwen3.8:27b-mlx",
@@ -85,7 +85,7 @@
         "model": "gemma4:31b-mlx",
         "enable_thinking": true
       }
-    ],
+    ],{{ end }}
     "model_parameters": []
   },
   "icon_theme": "Material Icon Theme",

@@ -1,7 +1,6 @@
-{{ if eq .chezmoi.os "darwin" -}}
 # 1Password SSH Agent configuration
 Host *
-    IdentityAgent "{{ .chezmoi.homeDir }}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+    IdentityAgent "{{ .chezmoi.homeDir }}{{ if eq .chezmoi.os "darwin" }}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock{{ else }}/.1password/agent.sock{{ end }}"
     IdentityFile ~/.ssh/petronetto.pub
     IdentitiesOnly yes
 
@@ -12,4 +11,3 @@ Include config.d/hosts
 Host github.com
     User git
 
-{{ end -}}

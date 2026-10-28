@@ -5,4 +5,12 @@ set -euo pipefail
 {{ if eq .chezmoi.os "darwin" -}}
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 BREWFILE={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }} "{{ .chezmoi.sourceDir }}/scripts/install-packages"
+{{ else if eq .chezmoi.os "linux" -}}
+# Ubuntu catalog hash: {{ include ".chezmoidata/ubuntu.yaml" | sha256sum }}
+# Ubuntu runtime hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+# Ubuntu installer hash: {{ include "scripts/install-ubuntu-packages" | sha256sum }}
+# Package dispatch hash: {{ include "scripts/install-packages" | sha256sum }}
+"{{ .chezmoi.sourceDir }}/scripts/install-packages" --profile {{ get . "profile" | default "workstation" | quote }} <<'UBUNTU_CATALOG'
+{{ .ubuntu | toJson }}
+UBUNTU_CATALOG
 {{ end -}}

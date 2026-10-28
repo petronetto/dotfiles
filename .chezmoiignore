@@ -11,6 +11,16 @@ key.txt.age
 # Local assets/scripts, not deployed to $HOME
 images/
 scripts/
+tests/
+docs/
 
 # Private folders
 private/
+
+{{ if ne .chezmoi.os "linux" -}}
+.config/mise/
+{{ end -}}
+{{ if ne .chezmoi.os "darwin" -}}
+.config/zsh/functions/ollama.zsh
+.config/pi/extensions/ollama.ts
+{{ end -}}

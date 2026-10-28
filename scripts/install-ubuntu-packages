@@ -1,0 +1,446 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+current_tool="catalog"
+profile="workstation"
+selected_tool=""
+check_only=false
+fonts_only=false
+
+TRAPZERR() {
+  local code=$?
+  print -u2 -r -- "Ubuntu packages: $current_tool failed (exit $code)"
+  return "$code"
+}
+
+fail() {
+  print -u2 -r -- "Ubuntu packages: $*"
+  exit 1
+}
+
+validate_catalog() {
+  jq -e '
+    def nonempty: type == "string" and length > 0;
+    def strings: type == "array" and length > 0 and all(.[]; nonempty);
+    def digest: type == "string" and test("^[0-9a-f]{64}$");
+    .schema == 1 and .release == "26.04" and .architecture == "amd64"
+    and (.system_packages | strings)
+    and (.repositories | type == "array" and length > 0)
+    and all(.repositories[];
+      (.id | test("^[a-z][a-z0-9-]*$"))
+      and (.url | startswith("https://")) and (.key_url | startswith("https://"))
+      and (.keyring_path | test("^(/etc/apt/keyrings|/usr/share/keyrings)/[a-z0-9-]+\\.(gpg|asc)$"))
+      and (.sources_path | test("^/etc/apt/sources\\.list\\.d/[a-z0-9-]+\\.sources$")))
+    and (.tools | type == "array" and length > 0)
+    and all(.tools[];
+      (.id | nonempty) and (.commands | strings)
+      and (.owner as $owner | ["apt", "bootstrap", "upstream", "mise", "npm", "vendor-apt"] | index($owner) != null)
+      and (if .owner == "mise" then .id == "node" and .commands == ["node", "npm", "npx"] and (.version | nonempty)
+           elif .owner == "upstream" then
+             (.version | nonempty) and (.url | startswith("https://"))
+             and (.provenance | startswith("https://"))
+             and (if .verification == "sha256" then (.sha256 | digest)
+                  else .id == "todoist" and .verification == "https-only" end)
+           elif .owner == "apt" then (.packages | strings)
+           elif .owner == "vendor-apt" then (.packages | strings) and (.repository | nonempty)
+           elif .owner == "npm" then (.package | nonempty) and (.version | nonempty)
+           else .id == "chezmoi" end))
+    and ([.tools[].id] | length == (unique | length))
+    and ([.tools[].commands[]] | length == (unique | length))
+    and (.fonts | type == "array" and length > 0)
+    and all(.fonts[]; (.id | nonempty) and (.family | nonempty)
+      and (.version | nonempty) and (.url | startswith("https://")) and (.sha256 | digest))
+  ' <<< "$catalog" >/dev/null || fail "invalid catalog, owners, commands, or upstream integrity"
+}
+
+elevate() {
+  sudo -- "$@"
+}
+
+install_apt_tool() {
+  local packages=("${(@f)$(jq -r '.packages[]' <<< "$tool")}")
+  elevate env DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
+  local compatibility binary link
+  compatibility=$(jq -r '.compatibility_binary // empty' <<< "$tool")
+  [[ -n "$compatibility" ]] || return 0
+  command -v "$current_tool" >/dev/null && return 0
+  binary=$(command -v "$compatibility") || fail "$current_tool: distribution command $compatibility is missing"
+  link="$HOME/.local/bin/$current_tool"
+  [[ ! -e "$link" && ! -L "$link" ]] || fail "$current_tool: refusing to replace existing $link"
+  mkdir -p "$HOME/.local/bin"
+  ln -s "$binary" "$link"
+}
+
+confirm_service_installation() {
+  if [[ "$profile" == test-container ]]; then
+    [[ -f /.dockerenv && -x /usr/sbin/policy-rc.d ]] ||
+      fail "$current_tool: test profile requires a container with an explicit service policy"
+    local service policy_code
+    local services=("$current_tool")
+    [[ "$current_tool" != docker ]] || services+=(containerd)
+    for service in "${services[@]}"; do
+      policy_code=0
+      /usr/sbin/policy-rc.d "$service" start || policy_code=$?
+      [[ "$policy_code" == 101 ]] || fail "$current_tool: fixture policy does not deny $service startup"
+    done
+    return
+  fi
+  local answer
+  read -r "answer?Install $current_tool and its package-managed privileged helpers/services? [y/N] " < /dev/tty ||
+    fail "$current_tool: service installation declined or no terminal is available"
+  [[ "$answer" == y || "$answer" == Y || "$answer" == yes ]] || fail "$current_tool: service installation declined"
+}
+
+check_docker_conflicts() {
+  local package installed code
+  local conflicts=(docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc)
+  for package in "${conflicts[@]}"; do
+    code=0
+    installed=$(dpkg-query --show --showformat '${db:Status-Status}' "$package" 2>/dev/null) || code=$?
+    case "$code" in
+      0) [[ "$installed" != installed ]] || fail "docker: conflicting package $package; removal requires separate approval" ;;
+      1) ;;
+      *) fail "docker: cannot inspect conflicting package $package" ;;
+    esac
+  done
+}
+
+prepare_repository() {
+  local repository_id repository key keyring keyring_path sources_path fingerprint expected source
+  repository_id=$(jq -r '.repository' <<< "$tool")
+  repository=$(jq -ce --arg id "$repository_id" '.repositories[] | select(.id == $id)' <<< "$catalog")
+  key="$work_dir/$repository_id.key"
+  keyring="$work_dir/$repository_id.gpg"
+  keyring_path=$(jq -r '.keyring_path' <<< "$repository")
+  sources_path=$(jq -r '.sources_path' <<< "$repository")
+  curl -fsSL "$(jq -r '.key_url' <<< "$repository")" -o "$key"
+  fingerprint=$(gpg --batch --show-keys --with-colons "$key" | awk -F: '$1 == "fpr" {print $10; exit}')
+  [[ -n "$fingerprint" ]] || fail "$current_tool: repository signing key is invalid"
+  expected=$(jq -r '.fingerprint // empty' <<< "$repository")
+  [[ -z "$expected" || "$fingerprint" == "$expected" ]] || fail "$current_tool: repository key fingerprint mismatch"
+  if [[ $(jq -r '.key_format' <<< "$repository") == armored && "$keyring_path" == *.gpg ]]; then
+    gpg --batch --yes --dearmor --output "$keyring" "$key"
+  else
+    cp "$key" "$keyring"
+  fi
+  elevate install -d -m 0755 "${keyring_path:h}"
+  elevate install -m 0644 "$keyring" "$keyring_path"
+  source="$work_dir/$repository_id.sources"
+  printf 'Types: deb\nURIs: %s\nSuites: %s\nComponents: %s\nArchitectures: amd64\nSigned-By: %s\n' \
+    "$(jq -r '.url' <<< "$repository")" "$(jq -r '.suite' <<< "$repository")" \
+    "$(jq -r '.components' <<< "$repository")" "$keyring_path" > "$source"
+  elevate install -m 0644 "$source" "$sources_path"
+  if [[ "$repository_id" == onepassword ]]; then
+    local policy
+    policy="$work_dir/1password.pol"
+    curl -fsSL "$(jq -r '.debsig_policy_url' <<< "$repository")" -o "$policy"
+    elevate install -d -m 0755 /etc/debsig/policies/AC2D62742012EA22
+    elevate install -m 0644 "$policy" /etc/debsig/policies/AC2D62742012EA22/1password.pol
+    elevate install -d -m 0755 /usr/share/debsig/keyrings/AC2D62742012EA22
+    elevate install -m 0644 "$keyring" /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  fi
+  elevate apt-get update
+}
+
+download_release() {
+  local url checksum actual
+  url=$(jq -r '.url' <<< "$tool")
+  checksum=$(jq -r '.sha256 // empty' <<< "$tool")
+  asset="$work_dir/$current_tool.$(jq -r '.format' <<< "$tool")"
+  curl -fsSL "$url" -o "$asset"
+  actual=$(sha256sum "$asset")
+  actual=${actual%% *}
+  [[ -z "$checksum" || "$actual" == "$checksum" ]] || fail "$current_tool: release checksum mismatch"
+  tool=$(jq -c --arg digest "$actual" '. + {download_sha256: $digest}' <<< "$tool")
+}
+
+check_shared_libraries() {
+  local libraries
+  libraries=$(ldd "$1") || fail "$current_tool: cannot inspect shared libraries"
+  [[ "$libraries" != *"not found"* ]] || fail "$current_tool: missing shared libraries: $libraries"
+}
+
+link_application() {
+  local source=$1 target=$2
+  [[ ! -e "$target" || -L "$target" ]] || fail "$current_tool: refusing to replace existing $target"
+  ln -sfn "$source" "$target"
+}
+
+install_obsidian() {
+  download_release
+  elevate env DEBIAN_FRONTEND=noninteractive apt-get install -y "$asset"
+  [[ -x /opt/Obsidian/obsidian-cli && -x /opt/Obsidian/obsidian ]] ||
+    fail "obsidian: bundled official CLI or application is missing"
+  check_shared_libraries /opt/Obsidian/obsidian
+  mkdir -p "$HOME/.local/bin"
+  install -m 0755 /opt/Obsidian/obsidian-cli "$HOME/.local/bin/obsidian"
+}
+
+install_dependencies() {
+  local dependencies=("${(@f)$(jq -r '.dependencies[]' <<< "$tool")}")
+  elevate env DEBIAN_FRONTEND=noninteractive apt-get install -y "${dependencies[@]}"
+}
+
+install_zed() {
+  local version destination application desktop
+  install_dependencies
+  download_release
+  version=$(jq -r '.version' <<< "$tool")
+  destination="$HOME/.local/share/zed/$version"
+  mkdir -p "$destination" "$HOME/.local/bin" "$HOME/.local/share/applications"
+  bsdtar -xzf "$asset" -C "$destination"
+  application="$destination/zed.app"
+  [[ -x "$application/bin/zed" && -x "$application/libexec/zed-editor" ]] || fail "zed: application bundle is incomplete"
+  check_shared_libraries "$application/libexec/zed-editor"
+  link_application "$application" "$HOME/.local/zed.app"
+  link_application "$application/bin/zed" "$HOME/.local/bin/zed"
+  desktop="$HOME/.local/share/applications/dev.zed.Zed.desktop"
+  printf '[Desktop Entry]\nType=Application\nName=Zed\nExec="%s" %%U\nIcon=%s\nTerminal=false\nCategories=Development;IDE;TextEditor;\nStartupWMClass=dev.zed.Zed\nMimeType=text/plain;inode/directory;\n' \
+    "$HOME/.local/bin/zed" "$HOME/.local/zed.app/share/icons/hicolor/512x512/apps/zed.png" > "$desktop"
+}
+
+install_todoist() {
+  local version destination launcher desktop
+  install_dependencies
+  download_release
+  version=$(jq -r '.version' <<< "$tool")
+  destination="$HOME/.local/share/todoist/$version"
+  mkdir -p "$destination" "$HOME/.local/bin" "$HOME/.local/share/applications"
+  7z x -y "-o$destination" "$asset"
+  [[ -x "$destination/todoist" && -f "$destination/todoist.desktop" ]] || fail "todoist: extracted application is incomplete"
+  check_shared_libraries "$destination/todoist"
+  launcher="$destination/launcher"
+  # Vendor AppRun automatically disables the sandbox when user namespaces fail.
+  # Launch the application directly and retain Chromium sandbox defaults.
+  tee "$launcher" >/dev/null <<'TODOIST_LAUNCHER'
+#!/usr/bin/env zsh
+set -euo pipefail
+app_dir="${0:A:h}"
+export APPDIR="$app_dir"
+export LD_LIBRARY_PATH="$app_dir/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XDG_DATA_DIRS="$app_dir/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+exec "$app_dir/todoist" "$@"
+TODOIST_LAUNCHER
+  chmod 0755 "$launcher"
+  link_application "$launcher" "$HOME/.local/bin/todoist"
+  desktop="$HOME/.local/share/applications/todoist.desktop"
+  printf '[Desktop Entry]\nType=Application\nName=Todoist\nExec="%s" %%U\nIcon=%s\nTerminal=false\nCategories=Office;\nStartupWMClass=todoist\nMimeType=x-scheme-handler/todoist;\n' \
+    "$HOME/.local/bin/todoist" "$destination/todoist.png" > "$desktop"
+}
+
+install_upstream_tool() {
+  case "$current_tool" in
+    obsidian) install_obsidian; return ;;
+    zed) install_zed; return ;;
+    todoist) install_todoist; return ;;
+  esac
+  local format extracted binary
+  format=$(jq -r '.format' <<< "$tool")
+  case "$format" in
+    binary|tar.gz|zip) ;;
+    *) fail "$current_tool: unsupported release format $format" ;;
+  esac
+  download_release
+  extracted="$work_dir/$current_tool"
+  mkdir -p "$extracted" "$HOME/.local/bin"
+  case "$format" in
+    binary) binary="$asset" ;;
+    tar.gz)
+      bsdtar -xzf "$asset" -C "$extracted"
+      binary="$extracted/$current_tool"
+      ;;
+    zip)
+      unzip -o -q "$asset" -d "$extracted"
+      binary="$extracted/$current_tool"
+      ;;
+  esac
+  [[ -f "$binary" ]] || fail "$current_tool: declared release command is missing"
+  install -m 0755 "$binary" "$HOME/.local/bin/$current_tool"
+}
+
+install_node_runtime() {
+  local version mise
+  mise="$HOME/.local/bin/mise"
+  [[ -x "$mise" ]] || fail "node: install mise before language runtimes"
+  version=$(jq -r '.version' <<< "$tool")
+  "$mise" install "node@$version"
+  "$mise" exec "node@$version" -- npm config set prefix "$HOME/.local"
+}
+
+install_npm_tool() {
+  local version package mise
+  mise="$HOME/.local/bin/mise"
+  [[ -x "$mise" ]] || fail "$current_tool: mise and Node must be installed first"
+  version=$(jq -r '.tools[] | select(.id == "node") | .version' <<< "$catalog")
+  package=$(jq -r '.package + "@" + .version' <<< "$tool")
+  "$mise" exec "node@$version" -- npm install --global --prefix "$HOME/.local" \
+    --ignore-scripts --no-audit --no-fund "$package"
+}
+
+installed_version() {
+  local owner packages package version
+  owner=$(jq -r '.owner' <<< "$tool")
+  if [[ "$current_tool" == todoist ]]; then
+    version=$(jq -r '.version' <<< "$tool")
+    awk -F= '/^X-AppImage-Version=/ {print $2; exit}' "$HOME/.local/share/todoist/$version/todoist.desktop"
+    return
+  fi
+  if [[ "$current_tool" == obsidian ]]; then
+    dpkg-query --show --showformat '${Package}=${Version}\n' obsidian
+    return
+  fi
+  case "$owner" in
+    apt|vendor-apt)
+      packages=("${(@f)$(jq -r '.packages[]' <<< "$tool")}")
+      dpkg-query --show --showformat '${Package}=${Version}\n' "${packages[@]}"
+      ;;
+    mise)
+      version=$(jq -r '.version' <<< "$tool")
+      "$HOME/.local/bin/mise" exec "node@$version" -- node --version
+      ;;
+    npm)
+      package=$(jq -r '.package' <<< "$tool")
+      jq -er '.version' "$HOME/.local/lib/node_modules/$package/package.json"
+      ;;
+    *) "$current_tool" --version ;;
+  esac
+}
+
+save_record() {
+  local entry=$1 state_dir ledger pending
+  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+  mkdir -p "$state_dir"
+  ledger="$state_dir/ubuntu-packages.json"
+  [[ -e "$ledger" ]] || print -r -- '{}' > "$ledger"
+  jq -e 'type == "object"' "$ledger" >/dev/null || fail "Invalid existing package provenance ledger"
+  pending=$(mktemp "$state_dir/packages.XXXXXX")
+  jq --argjson entry "$entry" '. + {($entry.id): $entry}' "$ledger" > "$pending"
+  mv "$pending" "$ledger"
+}
+
+record_tool() {
+  local owner command binary version selected entry repository
+  owner=$(jq -r '.owner' <<< "$tool")
+  if [[ "$owner" != mise ]]; then
+    for command in "${(@f)$(jq -r '.commands[]' <<< "$tool")}"; do
+      binary=${command%% *}
+      command -v "$binary" >/dev/null || fail "$current_tool: installed command $binary is missing"
+    done
+  fi
+  version=$(installed_version)
+  [[ -n "$version" ]] || fail "$current_tool: installed version could not be determined"
+  selected=$(jq -r '.version // empty' <<< "$tool")
+  [[ -z "$selected" || "$version" == *"$selected"* ]] || fail "$current_tool: installed version differs from catalog $selected"
+  entry=$(jq -c --arg version "$version" --arg recorded_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+    . + {installed_version: $version, recorded_at: $recorded_at,
+         verification: (.verification // "signed-apt")}
+  ' <<< "$tool")
+  if [[ "$owner" == vendor-apt ]]; then
+    repository=$(jq -c --arg id "$(jq -r '.repository' <<< "$tool")" \
+      '.repositories[] | select(.id == $id)' <<< "$catalog")
+    entry=$(jq -c --argjson repository "$repository" '. + {repository_details: $repository}' <<< "$entry")
+  fi
+  save_record "$entry"
+}
+
+install_system_dependencies() {
+  current_tool="system-dependencies"
+  local packages=("${(@f)$(jq -r '.system_packages[]' <<< "$catalog")}")
+  elevate env DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
+}
+
+install_fonts() {
+  local font_id version destination family discovered entry
+  for font_id in "${(@f)$(jq -r '.fonts[].id' <<< "$catalog")}"; do
+    current_tool="font:$font_id"
+    tool=$(jq -c --arg id "$font_id" '.fonts[] | select(.id == $id) |
+      . + {id: ("font:" + .id), owner: "upstream", format: "tar.xz", verification: "sha256"}' <<< "$catalog")
+    download_release
+    version=$(jq -r '.version' <<< "$tool")
+    family=$(jq -r '.family' <<< "$tool")
+    destination="$HOME/.local/share/fonts/NerdFonts/$font_id/$version"
+    mkdir -p "$destination"
+    bsdtar -xf "$asset" -C "$destination"
+    [[ -n $(find "$destination" -type f '(' -name '*.ttf' -o -name '*.otf' ')' -print -quit) ]] ||
+      fail "$current_tool: release contains no font files"
+    fc-cache -f "$destination"
+    discovered=$(fc-match -f '%{family}' "$family")
+    [[ "$discovered" == *"$family"* ]] || fail "$current_tool: font family $family is not discoverable (matched $discovered)"
+    entry=$(jq -c --arg family "$discovered" '. + {installed_version: .version,
+      discovered_family: $family, recorded_at: (now | todateiso8601)}' <<< "$tool")
+    save_record "$entry"
+  done
+}
+
+install_tool() {
+  current_tool=$1
+  tool=$(jq -ce --arg id "$current_tool" '.tools[] | select(.id == $id)' <<< "$catalog") ||
+    fail "Unknown catalog tool: $current_tool"
+  case "$(jq -r '.owner' <<< "$tool")" in
+    apt) install_apt_tool ;;
+    vendor-apt)
+      if [[ "$current_tool" == docker ]]; then
+        check_docker_conflicts
+        confirm_service_installation
+      elif [[ "$current_tool" == onepassword ]]; then
+        confirm_service_installation
+      fi
+      prepare_repository
+      install_apt_tool
+      if [[ "$current_tool" == onepassword ]]; then
+        [[ -x /opt/1Password/op-ssh-sign ]] || fail "onepassword: Linux signing helper is missing"
+      elif [[ "$current_tool" == docker ]]; then
+        docker compose version >/dev/null
+        docker buildx version >/dev/null
+      fi
+      ;;
+    upstream) install_upstream_tool ;;
+    mise) install_node_runtime ;;
+    npm) install_npm_tool ;;
+    bootstrap) command -v chezmoi >/dev/null || fail "chezmoi must be installed by bootstrap" ;;
+    *) fail "$current_tool: unsupported installation owner" ;;
+  esac
+  record_tool
+}
+
+while (( $# )); do
+  case "$1" in
+    --check-catalog) check_only=true; shift ;;
+    --fonts) fonts_only=true; shift ;;
+    --tool|--profile)
+      (( $# >= 2 )) || fail "$1 requires a value"
+      case "$1" in
+        --tool) selected_tool=$2 ;;
+        --profile) profile=$2 ;;
+      esac
+      shift 2
+      ;;
+    *) fail "Unknown option: $1" ;;
+  esac
+done
+catalog=$(<&0)
+validate_catalog
+[[ "$check_only" == false ]] || exit 0
+[[ "$fonts_only" == false || -z "$selected_tool" ]] || fail "--fonts conflicts with --tool"
+(( EUID != 0 )) || fail "Run package provisioning as the intended non-root user"
+[[ $(uname -s) == Linux && $(uname -m) == x86_64 ]] || fail "Ubuntu AMD64 is required"
+[[ "$profile" == workstation || "$profile" == test-container ]] || fail "Invalid provisioning profile"
+export PATH="$HOME/.local/bin:$PATH"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/ubuntu"
+mkdir -p "$cache_dir"
+work_dir=$(mktemp -d "$cache_dir/install.XXXXXX")
+print -r -- "Ubuntu package download staging: $work_dir"
+if [[ -n "$selected_tool" ]]; then
+  install_tool "$selected_tool"
+  exit
+fi
+install_system_dependencies
+if [[ "$fonts_only" == true ]]; then
+  install_fonts
+  exit
+fi
+for current_tool in "${(@f)$(jq -r '.tools[].id' <<< "$catalog")}"; do
+  install_tool "$current_tool"
+done
+install_fonts

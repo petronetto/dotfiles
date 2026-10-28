@@ -1,28 +1,48 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 
-set -eufo pipefail
+set -euo pipefail
+
+# Prime shell plugin dependencies (Antidote, TPM) so interactive startup
+# never downloads plugins. Idempotent; runs on both macOS and Ubuntu.
+prime_shell_plugins() {
+  echo "ℹ️ Priming shell plugin dependencies..."
+  local antidote_dir="${ZDOTDIR:-$HOME}/.antidote"
+  if [[ ! -d "$antidote_dir" ]]; then
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$antidote_dir" \
+      || echo "⚠️ Failed to clone antidote" >&2
+  fi
+  local tpm_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/plugins/tpm"
+  if [[ ! -d "$tpm_dir" ]]; then
+    mkdir -p "$(dirname "$tpm_dir")"
+    git clone https://github.com/tmux-plugins/tpm.git "$tpm_dir" \
+      || echo "⚠️ Failed to clone TPM" >&2
+  fi
+}
+prime_shell_plugins
+
+if [[ $(uname -s) == Linux ]]; then
+  exec zsh "${0:A:h}/install-ubuntu-packages" "$@"
+fi
 
 main() {
-    echo "ℹ️ Installing packages via Homebrew..."
+  echo "ℹ️ Installing packages via Homebrew..."
 
-    # Ensure Homebrew is in PATH
-    if [[ $(uname -m) == "arm64" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -f /usr/local/bin/brew ]]; then
-        eval "$(/usr/local/bin/brew shellenv)"
-    fi
+  if [[ $(uname -m) == arm64 && -f /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -f /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
 
-    export HOMEBREW_NO_INSTALL_CLEANUP=1
-    export HOMEBREW_NO_ASK=1
-    export NONINTERACTIVE=1
-    export HOMEBREW_CASK_OPTS="--no-quarantine"
+  export HOMEBREW_NO_INSTALL_CLEANUP=1
+  export HOMEBREW_NO_ASK=1
+  export NONINTERACTIVE=1
+  export HOMEBREW_CASK_OPTS="--no-quarantine"
 
-    brew bundle --file="$BREWFILE" || echo "⚠️ one or more packages failed to install" >&2
-
-    echo "ℹ️ Cleaning up Homebrew cache..."
-    brew cleanup || echo "⚠️ brew cleanup failed" >&2
-
-    echo "✅ Package installation complete"
+  brew bundle --file="$BREWFILE" || echo "⚠️ one or more packages failed to install" >&2
+  echo "ℹ️ Cleaning up Homebrew cache..."
+  brew cleanup || echo "⚠️ brew cleanup failed" >&2
+  echo "✅ Package installation complete"
 }
 
+# Retain the existing macOS best-effort policy. Ubuntu failures propagate above.
 main || echo "❌ install-packages failed, continuing..." >&2

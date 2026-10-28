@@ -3,16 +3,24 @@ font-family = JetBrainsMono NFM Light
 font-size = 20
 maximize = true
 mouse-hide-while-typing = true
+{{ if eq .chezmoi.os "darwin" -}}
 keybind = global:cmd+shift+space=toggle_quick_terminal
+{{ else -}}
+keybind = ctrl+shift+space=toggle_quick_terminal
+{{ end -}}
 background-opacity = 0.8
 background-blur-radius = 30
 background-opacity-cells = true
 keybind = shift+enter=text:\n
 window-inherit-working-directory = true
+{{ if eq .chezmoi.os "darwin" -}}
 macos-titlebar-style = hidden
+{{ end -}}
 window-padding-y = 20
 window-padding-x = 20
 working-directory = ~/code
+{{ if eq .chezmoi.os "darwin" -}}
 # Enable Option key as Alt for keybindings
 # Use 'left' so right Option key can still type special characters
 macos-option-as-alt = left
+{{ end -}}

@@ -18,7 +18,7 @@ Set the `PRIVATE_DOTFILES_REPO` environment variable to your own private dotfile
 
 ## Quick Start
 
-### First Time Setup
+### First Time Setup (macOS)
 
 **Initialize and apply dotfiles**
 ```bash
@@ -32,6 +32,84 @@ curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/main/bootstrap.
 
 This sets up your shell, tools, and SSH keys with no secret tool required.
 You'll be prompted once for your git email during `chezmoi init`.
+
+### Ubuntu 26.04 AMD64 bootstrap
+
+Ubuntu support is in development. Do not deploy it to a workstation until the
+Ubuntu acceptance checks pass. See the [Ubuntu setup checklist](docs/ubuntu.md)
+for package owners, account setup, verification sources, and pending machine
+checks. The macOS commands above retain their existing Xcode Command Line Tools
+and Homebrew setup.
+
+On the intended Ubuntu machine, bootstrap needs Bash, apt, network access, and
+an existing non-root account with a home directory. A normal user also needs
+working `sudo`. Bootstrap checks the OS, release, architecture, and target user
+before package installation. Other Linux releases and ARM64 Ubuntu are refused.
+
+Select the repository and branch explicitly when testing a published branch:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/petronetto/dotfiles/feat/ubuntu-support/bootstrap.sh \
+  | bash -s -- --repo https://github.com/petronetto/dotfiles.git --branch feat/ubuntu-support
+```
+
+The branch must exist remotely for that example to work. To test unpublished
+changes, copy the current public source into the isolated test machine, then use
+that copy. Do not point a test at the primary machine's home or writable checkout:
+
+```bash
+bash /path/to/source/bootstrap.sh --source /path/to/source --profile test-container
+```
+
+Root-driven setup must name the existing target account:
+
+```bash
+bash /path/to/source/bootstrap.sh --source /path/to/source --user tester --profile test-container
+```
+
+Bootstrap installs sudo, CA certificates, curl, Git, GnuPG, archive utilities
+(including `libarchive-tools` for `bsdtar` and `7zip` for AppImages), locales, jq, and Zsh through apt, generates `en_US.UTF-8`, then installs chezmoi
+from its official installer if needed. System packages use root privileges;
+chezmoi and user-local files use the target account. It does not change the login
+shell, sudo policy, or group membership. A normal-user run stops if elevation
+fails. Root without `--user`, or with a root target, is refused.
+
+Options:
+
+- `--repo URL`: select an explicit Git repository URL.
+- `--branch NAME`: select the source branch. An existing checkout on another
+  branch is refused before apply; bootstrap does not reset or switch it.
+- `--source DIR`: use an existing local tree, including changed files, without
+  cloning a remote. This conflicts with `--repo` and `--branch`.
+- `--user NAME`: select the non-root target for a root invocation. A normal user
+  can select only their own account.
+- `--profile workstation|test-container`: persist the selected profile in chezmoi
+  data. New configurations default to `workstation`. A rerun without this option
+  preserves the saved profile. Test mode suppresses private synchronization,
+  including the template-time remote lookup, on later applies too. It does not
+  replace the required tool catalog with a reduced installation.
+- `--help`: print options without making changes. All options work with
+  `bash -s --` when the script arrives through standard input.
+
+`git_email` is prompted once. Isolated fixtures supply a synthetic address in
+chezmoi configuration data; they must not use the production Git identity.
+Required Ubuntu package, download, initialization, or apply failures stop the
+bootstrap with a nonzero exit status and a named stage. Ubuntu does not use
+`--keep-going`. Existing prerequisites are reused, with no automatic reset or
+package removal. Review the managed diff before any later workstation apply.
+
+Local regression checks require Python 3, chezmoi, Bash, and ShellCheck:
+
+```bash
+python3 scripts/test-bootstrap.py
+python3 scripts/test-plan-adapters.py
+bash -n bootstrap.sh
+shellcheck --shell=bash bootstrap.sh
+```
+
+These tests use temporary homes and source trees. System and network commands
+are intercepted; the local-source tests use real chezmoi only on temporary data.
+They do not prove real Ubuntu package installation or hardware support.
 
 ### Update Dotfiles
 

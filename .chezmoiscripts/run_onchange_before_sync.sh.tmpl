@@ -1,3 +1,6 @@
+{{- $profile := "workstation" -}}
+{{- if hasKey . "profile" }}{{ $profile = .profile }}{{ end -}}
+{{- if ne $profile "test-container" -}}
 #!/usr/bin/env zsh
 
 set -euo pipefail
@@ -9,3 +12,4 @@ set -euo pipefail
 # this script on any machine.
 
 "{{ .chezmoi.sourceDir }}/scripts/sync-private-dotfiles"
+{{ end -}}

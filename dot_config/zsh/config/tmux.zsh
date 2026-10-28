@@ -1,14 +1,9 @@
 #!/usr/bin/env zsh
 
 # TPM (Tmux Plugin Manager) setup
+# TPM is primed by provisioning; startup never downloads plugins.
+# tmux.conf loads TPM from $HOME/.local/share/tmux/plugins/tpm when present.
 XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 TPM_DIR="${XDG_DATA_HOME}/tmux/plugins/tpm"
-TPM_REPO="https://github.com/tmux-plugins/tpm"
 
-# Check if TPM is installed, install if not
-if [[ ! -d "${TPM_DIR}" ]]; then
-  echo "TPM not found. Installing..."
-  mkdir -p "$(dirname "${TPM_DIR}")"
-  git clone "${TPM_REPO}" "${TPM_DIR}"
-  echo "TPM installed successfully."
-fi
+[[ -d "${TPM_DIR}" ]] || print "⚠️ TPM not primed; run provisioning to install." >&2

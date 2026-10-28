@@ -1,0 +1,24 @@
+# Retained SSH acceptance fixture.
+# Contract (see scripts/test-ubuntu-test.py ComposeFixtureTests):
+#   - explicit linux/amd64 platform (guest is AMD64 on the ARM64 host)
+#   - fixed container name and localhost-only SSH binding
+#   - init + foreground sshd, restart: unless-stopped
+#   - no elevated runtime mode, no shared host namespaces, no host bind inputs,
+#     no daemon socket access
+#   - no credentials in the fixture: the public key arrives at prepare time
+services:
+  ubuntu-dotfiles-test:
+    platform: linux/amd64
+    image: ubuntu-dotfiles-test:26.04
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ubuntu-dotfiles-test
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2222:22"
+    entrypoint: ["/usr/local/bin/fixture-entrypoint"]
+    # The fixture adds no host bind inputs, no shared namespaces, and no env
+    # secrets. The tester public key is installed by scripts/ubuntu-test after
+    # the container starts.

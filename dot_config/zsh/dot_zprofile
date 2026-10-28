@@ -1,1 +1,4 @@
-# Empty .zprofile file to prevent other applications from adding default configurations.
+# Keep runtime activation available to login and SSH shells.
+if [[ -f "$ZDOTDIR/runtime.zsh" ]]; then
+  source "$ZDOTDIR/runtime.zsh"
+fi

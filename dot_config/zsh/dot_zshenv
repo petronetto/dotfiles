@@ -1,16 +1,39 @@
 #!/usr/bin/env zsh
 
-# General configuration
-export LANG=en_GB.UTF-8
-export TERM=xterm-256color
+if [[ "$OSTYPE" == darwin* ]]; then
+  export LANG=en_GB.UTF-8
+  export TERM=xterm-256color
+  export XDG_CONFIG_HOME="$HOME/.config"
+  export XDG_DATA_HOME="$HOME/.local/share"
+  export XDG_CACHE_HOME="$HOME/.cache"
+  export XDG_RUNTIME_DIR="$HOME/.cache/run"
+  export XDG_CONFIG_DIRS="/etc/xdg"
+  export XDG_DATA_DIRS="/opt/homebrew/share:/usr/local/share:/usr/share"
+else
+  # SSH clients can supply a locale that is not installed on the target.
+  _dotfiles_select_locale() {
+    local requested="${LANG:-en_US.UTF-8}" locales candidate available
+    locales=$(LC_ALL=C locale -a 2>/dev/null) || locales=C
+    for candidate in "$requested" en_US.UTF-8 C.UTF-8 C; do
+      for available in "${(@f)locales}"; do
+        [[ "${${available:l}//-/}" == "${${candidate:l}//-/}" ]] || continue
+        export LANG="$candidate"
+        return
+      done
+    done
+    export LANG=C
+  }
+  _dotfiles_select_locale
+  unfunction _dotfiles_select_locale
 
-# XDG Base Directory Specification
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_RUNTIME_DIR="$HOME/.cache/run"
-export XDG_CONFIG_DIRS="/etc/xdg"
-export XDG_DATA_DIRS="/opt/homebrew/share:/usr/local/share:/usr/share"
+  if [[ -z "${TERM:-}" ]]; then
+    export TERM=xterm-256color
+  fi
+  export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+  export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+  export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+  export XDG_CONFIG_DIRS="${XDG_CONFIG_DIRS:-/etc/xdg}"
+  export XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+fi
 
-# ZSH configuration
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"

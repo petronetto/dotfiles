@@ -7,8 +7,14 @@ export EDITOR='vim'
 export BAT_THEME="ansi"
 
 # PATH additions
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.composer/vendor/bin:$PATH"
+if [[ "$OSTYPE" == darwin* ]]; then
+  export PATH="$HOME/.local/bin:$PATH"
+  export PATH="$HOME/.composer/vendor/bin:$PATH"
+else
+  typeset -gU path
+  path=("$HOME/.local/bin" $path)
+  [[ ! -d "$HOME/.composer/vendor/bin" ]] || path=("$HOME/.composer/vendor/bin" $path)
+fi
 
 # Plans
 export PLAN_BACKEND='obsidian'

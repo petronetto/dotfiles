@@ -2,9 +2,16 @@
 # https://www.chezmoi.io/reference/configuration-file/
 
 {{- $gitEmail := promptStringOnce . "git_email" "Git email" }}
+{{- $profile := "workstation" }}
+{{- if hasKey . "profile" }}{{ $profile = .profile }}{{ end }}
+{{- if env "DOTFILES_PROFILE" }}{{ $profile = env "DOTFILES_PROFILE" }}{{ end }}
+{{- if not (has $profile (list "workstation" "test-container")) }}
+{{- fail "profile must be workstation or test-container" }}
+{{- end }}
 
 [data]
     git_email = {{ $gitEmail | quote }}
+    profile = {{ $profile | quote }}
 
 [git]
     autoCommit = false

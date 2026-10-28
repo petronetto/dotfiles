@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+[[ "$OSTYPE" == darwin* ]] || return 0
+
 # Simulate global display scaling (125%, 150%...) by adding HiDPI
 # scaled resolutions as a display override. Requires gum for the
 # interactive mode. Changes take effect after a reboot.

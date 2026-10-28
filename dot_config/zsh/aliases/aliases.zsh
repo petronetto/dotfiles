@@ -7,7 +7,11 @@ alias dc='docker compose'
 alias dup='docker compose up -d'
 alias dcs='docker compose stop'
 alias de='docker-exec'
-alias docker-init='open --background -a Docker'
+if [[ "$OSTYPE" == darwin* ]]; then
+  alias docker-init='open --background -a Docker'
+else
+  alias docker-init='print -r -- "Docker Engine uses system services. Review and authorize service setup separately."'
+fi
 alias docker-ip='docker inspect -f "{{.Name}} - {{.NetworkSettings.IPAddress }}" $(docker ps -aq)'
 alias docker-rm='docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
 alias docker-rm-stoped='docker stop $(docker ps -aq -f status=exited) && docker rm $(docker ps -aq -f status=exited)'
@@ -48,7 +52,11 @@ alias lla="ls -lla"
 
 # File operations
 alias tailf="tail -f"
-alias pwd="pwd | tee >(pbcopy)"
+if [[ "$OSTYPE" == darwin* ]]; then
+  alias pwd="pwd | tee >(pbcopy)"
+else
+  alias pwd="pwd | tee >(clipboard_copy)"
+fi
 alias prev="fzf --preview 'bat --style=numbers --color=always --line-range :500 {}'"
 
 #------------------------------------------------------------
@@ -82,9 +90,13 @@ alias ggraph="git log --graph --oneline --decorate --all"
 #------------------------------------------------------------
 # Python
 #------------------------------------------------------------
-alias python='python3'
-alias py='python'
-alias pip='pip3'
+if [[ "$OSTYPE" == darwin* ]] || command -v python3 >/dev/null; then
+  alias python='python3'
+  alias py='python'
+fi
+if [[ "$OSTYPE" == darwin* ]] || command -v pip3 >/dev/null; then
+  alias pip='pip3'
+fi
 
 #------------------------------------------------------------
 # tmux

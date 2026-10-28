@@ -1,0 +1,8 @@
+{{- if eq .chezmoi.os "linux" -}}
+[tools]
+{{ range .ubuntu.tools -}}
+{{ if eq .id "node" -}}
+node = {{ .version | quote }}
+{{ end -}}
+{{ end -}}
+{{ end -}}

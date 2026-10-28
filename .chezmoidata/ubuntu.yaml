@@ -1,0 +1,232 @@
+ubuntu:
+  schema: 1
+  release: "26.04"
+  architecture: amd64
+  # These are dependency packages, not additional selected end-user tools.
+  system_packages:
+    - ca-certificates
+    - gnupg
+    - tar
+    - libarchive-tools
+    - 7zip
+    - unzip
+    - xz-utils
+    - locales
+    - fontconfig
+    - wl-clipboard
+    - xclip
+  repositories:
+    - id: onepassword
+      url: https://downloads.1password.com/linux/debian/amd64
+      key_url: https://downloads.1password.com/linux/keys/1password.asc
+      key_format: armored
+      keyring_path: /usr/share/keyrings/1password-archive-keyring.gpg
+      sources_path: /etc/apt/sources.list.d/1password.sources
+      fingerprint: 3FEF9748469ADBE15DA7CA80AC2D62742012EA22
+      suite: stable
+      components: main
+      debsig_policy_url: https://downloads.1password.com/linux/debian/debsig/1password.pol
+    - id: brave
+      url: https://brave-browser-apt-release.s3.brave.com
+      key_url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+      key_format: binary
+      keyring_path: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+      sources_path: /etc/apt/sources.list.d/brave-browser-release.sources
+      suite: stable
+      components: main
+    - id: docker
+      url: https://download.docker.com/linux/ubuntu
+      key_url: https://download.docker.com/linux/ubuntu/gpg
+      key_format: armored
+      keyring_path: /etc/apt/keyrings/docker.asc
+      sources_path: /etc/apt/sources.list.d/docker.sources
+      fingerprint: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      suite: resolute
+      components: stable
+  # Versions below are selected upstream releases, not acceptance-test evidence.
+  # Provisioning records resolved versions and verification in the target home.
+  tools:
+    - id: zsh
+      owner: apt
+      packages: [zsh]
+      commands: [zsh]
+    - id: git
+      owner: apt
+      packages: [git]
+      commands: [git]
+    - id: curl
+      owner: apt
+      packages: [curl]
+      commands: [curl]
+    - id: jq
+      owner: apt
+      packages: [jq]
+      commands: [jq]
+    - id: ghostty
+      owner: apt
+      packages: [ghostty]
+      commands: [ghostty]
+    - id: ripgrep
+      owner: apt
+      packages: [ripgrep]
+      commands: [rg]
+    - id: fd
+      owner: apt
+      packages: [fd-find]
+      commands: [fd]
+      compatibility_binary: fdfind
+    - id: bat
+      owner: apt
+      packages: [bat]
+      commands: [bat]
+      compatibility_binary: batcat
+    - id: fzf
+      owner: apt
+      packages: [fzf]
+      commands: [fzf]
+    - id: zoxide
+      owner: apt
+      packages: [zoxide]
+      commands: [zoxide]
+    - id: lsd
+      owner: apt
+      packages: [lsd]
+      commands: [lsd]
+    - id: delta
+      owner: apt
+      packages: [git-delta]
+      commands: [delta]
+    - id: atuin
+      owner: apt
+      packages: [atuin]
+      commands: [atuin]
+    - id: tmux
+      owner: apt
+      packages: [tmux]
+      commands: [tmux]
+    - id: neovim
+      owner: apt
+      packages: [neovim]
+      commands: [nvim]
+    - id: chezmoi
+      owner: bootstrap
+      commands: [chezmoi]
+      source: https://get.chezmoi.io
+      verification: official-installer
+    - id: mise
+      owner: upstream
+      commands: [mise]
+      version: "2026.10.18"
+      format: binary
+      url: https://github.com/jdx/mise/releases/download/v2026.10.18/mise-v2026.10.18-linux-x64
+      sha256: e97c38973336aa2ff350fea50f47b412b266fe263b102b7200ff1e9b118c6942
+      verification: sha256
+      provenance: https://api.github.com/repos/jdx/mise/releases/tags/v2026.10.18
+    - id: node
+      owner: mise
+      commands: [node, npm, npx]
+      version: "24.22.1"
+      source: https://nodejs.org/dist/v24.22.1/
+      verification: mise-node-checksums
+    - id: starship
+      owner: upstream
+      commands: [starship]
+      version: "1.27.0"
+      format: tar.gz
+      url: https://github.com/starship/starship/releases/download/v1.27.0/starship-x86_64-unknown-linux-gnu.tar.gz
+      sha256: 3b94758850901717eb36aa1b53f8492c1322506ec6d41273bc6151e79ed8e4a1
+      verification: sha256
+      provenance: https://api.github.com/repos/starship/starship/releases/tags/v1.27.0
+    - id: herdr
+      owner: upstream
+      commands: [herdr]
+      version: "0.9.5"
+      format: binary
+      url: https://github.com/herdrdev/herdr/releases/download/v0.9.5/herdr-linux-x86_64
+      sha256: 14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d
+      verification: sha256
+      provenance: https://herdr.dev/latest.json
+    - id: ast-grep
+      owner: upstream
+      commands: [ast-grep]
+      version: "0.51.0"
+      format: zip
+      url: https://github.com/ast-grep/ast-grep/releases/download/0.51.0/app-x86_64-unknown-linux-gnu.zip
+      sha256: a7eead5552d3a8daad70f5d50d935da44bd0c138e946b5b0a96b1d38169fa639
+      verification: sha256
+      provenance: https://api.github.com/repos/ast-grep/ast-grep/releases/tags/0.51.0
+    - id: pi
+      owner: npm
+      commands: [pi]
+      package: "@earendil-works/pi-coding-agent"
+      version: "1.4.0"
+      source: https://pi.dev/
+      verification: npm-integrity
+    - id: onepassword
+      owner: vendor-apt
+      repository: onepassword
+      packages: [1password]
+      commands: [1password]
+    - id: op
+      owner: vendor-apt
+      repository: onepassword
+      packages: [1password-cli]
+      commands: [op]
+    - id: brave
+      owner: vendor-apt
+      repository: brave
+      packages: [brave-browser]
+      commands: [brave-browser]
+    - id: obsidian
+      owner: upstream
+      commands: [obsidian]
+      version: "1.14.5"
+      format: deb
+      url: https://github.com/obsidianmd/obsidian-releases/releases/download/v1.14.5/obsidian_1.14.5_amd64.deb
+      sha256: c37fb46a966f604823337fb36ab23bd1baf8ce912ec35af59d62358a93357bee
+      verification: sha256
+      provenance: https://api.github.com/repos/obsidianmd/obsidian-releases/releases/tags/v1.14.5
+    - id: zed
+      owner: upstream
+      commands: [zed]
+      dependencies: [libasound2t64, libvulkan1, libxkbcommon0, libxkbcommon-x11-0, libwayland-client0, libxcb1]
+      version: "1.25.3"
+      format: tar.gz
+      url: https://github.com/zed-industries/zed/releases/download/v1.25.3/zed-linux-x86_64.tar.gz
+      sha256: 35f9115acd8b4c3bea6ed20f7c9b6ec8f1d2c2dd5a1cc438d552167b5ed4b342
+      verification: sha256
+      provenance: https://api.github.com/repos/zed-industries/zed/releases/tags/v1.25.3
+    - id: todoist
+      owner: upstream
+      commands: [todoist]
+      dependencies: [libgtk-3-0t64, libnss3, libxss1, libasound2t64, libgbm1, libnotify4, libsecret-1-0]
+      version: "9.31.0"
+      format: appimage
+      url: https://electron-dl.todoist.net/linux/Todoist-linux-9.31.0-x86_64-latest.AppImage
+      verification: https-only
+      provenance: https://www.todoist.com/downloads/linux
+    - id: td
+      owner: npm
+      commands: [td]
+      package: "@doist/todoist-cli"
+      version: "5.8.0"
+      source: https://www.todoist.com/cli
+      verification: npm-integrity
+    - id: docker
+      owner: vendor-apt
+      repository: docker
+      packages: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
+      commands: [docker, "docker compose", "docker buildx"]
+  fonts:
+    - id: JetBrainsMono
+      family: JetBrainsMono NFM
+      version: "3.5.1"
+      url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/JetBrainsMono.tar.xz
+      sha256: 04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf
+      provenance: https://api.github.com/repos/ryanoasis/nerd-fonts/releases/tags/v3.5.1
+    - id: CascadiaCode
+      family: CaskaydiaCove Nerd Font
+      version: "3.5.1"
+      url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/CascadiaCode.tar.xz
+      sha256: ae598e9401e2846aa3ee364513715de0490b844a4b54f0768991f45f23aa8369
+      provenance: https://api.github.com/repos/ryanoasis/nerd-fonts/releases/tags/v3.5.1
