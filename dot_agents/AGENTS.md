@@ -36,8 +36,12 @@ Follow these guidelines in every project. The instructions below are not optiona
 - Comment only when the code cannot clearly express the reason.
 
 ## References (consult on demand)
-- Use `/find-docs` for current library, framework, SDK, CLI, or cloud documentation.
-- Before object-oriented or structurally complex work, read `@~/.agents/references/SOLID.md`, `@~/.agents/references/clean-code.md`, and `@~/.agents/references/object-calisthenics.md`.
+Before object-oriented or structurally complex work, read the references below, they are *non-negotiable design rules*:
+- Writting code: `@~/.agents/references/code-quality.md`, `@~/.agents/references/SOLID.md`, `@~/.agents/references/clean-code.md`, and `@~/.agents/references/object-calisthenics.md`.
+- Writting tests: `@~/.agents/references/writing-tests.md`.
+- Writting comments: `@~/.agents/references/writing-comments.md`.
+
+Use `/find-docs` for current library, framework, SDK, CLI, or cloud documentation.
 
 ## Communication
 - Write in ASD-STE100 Simplified Technical English by default. For generated documents, an explicit writing style in the document template takes precedence over this default. Be concise; prefer prose, and use lists only for enumerations, rankings, or steps.
