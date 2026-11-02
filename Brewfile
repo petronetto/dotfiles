@@ -32,6 +32,7 @@ cask "zed"          # Zed editor
 
 # --- Version control & hosting CLIs ---
 brew "git"
+brew "worktrunk"
 brew "git-delta"    # syntax-highlighting for git and diff output
 brew "gh"           # GitHub CLI
 
@@ -106,6 +107,7 @@ brew "mole"         # deep clean and Mac optimization tool
 cask "brave-browser"
 
 # --- GUI utilities ---
+cask "localsend"
 cask "rectangle"    # window management & snapping
 cask "vorssaint"    # menu bar system utilities
 
