@@ -33,31 +33,27 @@
     "reserveTokens": 16384,
     "keepRecentTokens": 20000
   },
-  "defaultProvider": "openrouter",
-  "defaultModel": "z-ai/glm-5.3-flash",
-  "lastChangelogVersion": "1.1.0",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6.1-sol",
+  "lastChangelogVersion": "1.4.0",
   "enabledModels": [
     "anthropic/claude-sonnet-5-5",
     "anthropic/claude-opus-5-5",
     "anthropic/claude-fable-5-1",
     "anthropic/claude-haiku-5-5",
     "openai-codex/gpt-6.1-sol",
+    "openai-codex/gpt-6.1-terra",
     "openai-codex/gpt-6-luna",
     "openai-codex/gpt-6-astra",
     "github-copilot/kimi-k3",
     "github-copilot/claude-sonnet-5.5",
     "github-copilot/claude-opus-5.5",
     "github-copilot/claude-haiku-5.5",
-    "github-copilot/gpt-6.1-sol",
-    "github-copilot/gpt-6-astra",
-    "github-copilot/gpt-6-luna",
     "openrouter/z-ai/glm-5.3-flash",
     "openrouter/z-ai/glm-5.3",
-    "openrouter/moonshotai/kimi-k3",
+    "openrouter/moonshotai/kimi-k3.1-pro",
     "openrouter/minimax/minimax-m3",
-    "openrouter/deepseek/deepseek-v4.1-flash",
-    "ollama/qwen3.8:27b-mlx",
-    "ollama/ornith-1.5:35b",
-    "ollama/gemma4:31b-mlx"
+    "openrouter/minimax/minimax-m3.1-flash",
+    "openrouter/deepseek/deepseek-v4.1-flash"
   ]
 }
