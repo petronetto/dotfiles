@@ -7,6 +7,9 @@ Follow these guidelines in every project. The instructions below are not optiona
 - Primary environment: macOS, Zsh, Homebrew. Prefer `fd`, `rg`, `bat`, `lsd`, `fzf`, `httpie`, `jq`, and `tldr` when available.
 - `ast-grep` is installed. For any code search that needs syntax or structure awareness, default to `ast-grep --lang <language> -p '<pattern>'`. Use text-only search (`rg`) only when a plain-text match is enough.
 - Use `ast-grep outline <file-or-dir>` for a cheap structural map (imports, exports, members) before you read full source.
+- Set an explicit timeout for every command.
+- Run long-running tasks in the background or in `tmux` so they do not block the session. Keep a way to check their status and stop them.
+- Use Worktrunk (`wt`) to manage Git worktrees.
 
 ## Token & Context Efficiency
 - Keep responses and context focused. Delegate codebase exploration when it reduces main-context use; disable sub-agent thinking for simple tasks.
