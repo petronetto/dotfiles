@@ -1,0 +1,60 @@
+#!/usr/bin/env zsh
+# Shared by retained and clean-install fixtures; never reads the host home.
+
+set -euo pipefail
+
+fail() {
+  print -u2 -r -- "ubuntu-snapshot: $*"
+  exit 1
+}
+
+(( $# == 2 )) || fail 'usage: ubuntu-snapshot <Git source root> <output directory>'
+readonly SOURCE="$(cd "$1" && pwd -P)"
+readonly OUTPUT="$2"
+readonly INCLUDE=(
+  .chezmoi.toml.tmpl .chezmoiignore .chezmoidata .chezmoiscripts
+  dot_config dot_agents private_dot_ssh symlink_dot_zshenv
+  scripts tests/ubuntu Brewfile bootstrap.sh
+)
+root="$(git -C "${SOURCE}" rev-parse --show-toplevel 2>/dev/null)" ||
+  fail 'source must be a Git working tree; no remote checkout is substituted'
+[[ "${SOURCE}" == "${root}" ]] || fail 'source must be the Git working-tree root'
+mkdir -p "${OUTPUT}"
+
+authorized_files() {
+  local candidate top
+  local files=()
+  while IFS= read -r -d '' candidate; do
+    case "${candidate}" in
+      private/*|*/private/*|*.age|*.swp|*/.DS_Store|*/__pycache__/*|*/node_modules/*) continue ;;
+    esac
+    [[ -f "${SOURCE}/${candidate}" && ! -L "${SOURCE}/${candidate}" ]] || continue
+    for top in "${INCLUDE[@]}"; do
+      if [[ "${candidate}" == "${top}" || "${candidate}" == "${top}"/* ]]; then
+        files+=("${candidate}")
+        break
+      fi
+    done
+  done < "${OUTPUT}/git-files"
+  (( ${#files} > 0 )) || fail 'no allowed source files found'
+  printf '%s\0' "${(ou)files[@]}"
+}
+
+content_digest() {
+  local file mode digest
+  while IFS= read -r -d '' file; do
+    mode=100644
+    [[ ! -x "${SOURCE}/${file}" ]] || mode=100755
+    digest="$(shasum -a 256 < "${SOURCE}/${file}")" || return
+    printf '%s\0%s\0%s\0' "${file}" "${mode}" "${digest%% *}"
+  done < "${OUTPUT}/files"
+}
+
+git -C "${SOURCE}" ls-files --cached --others --exclude-standard -z > "${OUTPUT}/git-files"
+authorized_files > "${OUTPUT}/files"
+digest="$(content_digest | shasum -a 256 | awk '{print $1}')"
+COPYFILE_DISABLE=1 tar --format=ustar --owner=root:0 --group=root:0 --no-xattrs --no-acls \
+  -C "${SOURCE}" --null -T "${OUTPUT}/files" -cf "${OUTPUT}/source.tar"
+[[ "${digest}" == "$(content_digest | shasum -a 256 | awk '{print $1}')" ]] ||
+  fail 'source changed while snapshotting; no container was modified'
+print -r -- "${digest}"

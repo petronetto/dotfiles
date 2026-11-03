@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Bootstrap contract tests, with system and network boundaries isolated."""
 
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 
@@ -17,7 +20,7 @@ BOOTSTRAP = REPO / "bootstrap.sh"
 # None of these commands may reach the host, even when testing the old script.
 BOUNDARIES = (
     "uname", "id", "getent", "sudo", "apt-get", "locale-gen", "curl",
-    "brew", "xcode-select", "softwareupdate", "chezmoi", "chown", "chsh",
+    "brew", "xcode-select", "softwareupdate", "chezmoi", "chown", "chsh", "bsdtar", "tar", "sha256sum",
 )
 DISPATCHER = r'''
 import json
@@ -66,14 +69,35 @@ elif name == "chezmoi":
     elif "get-url" in args:
         print(os.environ.get("TEST_ORIGIN", "https://example.invalid/dotfiles.git"))
 elif name == "curl":
-    installer = ('#!/bin/sh\nset -eu\n'
-                 'mkdir -p "$HOME/.local/bin"\n'
-                 'cp "$TEST_DISPATCHER" "$HOME/.local/bin/chezmoi"\n'
-                 'chmod +x "$HOME/.local/bin/chezmoi"\n')
-    if "-o" in args:
-        Path(args[args.index("-o") + 1]).write_text(installer)
+    url = next(value for value in args if value.startswith("https://"))
+    destination = Path(args[args.index("-o") + 1]) if "-o" in args else None
+    if url.endswith("/releases/latest"):
+        content = json.dumps({"tag_name": os.environ.get("TEST_RELEASE_TAG", "v2.99.0")})
+    elif url.endswith("_checksums.txt"):
+        digest = os.environ["TEST_ARCHIVE_DIGEST"]
+        if os.environ.get("TEST_BAD_CHECKSUM"):
+            digest = "0" * 64
+        content = digest + "  " + os.environ["TEST_ASSET"] + "\n"
+        if os.environ.get("TEST_EMPTY_CHECKSUM"):
+            content = ""
+    elif url.endswith(".tar.gz"):
+        shutil.copyfile(os.environ["TEST_ARCHIVE"], destination)
+        sys.exit(0)
     else:
-        print(installer)
+        content = ('#!/bin/sh\nset -eu\n'
+                   'mkdir -p "$HOME/.local/bin"\n'
+                   'cp "$TEST_DISPATCHER" "$HOME/.local/bin/chezmoi"\n'
+                   'chmod +x "$HOME/.local/bin/chezmoi"\n')
+    if destination is not None:
+        destination.write_text(content)
+    else:
+        print(content)
+elif name == "bsdtar":
+    os.execv(os.environ["TEST_REAL_BSDTAR"], ["bsdtar", *args])
+elif name == "tar":
+    sys.exit("GNU tar must not be used for Ubuntu bootstrap extraction")
+elif name == "sha256sum":
+    os.execv(os.environ["TEST_REAL_SHASUM"], ["shasum", "-a", "256", *args])
 elif name == "brew":
     if args == ["shellenv"]:
         print(":")
@@ -95,6 +119,20 @@ class BootstrapTests(unittest.TestCase):
         dispatcher.chmod(0o755)
         for name in BOUNDARIES:
             (self.bin / name).symlink_to(dispatcher)
+        for name in ("jq",):
+            executable = shutil.which(name)
+            self.assertIsNotNone(executable, f"{name} is required for bootstrap verification")
+            (self.bin / name).symlink_to(executable)
+        self.archive = self.root / "chezmoi.tar.gz"
+        binary = dispatcher.read_bytes()
+        with tarfile.open(self.archive, "w:gz") as archive:
+            member = tarfile.TarInfo("chezmoi")
+            member.size = len(binary)
+            member.mode = 0o755
+            archive.addfile(member, io.BytesIO(binary))
+            completion = tarfile.TarInfo("completions/chezmoi-completion.bash")
+            completion.size = 0
+            archive.addfile(completion, io.BytesIO())
         # Replace only the OS-release file boundary, not bootstrap logic.
         self.release = self.root / "os-release"
         self.release.write_text('ID=ubuntu\nVERSION_ID="26.04"\n')
@@ -108,6 +146,11 @@ class BootstrapTests(unittest.TestCase):
             "TEST_OS": "Linux", "TEST_ARCH": "x86_64", "TEST_UID": "1000",
             "TEST_LOG": str(self.log), "TEST_USER_HOME": str(self.home),
             "TEST_DISPATCHER": str(dispatcher), "LC_ALL": "C",
+            "TEST_ARCHIVE": str(self.archive),
+            "TEST_ARCHIVE_DIGEST": hashlib.sha256(self.archive.read_bytes()).hexdigest(),
+            "TEST_ASSET": "chezmoi_2.99.0_linux-glibc_amd64.tar.gz",
+            "TEST_REAL_BSDTAR": shutil.which("bsdtar"),
+            "TEST_REAL_SHASUM": shutil.which("shasum"),
         }
 
     def run_bootstrap(self, *args, piped=False):
@@ -353,6 +396,61 @@ class BootstrapTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("chezmoi download/install", result.stderr)
         self.assertFalse([c for c in self.commands() if c["command"] == "chezmoi"])
+
+    def test_ubuntu_installs_the_official_checksummed_release_with_bsdtar(self):
+        (self.bin / "chezmoi").unlink()
+
+        result = self.run_bootstrap()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.home / ".local/bin/chezmoi").is_file())
+        downloads = [argument for call in self.commands() if call["command"] == "curl"
+                     for argument in call["args"] if argument.startswith("https://")]
+        self.assertIn("https://api.github.com/repos/twpayne/chezmoi/releases/latest", downloads)
+        self.assertIn("https://github.com/twpayne/chezmoi/releases/download/v2.99.0/" + self.env["TEST_ASSET"], downloads)
+        self.assertTrue(any(call["command"] == "bsdtar" for call in self.commands()))
+        self.assertFalse(any(call["command"] == "tar" for call in self.commands()))
+        record = json.loads((self.home / ".local/state/dotfiles/bootstrap-chezmoi.json").read_text())
+        self.assertEqual(record["version"], "2.99.0")
+        self.assertEqual(record["sha256"], self.env["TEST_ARCHIVE_DIGEST"])
+        self.assertEqual(record["verification"], "release-sha256")
+
+    def test_ubuntu_rejects_bad_or_missing_release_checksums_before_installation(self):
+        (self.bin / "chezmoi").unlink()
+        for setting in ("TEST_BAD_CHECKSUM", "TEST_EMPTY_CHECKSUM"):
+            with self.subTest(setting=setting):
+                self.env[setting] = "1"
+                self.log.write_text("")
+
+                result = self.run_bootstrap()
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("chezmoi download/install", result.stderr)
+                self.assertFalse((self.home / ".local/bin/chezmoi").exists())
+                self.assertFalse(any(call["command"] in ("bsdtar", "chezmoi") for call in self.commands()))
+                del self.env[setting]
+
+    def test_ubuntu_rejects_invalid_release_tags_before_asset_download(self):
+        (self.bin / "chezmoi").unlink()
+        self.env["TEST_RELEASE_TAG"] = "../../untrusted"
+
+        result = self.run_bootstrap()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.home / ".local/bin/chezmoi").exists())
+        downloads = [call for call in self.commands() if call["command"] == "curl"]
+        self.assertEqual(len(downloads), 1)
+
+    def test_ubuntu_extraction_failure_does_not_install_or_initialize_chezmoi(self):
+        (self.bin / "chezmoi").unlink()
+        self.env["TEST_FAIL_COMMAND"] = "bsdtar"
+
+        result = self.run_bootstrap()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("chezmoi download/install", result.stderr)
+        self.assertFalse((self.home / ".local/bin/chezmoi").exists())
+        self.assertFalse(any(call["command"] == "chezmoi" for call in self.commands()))
 
     def test_macos_retains_existing_init_and_does_not_install_ubuntu_tools(self):
         self.env["TEST_OS"] = "Darwin"

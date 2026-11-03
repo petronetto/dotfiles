@@ -111,8 +111,8 @@ ubuntu:
     - id: chezmoi
       owner: bootstrap
       commands: [chezmoi]
-      source: https://get.chezmoi.io
-      verification: official-installer
+      source: https://github.com/twpayne/chezmoi/releases
+      verification: release-sha256
     - id: mise
       owner: upstream
       commands: [mise]

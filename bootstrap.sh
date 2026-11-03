@@ -146,11 +146,30 @@ prepare_ubuntu() {
   as_user sh -eu -c '
     export PATH="$HOME/.local/bin:$PATH"
     if command -v chezmoi >/dev/null 2>&1; then exit 0; fi
-    installer=$(mktemp)
-    trap '\''rm -f "$installer"'\'' EXIT
-    curl -fsSL https://get.chezmoi.io -o "$installer"
-    sh "$installer" -b "$HOME/.local/bin"
-    test -x "$HOME/.local/bin/chezmoi"
+    cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/bootstrap"
+    mkdir -p "$cache_dir"
+    work_dir=$(mktemp -d "$cache_dir/chezmoi.XXXXXX")
+    printf "Chezmoi bootstrap staging: %s\n" "$work_dir"
+    curl -fsSL https://api.github.com/repos/twpayne/chezmoi/releases/latest -o "$work_dir/release.json"
+    tag=$(jq -er '\''.tag_name | select(type == "string" and test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))'\'' "$work_dir/release.json")
+    version=${tag#v}
+    asset="chezmoi_${version}_linux-glibc_amd64.tar.gz"
+    release_url="https://github.com/twpayne/chezmoi/releases/download/$tag"
+    curl -fsSL "$release_url/$asset" -o "$work_dir/$asset"
+    curl -fsSL "$release_url/chezmoi_${version}_checksums.txt" -o "$work_dir/checksums.txt"
+    checksum=$(awk -v file="$asset" '\''$2 == file {print $1}'\'' "$work_dir/checksums.txt")
+    [ "${#checksum}" -eq 64 ] || { printf "Invalid chezmoi release checksum\n" >&2; exit 1; }
+    printf "%s  %s\n" "$checksum" "$work_dir/$asset" | sha256sum --check --strict --status
+    bsdtar -xzf "$work_dir/$asset" -C "$work_dir" chezmoi
+    test -f "$work_dir/chezmoi" && test ! -L "$work_dir/chezmoi"
+    mkdir -p "$HOME/.local/bin"
+    install -m 0755 "$work_dir/chezmoi" "$HOME/.local/bin/chezmoi"
+    state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+    mkdir -p "$state_dir"
+    jq -n --arg version "$version" --arg source "$release_url/$asset" --arg sha256 "$checksum" \
+      '\''{version: $version, source: $source, sha256: $sha256, verification: "release-sha256"}'\'' \
+      > "$state_dir/bootstrap-chezmoi.json"
+    printf "Installed chezmoi %s (verified SHA-256)\n" "$version"
   '
 }
 

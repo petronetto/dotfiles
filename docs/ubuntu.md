@@ -1,8 +1,8 @@
 # Ubuntu secondary workstation
 
 Status: in development. Package installation has been exercised in an AMD64
-Ubuntu 26.04 fixture. Shared configuration, the retained SSH fixture, and the
-full CLI acceptance gate are not complete. Do not deploy to a workstation until
+Ubuntu 26.04 fixture. The retained Docker fixture and the full CLI acceptance
+gate are not complete. Do not deploy to a workstation until
 that gate passes. No primary-machine apply is part of this work.
 
 ## Bootstrap and ownership
@@ -21,6 +21,16 @@ not a workstation bypass for service consent. No passwordless sudo is configured
 Each selected tool has one installation owner. Bootstrap installs prerequisites
 before chezmoi can run Zsh lifecycle scripts. Supporting archive and font tools
 are dependencies, not additional selected end-user tools.
+
+When chezmoi is missing, Ubuntu bootstrap downloads the latest stable official
+AMD64 glibc release, verifies its SHA-256 checksum, and extracts only the binary
+with `bsdtar`. This avoids the official shell installer's hardcoded GNU tar
+extraction, which fails on nested paths in the AMD64 emulation fixture. The
+macOS installation path is unchanged. The resolved version, source URL, and
+archive digest are recorded in
+`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/bootstrap-chezmoi.json`.
+Download metadata and archives remain under
+`${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/bootstrap/` for diagnosis.
 
 ## Selected applications and commands
 
@@ -69,8 +79,9 @@ fc-match -f '%{family}\n' 'JetBrainsMono NFM'
 fc-match -f '%{family}\n' 'CaskaydiaCove Nerd Font'
 ```
 
-GitHub/upstream release artifacts with published SHA-256 values are pinned and
-checked before installation. Vendor packages use signed apt repositories. The
+Cataloged GitHub/upstream release artifacts with published SHA-256 values are
+pinned and checked before installation. Bootstrap resolves and records the
+latest stable chezmoi release rather than pinning it. Vendor packages use signed apt repositories. The
 Todoist AppImage source does not publish a checksum in the selected download
 flow: its record states `https-only` and records the downloaded content hash.
 That hash identifies the tested file; it is not an independent vendor signature.
@@ -113,36 +124,63 @@ Complete these steps on the intended machine, not through automated fixture logi
 7. Open Brave and complete any optional browser/account setup manually.
 8. Review the separate Docker service and access decisions below.
 
-## Retained SSH test fixture
+## Retained Docker test fixture
 
-`scripts/ubuntu-test` manages the named container `ubuntu-dotfiles-test` on this
-Mac. Its lifecycle operations never delete the sandbox: `prepare` builds and
-starts it, `start` reuses or resumes it, `status` reports state, `ssh` and
-`logs` print instructions, `check` runs the smoke gate, and `stop` stops it
-with the filesystem intact.
+`scripts/ubuntu-test` manages `ubuntu-dotfiles-test`. The host needs Docker
+with Compose, Git, jq, Zsh, tar, and shasum. No lifecycle operation removes,
+resets, rebuilds, or replaces an existing container. There is no SSH server,
+public-key input, published port, host-home mount, or Docker socket mount.
 
-- Public key input: `ubuntu-test prepare --public-key <file>` accepts only an
-  OpenSSH public key. The fixture copies that one file into
-  `/home/tester/.ssh/authorized_keys` and never requests or records a private
-  key. The key fingerprint is reported; the key body is not logged.
-- SSH access: `ssh -t -p 2222 tester@localhost` starts an interactive Zsh
-  session. SSH listens on `127.0.0.1` only, with password login, root login,
-  and agent forwarding disabled.
-- Host-key verification: the container generates its own SSH host keys at
-  creation and keeps them across stop/start. If the container is ever replaced
-  explicitly (`start --yes`), the new fingerprint is reported for the user to
-  accept manually; known_hosts is never rewritten automatically.
-- Manual sudo: the `tester` account has sudo group membership with the
-  standard password challenge. To set a sudo password for manual testing, run
-  `docker exec -it --user root ubuntu-dotfiles-test passwd tester`. That does
-  not enable SSH password authentication.
-- Persistent-state boundaries: stop/start preserves installed packages, user
-  files, configuration, and the SSH host identity. Running processes and live
-  Herdr sessions do not survive a container restart; restart them after
-  reconnecting.
-- No automatic cleanup: no operation removes, resets, or silently replaces the
-  container. A fingerprint mismatch (different source or image evidence)
-  refuses replacement until you pass `--yes` explicitly.
+```sh
+scripts/ubuntu-test prepare
+scripts/ubuntu-test status
+scripts/ubuntu-test shell
+# Equivalent interactive entry:
+docker exec -it --user tester ubuntu-dotfiles-test zsh -l
+scripts/ubuntu-test logs
+scripts/ubuntu-test stop
+scripts/ubuntu-test start
+```
+
+`prepare` builds the AMD64 image, starts it, and copies an allowlisted snapshot
+of the current public Git working tree, including uncommitted implementation
+files, into `/home/tester/.local/share/chezmoi`. Git-ignored files, private
+trees, caches, and filesystem symlinks are excluded. Archives strip host extended
+attributes and ACLs and use neutral root ownership. Chezmoi's regular
+`symlink_` source instructions are included. Preparation alone does not prove
+package installation or CLI acceptance. After provisioning, `check` runs the
+catalog-linked smoke gate as `tester` and copies its JSON report to the host.
+Missing smoke implementations fail the gate; they are not passing tests.
+
+```sh
+scripts/ubuntu-test check
+scripts/ubuntu-test check --only jq
+```
+
+A focused run records other catalog commands as `unexecuted`, so it cannot pass
+full acceptance. Reports contain the source digest, immutable image ID, actual
+runtime architecture and UID, installed versions, and each command's status,
+exit code, bounded output, and duration. A missing command/check, skip, failure,
+timeout, invalid evidence, root execution, or wrong architecture blocks the gate.
+Machine-only checks remain explicitly pending even after all CLI checks pass.
+
+`prepare`, `start`, and `shell` compare the current source content digest and
+immutable local image ID with the retained container, even when it is stopped.
+A mismatch fails without replacing it. Replacement needs separate approval;
+there is no `--yes` bypass. Evidence is stored under
+`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/ubuntu-test/`.
+
+Shell entry uses the non-root `tester` account without a password. Docker
+access itself is a privileged host capability. The account belongs to the sudo
+group but has no passwordless-sudo exemption. To set a manual sudo password:
+
+```sh
+docker exec -it --user root ubuntu-dotfiles-test passwd tester
+```
+
+Stop/start preserves installed packages, configuration, and manual files.
+Running processes and live Herdr sessions do not survive a restart. Start them
+again after entering the container.
 
 ## Shell and keybinding behavior
 
@@ -164,6 +202,9 @@ Linux shell behavior differs from macOS in these areas:
 - Optional helpers: Homebrew, `pbcopy`, the macOS Docker launcher, and macOS
   1Password paths stay macOS-only. Linux uses `~/.1password/agent.sock` and the
   `/opt/1Password/op-ssh-sign` helper.
+- Atuin: Ubuntu keeps the apt package and uses its supported `fuzzy` search
+  mode. macOS retains `daemon-fuzzy`; all other shared Atuin settings remain
+  the same.
 - Local models: Pi and Zed start without the primary machine's Ollama server or
   MLX models. Live provider and account selection stays interactive. Ollama is
   not deployed on Ubuntu: the `ollama` Zsh helper and the Pi Ollama discovery

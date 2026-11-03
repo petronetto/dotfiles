@@ -68,8 +68,10 @@ bash /path/to/source/bootstrap.sh --source /path/to/source --user tester --profi
 ```
 
 Bootstrap installs sudo, CA certificates, curl, Git, GnuPG, archive utilities
-(including `libarchive-tools` for `bsdtar` and `7zip` for AppImages), locales, jq, and Zsh through apt, generates `en_US.UTF-8`, then installs chezmoi
-from its official installer if needed. System packages use root privileges;
+(including `libarchive-tools` for `bsdtar` and `7zip` for AppImages), locales,
+jq, and Zsh through apt, generates `en_US.UTF-8`, then installs chezmoi from its
+official AMD64 glibc release if needed. It verifies the archive against the
+release's SHA-256 checksums before extracting the binary with `bsdtar`. System packages use root privileges;
 chezmoi and user-local files use the target account. It does not change the login
 shell, sudo policy, or group membership. A normal-user run stops if elevation
 fails. Root without `--user`, or with a root target, is refused.

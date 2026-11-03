@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 
 
@@ -254,6 +255,14 @@ class PlatformTests(unittest.TestCase):
         self.assertIn("open --background -a Docker", result.stdout)
         self.assertTrue(any(c["command"] == "brew" for c in self.commands()))
         self.assertFalse(any(c["command"] == "mise" for c in self.commands()))
+
+    def test_atuin_keeps_shared_settings_with_platform_compatible_search_modes(self):
+        linux = tomllib.loads(self.render("dot_config/atuin/config.toml", "linux"))
+        darwin = tomllib.loads(self.render("dot_config/atuin/config.toml", "darwin"))
+
+        self.assertEqual(linux.pop("search_mode"), "fuzzy")
+        self.assertEqual(darwin.pop("search_mode"), "daemon-fuzzy")
+        self.assertEqual(linux, darwin)
 
     def test_linux_git_and_ssh_use_native_onepassword_paths(self):
         git = self.render("dot_config/git/config", "linux")

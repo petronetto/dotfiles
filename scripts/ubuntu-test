@@ -1,309 +1,155 @@
 #!/usr/bin/env zsh
-# Retained Ubuntu acceptance sandbox lifecycle.
-#
-# Operations (none deletes the sandbox):
-#   prepare --public-key <file> [--source <dir>]  build, start, install key
-#   start [--yes]                                 reuse or start the container
-#   status                                        state and SSH instructions
-#   ssh                                           print the SSH command
-#   logs                                          container logs
-#   stop                                          stop without deleting state
-#   check                                         run the smoke gate (pending)
-#
-# The retained container keeps installed tools, configuration, and manual
-# files across stop/start. Replacing it requires explicit confirmation; a
-# fingerprint mismatch is refused, never silently rebuilt.
+# Persistent Docker-only Ubuntu acceptance fixture. No operation removes it.
 
 set -euo pipefail
 
 readonly CONTAINER='ubuntu-dotfiles-test'
-readonly PORT='2222'
 readonly IMAGE='ubuntu-dotfiles-test:26.04'
 readonly PLATFORM='linux/amd64'
-readonly SSH_COMMAND='ssh -t -p 2222 tester@localhost'
-readonly FINGERPRINT_PATH='/opt/dotfiles-fixture/fingerprint'
 readonly REPO="$(cd "${0:A:h}/.." && pwd)"
 readonly COMPOSE_FILE="${REPO}/tests/ubuntu/docker-compose.yml"
 readonly STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/ubuntu-test"
-readonly SNAPSHOT_TAR="${STATE_DIR}/source-snapshot.tar"
-readonly MANIFEST="${STATE_DIR}/manifest.json"
-readonly STATE_FINGERPRINT="${STATE_DIR}/fingerprint"
-readonly STATE_PUBKEY="${STATE_DIR}/public-key"
+readonly GUEST_SOURCE='/home/tester/.local/share/chezmoi'
+readonly SHELL_COMMAND="docker exec -it --user tester ${CONTAINER} zsh -l"
+SOURCE="${REPO}"
+SNAPSHOT_DIR=''
+SOURCE_DIGEST=''
+CHECK_ARGS=()
 
-# Top-level source entries copied into the container snapshot. Everything else
-# (tests, docs, plans, private trees, secrets, editor debris) stays on the host.
-readonly SNAPSHOT_INCLUDE=(
-  .chezmoi.toml.tmpl .chezmoiignore .chezmoidata .chezmoiscripts
-  dot_config dot_agents dot_zshenv dot_zprofile dot_zshrc
-  private_dot_ssh scripts Brewfile bootstrap.sh
-)
+fail() {
+  print -u2 -r -- "ubuntu-test: error: $*"
+  exit 1
+}
 
 compose() {
   docker compose --project-directory "${REPO}/tests/ubuntu" -f "${COMPOSE_FILE}" "$@"
 }
 
-die() {
-  print -r -- "ubuntu-test: error: $1" >&2
-  exit "${2:-1}"
+container_exists() {
+  docker inspect "${CONTAINER}" >/dev/null 2>&1
 }
 
-port_busy() {
-  nc -z 127.0.0.1 "${PORT}" 2>/dev/null
+container_running() {
+  [[ "$(docker inspect --format '{{.State.Running}}' "${CONTAINER}")" == true ]]
 }
 
-container_line() {
-  docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}' 2>/dev/null |
-    grep "^${CONTAINER}" || true
-}
-
-container_fingerprint() {
-  docker exec "${CONTAINER}" cat "${FINGERPRINT_PATH}" 2>/dev/null || true
-}
-
-image_digest() {
-  docker image inspect --format '{{index .RepoDigests 0}}' "${IMAGE}" 2>/dev/null ||
-    print 'unbuilt-image'
-}
-
-current_fingerprint() {
-  printf '%s|%s' "$(cat "${STATE_DIR}/source-digest" 2>/dev/null || print none)" \
-    "$(image_digest)" | shasum -a 256 | awk '{print $1}'
-}
-
-require_port_free() {
-  if port_busy; then
-    die "port ${PORT} is already occupied; free port ${PORT} before preparing the fixture" 4
-  fi
-}
-
-require_public_key() {
-  if [[ -z "${PUBKEY}" ]]; then
-    die 'prepare requires --public-key <file>: the fixture installs only the public key you select' 2
-  fi
-  if [[ ! -f "${PUBKEY}" ]]; then
-    die "public key file not found: ${PUBKEY}" 2
-  fi
-  if grep -q 'PRIVATE KEY' "${PUBKEY}"; then
-    die 'refusing a private key; pass the .pub public key only' 2
-  fi
-  ssh-keygen -lf "${PUBKEY}" >/dev/null 2>&1 ||
-    die "public key is not a valid OpenSSH key: ${PUBKEY}" 2
+image_identity() {
+  docker image inspect --format '{{.Id}}' "${IMAGE}"
 }
 
 build_snapshot() {
-  local source="$1"
-  [[ -d "${source}" ]] || die "source tree not found: ${source}" 2
-  local list_tmp="${STATE_DIR}/snapshot-filelist"
-
   mkdir -p "${STATE_DIR}"
-  local rel top keep skip
-  : > "${list_tmp}"
-  find "${source}" -type f 2>/dev/null | while read -r file; do
-    rel="${file#"${source}"/}"
-    keep=0
-    for top in "${SNAPSHOT_INCLUDE[@]}"; do
-      if [[ "${rel}" == "${top}" || "${rel}" == "${top}"/* ]]; then
-        keep=1
-        break
-      fi
-    done
-    [[ "${keep}" == 1 ]] || continue
-    skip=0
-    case "${rel}" in
-      .git|*/.git/*|*/.git) skip=1 ;;
-      private|private/*|*/private/*) skip=1 ;;
-      *.age|*.swp|.DS_Store|*/.DS_Store) skip=1 ;;
-      *__pycache__*|*node_modules*) skip=1 ;;
-    esac
-    [[ "${skip}" == 1 ]] || print "${rel}" >> "${list_tmp}"
-  done
-
-  tar -C "${source}" -cf "${SNAPSHOT_TAR}" -T "${list_tmp}"
-  local digest
-  digest="$(shasum -a 256 "${SNAPSHOT_TAR}" | awk '{print $1}')"
-  print "${digest}" > "${STATE_DIR}/source-digest"
-  local count
-  count="$(wc -l < "${list_tmp}" | tr -d ' ')"
-  {
-    printf '{"digest":"%s","image":"%s","platform":"%s","created":"%s",'
-    printf '"excluded":["git","private-trees","secrets","untracked-top-level","caches","editor-debris"],"files":['
-    local first=1 file
-    while read -r file; do
-      [[ "${first}" == 1 ]] || printf ','
-      printf '"%s"' "${file}"
-      first=0
-    done < "${list_tmp}"
-    printf ']}\n'
-  } > "${MANIFEST}"
-  print "snapshot: ${count} files, source digest ${digest}"
+  SNAPSHOT_DIR="$(mktemp -d "${STATE_DIR}/snapshot.XXXXXX")"
+  SOURCE_DIGEST="$(zsh "${REPO}/scripts/ubuntu-snapshot" "${SOURCE}" "${SNAPSHOT_DIR}")"
 }
 
-wait_for_sshd() {
-  local attempt
-  for attempt in {1..30}; do
-    if docker exec "${CONTAINER}" pgrep -x sshd >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-  done
-  die 'sshd did not start inside the fixture container' 5
+record_manifest() {
+  local image="$1"
+  jq -n --arg digest "${SOURCE_DIGEST}" --arg image "${image}" \
+    --arg platform "${PLATFORM}" --arg created "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --rawfile files "${SNAPSHOT_DIR}/files" \
+    '{source_digest: $digest, image: $image, platform: $platform, created: $created,
+      files: ($files | split("\u0000") | map(select(length > 0)))}' > "${SNAPSHOT_DIR}/manifest.json"
+  cp "${SNAPSHOT_DIR}/manifest.json" "${STATE_DIR}/manifest.json"
 }
 
-install_public_key() {
-  docker cp "${PUBKEY}" "${CONTAINER}:/tmp/fixture-authorized-keys"
-  docker exec "${CONTAINER}" install -d -m 0700 -o tester -g tester /home/tester/.ssh
-  docker exec "${CONTAINER}" install -m 0600 -o tester -g tester \
-    /tmp/fixture-authorized-keys /home/tester/.ssh/authorized_keys
-  docker exec "${CONTAINER}" rm -f /tmp/fixture-authorized-keys
-}
-
-record_fingerprint() {
-  local fingerprint="$1"
-  docker exec "${CONTAINER}" mkdir -p /opt/dotfiles-fixture
-  docker exec "${CONTAINER}" sh -c "printf '%s\n' '${fingerprint}' > '${FINGERPRINT_PATH}'"
-  mkdir -p "${STATE_DIR}"
-  print "${fingerprint}" > "${STATE_FINGERPRINT}"
+require_matching_container() {
+  local actual expected
+  actual="$(docker inspect --format '{{ index .Config.Labels "dotfiles.source-digest" }}|{{.Image}}' "${CONTAINER}")"
+  expected="${SOURCE_DIGEST}|$(image_identity)"
+  [[ "${actual}" == "${expected}" ]] ||
+    fail "fingerprint mismatch: retained=${actual} current=${expected}; container preserved, replacement requires separate approval"
 }
 
 print_summary() {
-  local fingerprint="$1"
-  print "platform: ${PLATFORM}"
-  print "source digest: $(cat "${STATE_DIR}/source-digest")"
-  print "image digest: $(image_digest)"
-  print "fingerprint: ${fingerprint}"
-  print "public key: $(ssh-keygen -lf "${PUBKEY}" | awk '{print $2}') (tester)"
-  print "authorized keys: ${PUBKEY:t} -> /home/tester/.ssh/authorized_keys"
-  print "ssh: ${SSH_COMMAND}"
-  print 'retained: the container stays running after prepare and check failures'
+  print -r -- "container: ${CONTAINER}"
+  print -r -- "shell: ${SHELL_COMMAND}"
+  if [[ -f "${STATE_DIR}/manifest.json" ]]; then
+    jq -r '"source digest: \(.source_digest)\nimage: \(.image)\nplatform: \(.platform)"' "${STATE_DIR}/manifest.json"
+  fi
+  print -r -- 'retained: installed files persist across stop/start; running sessions do not'
 }
 
-do_prepare() {
-  require_port_free
-  require_public_key
-  print "public key: $(ssh-keygen -lf "${PUBKEY}" | awk '{print $2}') (tester)"
-  local existing
-  existing="$(container_line)"
-  if [[ -n "${existing}" ]]; then
-    local stored
-    stored="$(cat "${STATE_FINGERPRINT}" 2>/dev/null || print '')"
-    if [[ "$(container_fingerprint)" == "${stored}" && -n "${stored}" ]]; then
-      print "reusing existing container; fingerprint matches the recorded evidence"
-      print_summary "$(current_fingerprint)"
-      return 0
-    fi
-    die "existing container holds different source evidence; replace it explicitly with: ubuntu-test start --yes" 3
+resume_container() {
+  require_matching_container
+  if ! container_running; then
+    docker start "${CONTAINER}" >/dev/null
   fi
-  build_snapshot "${SOURCE}"
-  print "building ${IMAGE} for ${PLATFORM}"
-  compose up -d --build
-  wait_for_sshd
-  install_public_key
-  local fingerprint
-  fingerprint="$(current_fingerprint)"
-  record_fingerprint "${fingerprint}"
-  print "${PUBKEY}" > "${STATE_PUBKEY}"
-  print_summary "${fingerprint}"
+  print -r -- 'reusing matching container; manual state is preserved'
 }
 
-do_start() {
-  local existing
-  existing="$(container_line)"
-  if [[ -z "${existing}" ]]; then
-    die "no fixture container named ${CONTAINER}; run: ubuntu-test prepare" 3
+prepare() {
+  build_snapshot
+  if container_exists; then
+    resume_container
+    print_summary
+    return
   fi
-  if [[ "${existing}" == *'running'* ]]; then
-    local container_fp state_fp
-    container_fp="$(container_fingerprint)"
-    state_fp="$(cat "${STATE_FINGERPRINT}" 2>/dev/null || print '')"
-    if [[ -n "${container_fp}" && "${container_fp}" == "${state_fp}" ]]; then
-      print "reusing existing container; fingerprint matches the recorded evidence"
-      return 0
-    fi
-    if [[ "${REPLACE:-}" == '--yes' ]]; then
-      docker stop "${CONTAINER}" >/dev/null
-      docker rm "${CONTAINER}" >/dev/null
-      print 'replaced: rebuilding the fixture with the current source'
-      PUBKEY="$(cat "${STATE_PUBKEY}" 2>/dev/null || print '')"
-      SOURCE="${REPO}"
-      do_prepare
-      return 0
-    fi
-    die "fingerprint mismatch: container=${container_fp:-none} recorded=${state_fp:-none}; replacement requires explicit confirmation: ubuntu-test start --yes" 3
-  fi
-  docker start "${CONTAINER}" >/dev/null
-  print "started ${CONTAINER}; stopped files are intact, running sessions are not"
+  compose build
+  local image
+  image="$(image_identity)"
+  export UBUNTU_TEST_SOURCE_DIGEST="${SOURCE_DIGEST}"
+  compose up -d --no-build --no-recreate
+  require_matching_container
+  docker exec --user root "${CONTAINER}" mkdir -p /opt/dotfiles-fixture
+  docker exec --user tester "${CONTAINER}" mkdir -p "${GUEST_SOURCE}"
+  docker cp "${SNAPSHOT_DIR}/source.tar" "${CONTAINER}:/opt/dotfiles-fixture/source.tar"
+  docker exec --user tester "${CONTAINER}" bsdtar -xf /opt/dotfiles-fixture/source.tar -C "${GUEST_SOURCE}"
+  record_manifest "${image}"
+  docker cp "${STATE_DIR}/manifest.json" "${CONTAINER}:/opt/dotfiles-fixture/manifest.json"
+  print_summary
+  print -r -- 'source prepared; package provisioning and CLI acceptance are separate, not yet passed'
 }
 
-do_status() {
-  local existing
-  existing="$(container_line)"
-  if [[ -z "${existing}" ]]; then
-    print "status: not created (run: ubuntu-test prepare)"
-    return 0
-  fi
-  print "status: ${existing}"
-  if [[ -f "${STATE_FINGERPRINT}" ]]; then
-    print "recorded fingerprint: $(cat "${STATE_FINGERPRINT}")"
-    print "container fingerprint: $(container_fingerprint)"
-  fi
-  print "ssh: ${SSH_COMMAND}"
-  print "logs: ubuntu-test logs | stop: ubuntu-test stop (state preserved)"
+start() {
+  container_exists || fail 'no retained container; run scripts/ubuntu-test prepare'
+  build_snapshot
+  resume_container
 }
 
-do_logs() {
-  docker logs --tail 200 "${CONTAINER}"
-}
-
-do_stop() {
-  if [[ -z "$(container_line)" ]]; then
-    print "status: not created"
-    return 0
-  fi
-  docker stop "${CONTAINER}" >/dev/null
-  print "stopped ${CONTAINER}; files and SSH host identity are preserved"
-}
-
-do_check() {
-  die 'smoke registry not implemented yet; see tasks 5.1-5.7 in the change plan' 6
+check() {
+  start
+  local code=0
+  docker exec --user tester "${CONTAINER}" zsh -f "${GUEST_SOURCE}/tests/ubuntu/check.zsh" "${CHECK_ARGS[@]}" || code=$?
+  docker cp "${CONTAINER}:/home/tester/.local/state/dotfiles/ubuntu-test/report.json" "${STATE_DIR}/report.json" ||
+    fail 'smoke run did not produce a readable report; CLI acceptance has not passed'
+  print_summary
+  print -r -- "report: ${STATE_DIR}/report.json"
+  return "${code}"
 }
 
 main() {
   local operation="${1:-}"
-  shift 2>/dev/null || true
-  PUBKEY=''
-  SOURCE="${REPO}"
-  REPLACE=''
-  while [[ $# -gt 0 ]]; do
+  (( $# == 0 )) || shift
+  while (( $# )); do
+    (( $# >= 2 )) && [[ -n "$2" && "$2" != -* ]] || fail "incomplete option: $1"
     case "$1" in
-      --public-key)
-        [[ $# -ge 2 ]] || die '--public-key requires a file argument' 2
-        PUBKEY="$2"
-        shift 2
+      --source) SOURCE="$2" ;;
+      --only)
+        [[ "${operation}" == check ]] || fail '--only is valid for check only'
+        CHECK_ARGS=(--only "$2")
         ;;
-      --source)
-        [[ $# -ge 2 ]] || die '--source requires a directory argument' 2
-        SOURCE="$2"
-        shift 2
-        ;;
-      --yes)
-        REPLACE='--yes'
-        shift
-        ;;
-      *)
-        die "unknown option: $1 (see: ubuntu-test without arguments)" 2
-        ;;
+      *) fail "unknown option: $1" ;;
     esac
+    shift 2
   done
   case "${operation}" in
-    prepare) do_prepare ;;
-    start) do_start ;;
-    status) do_status ;;
-    ssh) print "${SSH_COMMAND}" ;;
-    logs) do_logs ;;
-    stop) do_stop ;;
-    check) do_check ;;
-    '') die "usage: ubuntu-test <prepare|start|status|ssh|logs|stop|check>" 2 ;;
-    *) die "unknown operation: ${operation}" 2 ;;
+    prepare) prepare ;;
+    start) start; print_summary ;;
+    shell) start; docker exec -it --user tester "${CONTAINER}" zsh -l ;;
+    check) check ;;
+    status)
+      if ! container_exists; then print 'status: not created'; return; fi
+      docker inspect --format '{{.State.Status}}' "${CONTAINER}"
+      print_summary
+      ;;
+    logs) docker logs --tail 200 "${CONTAINER}" ;;
+    stop)
+      container_exists || fail 'no retained container'
+      docker stop "${CONTAINER}" >/dev/null
+      print 'stopped; container files are preserved'
+      ;;
+    *) fail 'usage: scripts/ubuntu-test <prepare|check|start|status|shell|logs|stop> [--source <Git root>]' ;;
   esac
 }
 

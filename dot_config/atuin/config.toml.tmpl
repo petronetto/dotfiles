@@ -42,8 +42,8 @@
 # sync_frequency = "5m"
 
 ## which search mode to use for interactive search
-## possible values: prefix, fulltext, fuzzy, daemon-fuzzy
-search_mode = "daemon-fuzzy"
+## possible values: prefix, fulltext, fuzzy{{ if ne .chezmoi.os "linux" }}, daemon-fuzzy{{ end }}
+search_mode = "{{ if eq .chezmoi.os "linux" }}fuzzy{{ else }}daemon-fuzzy{{ end }}"
 
 ## which search mode to use when atuin is invoked from a shell up-key binding
 ## the accepted values are identical to those of "search_mode"
