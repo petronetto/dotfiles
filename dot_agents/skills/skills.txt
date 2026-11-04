@@ -1,9 +1,7 @@
-anthropics/skills/skill-creator
 ast-grep/agent-skill/ast-grep
 ast-grep/agent-skill/outline
 cursor/plugins/thermo-nuclear-code-quality-review
 doist/todoist-cli/todoist-cli
-juliusbrussee/caveman/caveman
 Leonxlnx/taste-skill/taste-skill
 obra/superpowers/systematic-debugging
 upstash/context7/find-docs
