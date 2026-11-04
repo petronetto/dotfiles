@@ -1,6 +1,13 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- $state := fromJson (.chezmoi.stdin | default "{}") -}}
-{{- $settings := `{
+{{- $extraModels := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- $extraModels = `,
+    "ollama/qwen3.8:27b-mlx",
+    "ollama/ornith-1.5:35b",
+    "ollama/gemma4:31b-mlx"` -}}
+{{- end -}}
+{{- $settings := print `{
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,
   "quietStartup": true,
@@ -55,10 +62,7 @@
     "openrouter/moonshotai/kimi-k3.1-pro",
     "openrouter/minimax/minimax-m3",
     "openrouter/minimax/minimax-m3.1-flash",
-    "openrouter/deepseek/deepseek-v4.1-flash"{{ if eq .chezmoi.os "darwin" }},
-    "ollama/qwen3.8:27b-mlx",
-    "ollama/ornith-1.5:35b",
-    "ollama/gemma4:31b-mlx"{{ end }}
+    "openrouter/deepseek/deepseek-v4.1-flash"` $extraModels `
   ]
 }` | fromJson -}}
 {{ merge $settings (pick $state "lastChangelogVersion" "extensionChangelogVersions") | toPrettyJson }}
