@@ -31,7 +31,7 @@ artifact operations. `files` returns sorted relative filenames and does
 not write. The adapter rejects traversal and symlink artifact paths.
 
 Preserve `PLAN_BACKEND` (default `disk`), `PLAN_CONFIG`, and any backend
-override throughout the operation. Read `~/.agents/plans.config.md`, or
+override throughout the operation. Read `../plans.config.md`, or
 `$PLAN_CONFIG` when set, for storage settings. The adapter resolves roots,
 vaults, folders, and `<repo-name>` substitutions. No workflow creates its
 own storage root or changes configuration. A backend error is not an empty
@@ -76,7 +76,7 @@ The default schema and all templates are bundled under
 `schemas/spec-driven/` beside this reference. Read `schema.yaml` and the
 artifact's template before drafting. The schema supplies artifact IDs,
 outputs, `requires`, `instruction`, and `apply` rules. A user-requested
-custom schema must be present under `~/.agents/plan-adapters/schemas/`;
+custom schema must be present under `schemas/`;
 inspect those files to list workflows. Never silently fall back when a
 requested schema is absent or invalid. Existing change metadata selects
 its schema. A location without `.change.yaml` is not a change managed by

@@ -2,7 +2,7 @@
 name: propose
 description: Propose a new change with all artifacts generated in one step. Use when the user wants to quickly describe what they want to build and get a complete proposal with design, specs, and tasks ready for implementation. Also use for "propose" or "propose change".
 license: MIT
-compatibility: Requires the plan adapter at ~/.agents/plan-adapters/plan.
+compatibility: Requires the plan adapter at ../../plan-adapters/plan.
 metadata:
   author: openspec
   version: "1.0"
@@ -22,7 +22,7 @@ I'll create a change with the artifacts your schema defines. With the default sp
 
 When the user is ready to implement, they must start the apply workflow explicitly.
 
-**Storage selection and project check:** Read `../../plan-adapters/change-workflow.md` before starting. It replaces CLI storage, status, and instruction discovery only. Preserve this skill's workflow and the selected schema's artifact formats. `plan-cli` means `~/.agents/plan-adapters/plan`. Use the configured `PLAN_BACKEND` and `~/.agents/plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory. Resolve existing work and the main-spec catalog through `plan-cli list`. Stop on backend errors; do not fall back to another directory. Only initialize the named change after understanding the request and resolving collisions.
+**Storage selection and project check:** Read `../../plan-adapters/change-workflow.md` before starting. It replaces CLI storage, status, and instruction discovery only. Preserve this skill's workflow and the selected schema's artifact formats. `plan-cli` means `../../plan-adapters/plan`. Use the configured `PLAN_BACKEND` and `../../plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory. Resolve existing work and the main-spec catalog through `plan-cli list`. Stop on backend errors; do not fall back to another directory. Only initialize the named change after understanding the request and resolving collisions.
 
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
@@ -61,7 +61,7 @@ When the user is ready to implement, they must start the apply workflow explicit
 
    **Use a different schema only if the user:**
    - Explicitly requests a specific schema by name: read that installed schema
-   - Asks to show workflows: inspect installed schemas under `~/.agents/plan-adapters/schemas/`, show their names and descriptions, and let them choose
+   - Asks to show workflows: inspect installed schemas under `../../plan-adapters/schemas/`, show their names and descriptions, and let them choose
 
    Do not silently change a selected schema. Stop if a requested schema is unavailable or invalid.
 

@@ -33,8 +33,8 @@ Prefer a solution that removes complexity, following
 `../../references/code-quality.md`.
 
 Read `../../plan-adapters/change-workflow.md` for the adapter contract.
-`plan-cli` means `~/.agents/plan-adapters/plan`. Use it for every artifact
-operation, with `PLAN_BACKEND` and `~/.agents/plans.config.md` or `$PLAN_CONFIG`.
+`plan-cli` means `../../plan-adapters/plan`. Use it for every artifact
+operation, with `PLAN_BACKEND` and `../../plans.config.md` or `$PLAN_CONFIG`.
 Get locations from `list` or `init`, never hand-built paths. Stop on backend
 errors. For authorized blueprint creation, run `plan-cli init roadmap`.
 The task name is always `roadmap`, never a branch-derived name.

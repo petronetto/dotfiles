@@ -10,8 +10,8 @@ is a task group, not an individual checkbox. The reviewer is the gate; the
 orchestrator does not replace independent judgment.
 
 Read `../../plan-adapters/change-workflow.md` first. Use `plan-cli`
-(`~/.agents/plan-adapters/plan`) with the configured backend and
-`~/.agents/plans.config.md` or `$PLAN_CONFIG`. Use the adapter for all artifact
+(`../../plan-adapters/plan`) with the configured backend and
+`../../plans.config.md` or `$PLAN_CONFIG`. Use the adapter for all artifact
 operations. Stop on backend errors; do not initialize missing work.
 
 ## Input

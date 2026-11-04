@@ -19,9 +19,9 @@ conversation or other groups' details.
 instructions. Include CHARTER.md constraints read through plan-cli when present.>
 
 ## Engineering guidance
-- <contents of ~/.agents/references/code-quality.md>
-- <contents of ~/.agents/references/reuse-checklist.md>
-- <contents of ~/.agents/references/definition-of-done.md>
+- <contents of ../../../references/code-quality.md>
+- <contents of ../../../references/reuse-checklist.md>
+- <contents of ../../../references/definition-of-done.md>
 - <test skill and applicable behavior-testing guidance>
 
 ## Retry context

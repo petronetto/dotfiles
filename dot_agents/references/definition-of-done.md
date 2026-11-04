@@ -32,7 +32,7 @@ Apply this to every change before declaring it done.
 - [ ] Changes are scoped to the task; no unrelated refactors snuck in
 - [ ] Linting and formatting pass
 
-The depth behind these items lives in the `review` skill and `~/.agents/references/reuse-checklist.md` (reducing complexity without changing behavior).
+The depth behind these items lives in the `review` skill and `reuse-checklist.md` (reducing complexity without changing behavior).
 
 ### Integration
 - [ ] Change works with the rest of the system, not just in isolation

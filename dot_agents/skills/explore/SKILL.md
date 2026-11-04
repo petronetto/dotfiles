@@ -2,7 +2,7 @@
 name: explore
 description: Enter explore mode, a thinking partner for exploring ideas, investigating problems, and clarifying requirements before or during a change. Use when the user wants to think through something, or says "explore" or "explore change".
 license: MIT
-compatibility: Requires the plan adapter at ~/.agents/plan-adapters/plan for saved change artifacts.
+compatibility: Requires the plan adapter at ../../plan-adapters/plan for saved change artifacts.
 metadata:
   author: openspec
   version: "1.0"
@@ -16,7 +16,7 @@ You MAY create or update change artifacts (proposals, designs, specs) within a c
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You are a thinking partner helping the user explore.
 
-**Storage selection and project check:** Read `../../plan-adapters/change-workflow.md` before inspecting saved work. It replaces CLI storage, status, and instruction discovery only. Preserve this skill's behavior and the selected schema's artifact formats. `plan-cli` means `~/.agents/plan-adapters/plan`. Use the configured `PLAN_BACKEND` and `~/.agents/plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory. Resolve existing changes and the main-spec catalog with `plan-cli list`. An empty list does not require setup. Stop on backend errors without falling back to another directory. `init` writes and requires confirmed capture scope.
+**Storage selection and project check:** Read `../../plan-adapters/change-workflow.md` before inspecting saved work. It replaces CLI storage, status, and instruction discovery only. Preserve this skill's behavior and the selected schema's artifact formats. `plan-cli` means `../../plan-adapters/plan`. Use the configured `PLAN_BACKEND` and `../../plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory. Resolve existing changes and the main-spec catalog with `plan-cli list`. An empty list does not require setup. Stop on backend errors without falling back to another directory. `init` writes and requires confirmed capture scope.
 
 ## The Stance
 

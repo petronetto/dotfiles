@@ -59,7 +59,7 @@ is added.
 ## Backends
 
 `PLAN_BACKEND` selects the backend (`disk` by default). Backend settings
-live in `~/.agents/plans.config.md`, one block per backend; only the
+live in `../plans.config.md`, one block per backend; only the
 active backend's block is read.
 
 ```md

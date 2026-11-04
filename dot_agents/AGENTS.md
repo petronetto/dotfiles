@@ -40,9 +40,9 @@ Follow these guidelines in every project. The instructions below are not optiona
 
 ## References (consult on demand)
 Before object-oriented or structurally complex work, read the references below, they are *non-negotiable design rules*:
-- Writting code: `@~/.agents/references/code-quality.md`, `@~/.agents/references/SOLID.md`, `@~/.agents/references/clean-code.md`, and `@~/.agents/references/object-calisthenics.md`.
-- Writting tests: `@~/.agents/references/writing-tests.md`.
-- Writting comments: `@~/.agents/references/writing-comments.md`.
+- Writting code: `@./references/code-quality.md`, `@./references/SOLID.md`, `@./references/clean-code.md`, and `@./references/object-calisthenics.md`.
+- Writting tests: `@./references/writing-tests.md`.
+- Writting comments: `@./references/writing-comments.md`.
 
 Use `/find-docs` for current library, framework, SDK, CLI, or cloud documentation.
 

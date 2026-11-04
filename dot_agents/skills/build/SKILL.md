@@ -2,7 +2,7 @@
 name: build
 description: Implement a change one task group at a time, stopping for explicit approval before committing each group. Use when the user wants to build, implement, resume implementation, or work through change tasks.
 license: MIT
-compatibility: Requires the plan adapter at ~/.agents/plan-adapters/plan.
+compatibility: Requires the plan adapter at ../../plan-adapters/plan.
 metadata:
   author: openspec
   version: "1.0"
@@ -11,8 +11,8 @@ metadata:
 Implement tasks from a change, with a human approval gate after each task group.
 
 Read `../../plan-adapters/change-workflow.md` before starting. `plan-cli` means
-`~/.agents/plan-adapters/plan`. Use the configured `PLAN_BACKEND` and
-`~/.agents/plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory.
+`../../plan-adapters/plan`. Use the configured `PLAN_BACKEND` and
+`../../plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory.
 Resolve existing changes through `plan-cli list`. Do not initialize a change
 as a side effect. Stop on backend errors. For absent artifacts, point to
 `/propose` and wait for the user.
