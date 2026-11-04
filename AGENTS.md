@@ -31,12 +31,12 @@ This repository is public on GitHub. Never commit credentials, secrets, API keys
 
 ## Skills
 
-Skills live in `~/.agents/skills/` and are shared across agent tools (pi and Zed read that path directly; others via the symlinks in `dot_claude/`). There are two kinds:
+Skills live in `~/.agents/skills/` and are shared across agent tools (pi and Zed read that path directly; others via the symlinks in `dot_claude/`). The source folder `dot_agents/exact_skills/` is an `exact_` chezmoi directory: anything deleted from it disappears from `~/.agents/skills/` on the next apply. There are two kinds:
 
-- **Custom skills**: versioned in this repo under `dot_agents/skills/<name>/SKILL.md`. Edit them here.
-- **Third-party skills**: never committed. Tracked only by the manifest `dot_agents/skills/skills.txt` (one `owner/repo/skill` entry per line) and installed into `~/.agents/skills/` at apply time when the manifest changes.
+- **Custom skills**: versioned in this repo under `dot_agents/exact_skills/<name>/SKILL.md`. Edit them here.
+- **Third-party skills**: never committed. Tracked only by the manifest `dot_agents/exact_skills/skills.txt` (one `owner/repo/skill` entry per line) and gitignored by `dot_agents/exact_skills/.gitignore`, which `scripts/skills` regenerates from the manifest.
 
-To change third-party skills permanently, edit the manifest in this repo. The `scripts/skills` helper only affects the local machine: it updates the deployed manifest, which is regenerated from the repo copy on the next apply.
+A `run_after` script runs `scripts/skills sync` on every apply: it prunes skills removed from the manifest, installs missing ones, and updates all tracked ones, all inside `dot_agents/exact_skills/`. chezmoi deploys that folder; the script never writes to `~/.agents/skills/`. Because chezmoi reads the source state before running scripts, skills synced during an apply are deployed by the next apply. To change third-party skills permanently, edit the manifest in this repo. To add or drop a skill on this machine only, use the `scripts/skills add|remove` commands.
 
 ## Code Style and Structure
 

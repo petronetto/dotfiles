@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+set -euo pipefail
+
+# Runs on every `chezmoi apply`. Syncs third-party skills into the exact_
+# skills folder in the source state (install missing, update tracked, prune
+# removed). chezmoi deploys that folder to ~/.agents/skills; this script never
+# writes there. Best-effort: never fail `chezmoi apply` over a network hiccup;
+# run `scripts/skills sync` manually later if this fails.
+#
+# chezmoi reads the source state before running scripts, so skills synced here
+# are deployed by the next apply, not this one.
+"{{ .chezmoi.sourceDir }}/scripts/skills" sync \
+	|| echo "skills sync: skipped/failed, run it manually later"

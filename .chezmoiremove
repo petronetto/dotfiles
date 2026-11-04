@@ -1,8 +1,0 @@
-.agents/skills/spec
-.agents/skills/plan
-.agents/skills/continue-change
-.agents/skills/verify-change
-.agents/skills/apply-change
-.agents/skills/build/assets/review-log-entry.md
-.agents/skills/build-auto/assets/review-log-entry.md
-.agents/skills/build-auto/scripts/worktree.sh
