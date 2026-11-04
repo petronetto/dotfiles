@@ -1,4 +1,6 @@
-{
+{{- /* chezmoi:modify-template */ -}}
+{{- $state := fromJson (.chezmoi.stdin | default "{}") -}}
+{{- $settings := `{
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,
   "quietStartup": true,
@@ -35,7 +37,6 @@
   },
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-sol",
-  "lastChangelogVersion": "1.4.0",
   "enabledModels": [
     "anthropic/claude-sonnet-5-5",
     "anthropic/claude-opus-5-5",
@@ -56,4 +57,5 @@
     "openrouter/minimax/minimax-m3.1-flash",
     "openrouter/deepseek/deepseek-v4.1-flash"
   ]
-}
+}` | fromJson -}}
+{{ merge $settings (pick $state "lastChangelogVersion" "extensionChangelogVersions") | toPrettyJson }}
