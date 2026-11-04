@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# plan — the plan-file CLI. Dispatches one operation to the active backend.
+# plan: the plan-file CLI. Dispatches one operation to the active backend.
 #
 # Usage: plan <op> [args]
 #   init <task-name>       create the task's plan directory, print its location
@@ -8,8 +8,7 @@
 #   append <location> <file>       append to one plan file, content on stdin
 #   list                   list task locations, one per line
 #   files <location>       list relative artifact paths inside a task
-#   set-status <location> (--step <file> | --entry <id>) --status <status>
-#           [--reason <text>]
+#   set-status <location> --entry <id> --status <status>
 #   path <location>        print the location's on-disk directory
 #
 # PLAN_BACKEND selects the backend (default: disk); backends/ next to this
@@ -36,7 +35,7 @@ OPS=(init read write append list set_status path)
 DISPATCH_OPS=("${OPS[@]}" files)
 
 op="${1:-}"
-[[ -n "$op" ]] || die "usage: plan <op> [args] — ops: init, read, write, append, list, files, set-status, path"
+[[ -n "$op" ]] || die "usage: plan <op> [args]; ops: init, read, write, append, list, files, set-status, path"
 shift
 op="${op//-/_}"
 

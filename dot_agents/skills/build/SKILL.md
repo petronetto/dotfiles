@@ -1,112 +1,163 @@
 ---
 name: build
-description: Implement an existing plan one step at a time in small chunks, stopping after each step for explicit approval. Trigger on "build", "implement", "resume". Reads `plan`'s step files and runs the review-gated, test-driven loop.
+description: Implement a change one task group at a time, stopping for explicit approval before committing each group. Use when the user wants to build, implement, resume implementation, or work through change tasks.
+license: MIT
+compatibility: Requires the plan adapter at ~/.agents/plan-adapters/plan.
+metadata:
+  author: openspec
+  version: "1.0"
 ---
 
-# Build
+Implement tasks from a change, with a human approval gate after each task group.
 
-Implement a plan from `plan`, one step at a time, under human-in-the-loop review gates. State lives on disk; every run re-derives context from git and the filesystem for clean resumption. Each step is test-driven before it counts as done.
+Read `../../plan-adapters/change-workflow.md` before starting. `plan-cli` means
+`~/.agents/plan-adapters/plan`. Use the configured `PLAN_BACKEND` and
+`~/.agents/plans.config.md` (or `$PLAN_CONFIG`), never a hard-coded directory.
+Resolve existing changes through `plan-cli list`. Do not initialize a change
+as a side effect. Stop on backend errors. For absent artifacts, point to
+`/propose` and wait for the user.
 
-## Hard rules
+## Input
 
-- Implement one step at a time. Never start the next step before approval.
-- Break each step into small, readable chunks (focused diffs reviewable in minutes). Prefer more, smaller chunks, but every chunk must deliver a working change on its own, no scaffolding-only chunks (e.g. enums nothing consumes yet).
-- Test behavior, not implementation (AAA, mock external dependencies). Add or update tests per each step's Verification before considering it done; run the project's tests and linters where available. The discipline lives in the `test` skill.
-- Stop after every step. Do not continue on your own.
-- Never commit without explicit, unambiguous approval (per step).
-- Never reference the plan, steps, or chunks in commit messages or code comments; describe the actual change so the message stands alone.
-- Never mark done or advance under uncertainty. When in doubt, ask (see `~/.agents/references/uncertainty-protocol.md`). Ask multi-option decisions (which plan to resume, resume vs restart a step) per `~/.agents/references/question-format.md`, appending each answer to the plan directory's `DECISIONS.md`.
-- Preserve existing behavior unless the step requires changing it.
+Optionally specify a change name, such as `/build add-auth`. Infer it from
+conversation context or select the only active change. If ambiguous, list
+available changes and ask with the harness's question tool. Announce
+"Using change: <name>" and how to override it with `/build <other>`.
 
-## Gotchas
+## Steps
 
-- A chunk that only adds scaffolding (an enum, a type, a stub nothing consumes yet) doesn't count as a chunk — every chunk must leave the codebase working end-to-end, however small.
+### 1. Derive apply state
 
-## Plan CLI
+Run `plan-cli files <location>`, read `.change.yaml`, and derive status from
+the selected schema and shared storage reference. Read `schemaName`,
+`planningHome`, `changeRoot`, and `actionContext`. Identify the schema's
+tracking artifact rather than assuming a filename.
 
-- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
-  operation goes through it, never through a hand-built path: `init
-  <task-name>` (prints the task's `<location>`, idempotent), `read
-  <location> <file>`, `write <location> <file>` and `append <location>
-  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
-  line), `set-status <location> (--step <file> | --entry <id>) --status
-  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
-  with `blocked`), and `path <location>` (the `<location>`'s on-disk
-  directory).
-- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
-  live in `~/.agents/plans.config.md`. Every `<location>` comes from
-  `init` or `list` output.
+Read the schema's `apply` instruction and aggregate tracking files through
+the adapter. Obtain `contextFiles`, tasks with `sourcePath` and line, progress,
+state, instruction, `missingArtifacts`, optional project `context`, and
+`operationGuidance`.
 
-## Procedure
+- `blocked`: show the reason and pause. If artifacts are missing, point to
+  `/propose`. Otherwise repair the schema's tracking file from existing
+  artifacts within authorized scope; do not implement while blocked.
+- `all_done`: tracked tasks are complete, not proof that the change is done.
+  Go to the final audit rather than implement more work.
+- `ready`: proceed with the next pending group.
 
-### 1. Locate the plan
-- Run `plan-cli list` to enumerate the task directories; each printed line is that task's `<location>`. For each candidate, run `plan-cli read <location> PRD.md` to get step filenames from its Steps table, then `plan-cli read` each step file, and find the most recent `<location>` with `Status: pending`, `in-progress`, or `blocked` steps: `in-progress` means a prior session was interrupted mid-step; `blocked` means a prior `build-auto` run left it unresolved after 3 review cycles.
-- If multiple candidates exist, ask which to resume. Confirm before starting.
-- Read the PRD's problem, approach, and key decisions. Run `plan-cli read <location> SPEC.md` for required behavior and scenarios. Use the step's linked requirement and scenario IDs when writing tests.
-- If SPEC or the PRD's Steps table is missing, stop and ask the user to update the older plan through `spec` and `plan`. Do not guess requirements or delete old plan files.
+Treat project context as a required prompt input when supplied, and guidance
+as optional additive advice. Consider every guidance entry. Report conflicts
+with user choices, the workflow, or actual adapter data; preserve the
+controlling value and explain advice not followed. Neither context nor
+guidance is evidence of completion or permission to bypass a blocked state.
 
-### 2. Run the loop
-For each step (lowest `NNN` not yet `Status: done`):
+### 2. Read context and discover checks
 
-- If `Status: in-progress`, an earlier session was interrupted mid-step. Show the step file and the current diff, and ask the user whether to resume from where it left off or restart the step from a clean tree — never silently skip it for the next pending step.
-- If `Status: blocked`, a prior `build-auto` run left it unresolved. Show the step file's `Blocked` reason and review log, then work it through the same loop below until it resolves.
-- If `Status: pending`, proceed as normal below.
+Read every `contextFiles` entry with `plan-cli read`. For spec-driven changes,
+these are proposal, specs, design when applicable, and tasks. Use the resolved
+files for other schemas. Do not copy runtime context or operation guidance
+verbatim into code or artifacts.
 
-**Announce** — State the step and goal. Run `plan-cli set-status <location> --step <step-file> --status in-progress`.
+Read project instructions and, if a roadmap exists, `CHARTER.md` through the
+adapter. Discover build, test, lint, and runtime commands from the stack,
+README, wrappers, and CI. Do not guess defaults.
 
-**Implement in chunks** — Work chunks in order, each focused and reviewable. Apply `~/.agents/references/code-quality.md`. Run new code through the reuse/YAGNI gate (`~/.agents/references/reuse-checklist.md`). Add or update tests per Verification, then run linters/tests where available, piping long output.
+Load `../../references/code-quality.md`, `reuse-checklist.md`,
+`uncertainty-protocol.md`, `question-format.md`, and `definition-of-done.md`.
+Use the `test` skill for behavior changes and bug fixes. Apply its failing-test
+first discipline, Arrange-Act-Assert, and external test doubles.
 
-**Stop for review** — Stop when complete. Do not commit. Do not start the next step.
+Show the schema, "N/M tasks complete", remaining groups, dependencies, and
+current apply instruction. Resume at the first group with unchecked tasks.
+If it has partial work (checked tasks or relevant uncommitted changes), show
+the group and current diff and ask whether to resume or restart. Do not
+silently skip it or discard work. A restart requires explicit authorization
+for the specific changes to undo; protect unrelated user changes.
 
-**Handle response**
-- Modifications requested: append to the review log (`plan-cli append <location> <step-file>`) in the `assets/review-log-entry.md` format, implement the changes as small chunks, stop again. Repeat as needed.
-- Approved: ask "Am I cleared to commit this step and move to the next task?" on any uncertainty. Commit using project style (never co-authors), staging only this step's files. Run `plan-cli set-status <location> --step <step-file> --status done`, then record the final commit message under the step file's `Commit` section: `plan-cli read` the file, fill the section, write it back via `plan-cli write`. Move to the next step.
+### 3. Implement one task group
 
-### 3. Finish
-When all steps are `Status: done`, run the acceptance audit before reporting:
+Read its plain `Depends:` line. Prerequisites must be complete. Missing,
+cyclic, or unclear dependencies are a reason to pause, not guess.
 
-**Audit the delivered work against PRD and SPEC:** Re-read the PRD's goals and SPEC's requirements and scenarios. Check each against the delivered code, not the step logs: completion claims are not evidence. Classify every gap as `missing` (required work absent), `partial` (present but short of the scenario), `contradicts` (conflicts with PRD, SPEC, or a boundary), or `unrequested` (work outside the approved scope; report it for review, do not delete it). Work gaps through the same loop as review modifications: move the affected step back to `in-progress` (`plan-cli set-status <location> --step <step-file> --status in-progress`), append to its review log, implement as small chunks, stop for approval, repeat until no gap remains. A pure refactor (`No behavior change`) audits against preserved behavior instead.
+Announce the group and goal. Work in small, focused chunks that each leave
+the code working. Do not add scaffolding that nothing consumes. Preserve
+existing behavior unless the change explicitly requires otherwise. Apply
+code-quality and the reuse checklist before adding code. Do not add unrelated
+cleanup or silently reduce specified behavior.
 
-Then report: summary of changes, rationale, and suggested improvements. If the PRD's Roadmap field names an entry in the `roadmap` task's `ROADMAP.md`, run `plan-cli set-status <roadmap-location> --entry <id> --status done` with the `roadmap` task's `<location>`, its entry from step 1's enumeration, before reporting.
+For each task:
 
-## Rationalizations
+- Make the minimal scoped change and run its checks. For new or changed
+  behavior, prove a test failed before and passes after. Reproduce bugs in
+  tests before fixing them. Do not defer tests until the last group.
+- Before a checkbox edit, re-read its `sourcePath` through the adapter and
+  confirm the line and description still match. Refresh the view on drift.
+- Mark only fully implemented and verified tasks complete at their exact
+  source line. Use `plan-cli read` and `write` for the full revised tracking
+  file, preserving other content.
+- Refresh apply state and confirm the task and progress changed.
 
-| Excuse | Reality |
-| --- | --- |
-| "I'll test it all at the end." | Bugs compound. A bug in step 1 makes steps 2-5 wrong. Test each step. |
-| "It's faster to do it all at once." | It feels faster until something breaks and you can't tell which change did it. |
-| "This chunk is too small to keep separate." | Small, working chunks are free. A big, messy one hides bugs and makes rollback painful. |
-| "I'll add the regression test later." | A bug fix without a reproduction test is not a fix. Add it now (see `test`). |
-| "All steps passed, so the PRD is satisfied." | Per-step verification proves each step, not the whole contract; the acceptance audit closes the loop between spec and implementation. |
+Run the project's tests and linters, piping long output. Verify behavior at
+runtime, not just by compiling or typechecking. Use `agent-browser` for
+browser behavior. Check the entire Definition of Done per group, including
+integration, documentation, security, and rollback where applicable. Report
+inapplicable checks with reasons rather than invent work.
 
-## Red flags
+### 4. Stop for explicit approval
 
-- Moving to the next step without approval.
-- A chunk that leaves the codebase non-working.
-- Committing without unambiguous per-step approval.
-- Step changes that don't carry a passing test.
-- Unrelated cleanup or refactors snuck into a step.
-- Reporting all steps done without auditing the delivered work against PRD and SPEC.
+Show the group's diff, checks and runtime evidence, scope, and any issues.
+Stop after each task group for explicit approval. Do not commit or start the
+next group before that approval. Checked tasks alone do not satisfy this gate.
 
-## Verification
+If modifications are requested, implement them in small working chunks,
+repeat checks, and stop again. Keep decisions in the conversation; no extra
+review or decision files. Follow the uncertainty protocol: unclear approval,
+failing or skipped checks, unexpected diffs, and unclear scope require a
+focused question. Silence is not approval.
 
-Before a step counts as done:
-- [ ] The step's tests exist and pass; linters pass.
-- [ ] Behavior was verified at runtime, not just compiled or typechecked.
-- [ ] Scope was held to the step file; no unrelated changes.
-- [ ] The Definition of Done (`~/.agents/references/definition-of-done.md`) is satisfied, not just the step's own acceptance criteria.
-- [ ] The user approved the step, and it was committed with only its files staged.
+With unambiguous approval to commit this group, stage only that group's files
+and inspect the staged diff. Use the project's commit style and no co-author
+trailers. Never mention the plan, task, group, or chunk in commit messages or
+code comments; describe the actual code change. Do not include unrelated
+changes even when they share a file. If staging cannot isolate the change,
+pause. Move to the next group only after approval and the scoped commit.
 
-Before the plan counts as finished:
-- [ ] The acceptance audit ran; the delivered work matches the PRD's goals and SPEC's requirements and scenarios with no `missing`, `partial`, `contradicts`, or `unrequested` gap outstanding.
+On resumption, inspect git and artifacts, not session memory. If all tasks in
+a group are checked but its approval or commit is unproved, resolve that gate
+before advancing. Do not silently treat checkboxes as approval.
 
-## References
+### 5. Run the final audit
 
-- Definition of Done: `~/.agents/references/definition-of-done.md`
-- Code-quality standards: `~/.agents/references/code-quality.md`
-- Reuse/YAGNI gate: `~/.agents/references/reuse-checklist.md`
-- Uncertainty protocol: `~/.agents/references/uncertainty-protocol.md`
-- Question format and decision log: `~/.agents/references/question-format.md`
-- Review log entry template: `assets/review-log-entry.md`
-- Test discipline: `test` skill · autonomous variant: `build-auto` skill
-- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
+After the last group, run `../../references/final-audit.md` read-only against
+the delivered code and artifacts. For a pure refactor, audit preservation
+checks. CRITICAL findings and applicable `Not verified` checks block done.
+Return them to the same fix, verification, explicit approval, and scoped
+commit loop. Reopen affected checkboxes when work remains, and re-run the
+audit after fixes. WARNING and SUGGESTION findings are reported only.
+
+Only after all groups have cleared their gates and no audit blocker remains,
+read `roadmap_entry` from `.change.yaml`. If present, resolve the roadmap
+location with `plan-cli list` and run
+`plan-cli set-status <roadmap-location> --entry <id> --status done`.
+Do not mark a linked epic done on partial or unchecked evidence.
+
+## Output
+
+On a group stop, report the change, schema, completed tasks and overall
+progress, changed files, check results, and the explicit approval needed.
+On an issue, explain the blocker and available choices and wait for guidance.
+On completion, report changes, rationale, commits, final audit findings,
+roadmap status if linked, and unresolved warnings or suggestions.
+
+## Guardrails
+
+- Pause on unclear tasks, design issues, errors, blockers, or interruption.
+- If work exceeds the specs or tasks, surface the added scope and ask. Never
+  silently drop, narrow, defer, or accept exceptions to required behavior.
+- Read context before editing. Preserve schema-resolved state and tracking.
+- Only mark fully implemented behavior complete, not partial or deferred work.
+- Do not advance or commit without explicit group approval and passing checks.
+- Per-group checks do not replace the final audit. Report unrequested work;
+  never delete it during the audit.
+- Do not archive or delete files without authorization. Suggest `/propose`
+  for missing artifacts; do not invent a different artifact format.

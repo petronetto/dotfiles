@@ -8,9 +8,13 @@ artifacts:
     template: proposal.md
     instruction: |
       Create the proposal document that establishes WHY this change is needed.
+      Use ASD-STE100 Simplified Technical English. Define necessary terms at
+      first use. Use ASCII only in diagrams and no em or en dashes.
 
       Sections:
       - **Why**: 1-2 sentences on the problem or opportunity. What problem does this solve? Why now?
+      - **Goals**: Concrete observable results with IDs G1, G2. Link each goal to its requirement names and paths, or to preservation checks. A word such as "fast" needs a number or a check.
+      - **Excluded Work**: Related work that is outside this change. Keep problem, goals, and exclusions concrete.
       - **What Changes**: Bullet list of changes. Be specific about new capabilities, modifications, or removals. Mark breaking changes with **BREAKING**.
       - **Capabilities**: Identify which specs will be created or modified:
         - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<capability-path>/spec.md`. Name each capability for a durable system behavior (for example, `user-auth`), not the work in this change (for example, `add-login-endpoint`). Choose a cohesive boundary that can own related requirements as the system evolves; avoid broad catch-all capabilities. Use kebab-case for path segments you introduce (e.g., `user-auth` or `identity/user-auth`) and follow the project's existing spec organization.
@@ -33,6 +37,9 @@ artifacts:
       behavior changes (pure refactor, tooling, docs) - specs describe
       behavior, so if behavior does not change, no spec should change either.
       Do not invent a requirement just to satisfy validation.
+      For a pure refactor, set `skip_specs: true`. The proposal states
+      `No behavior change`, names the preserved behavior, and names the
+      checks that prove it. Do not create spec outputs for that change.
 
       Keep it concise (1-2 pages). Focus on the "why" not the "how" -
       implementation details belong in design.md.
@@ -48,6 +55,10 @@ artifacts:
       Create specification files that define WHAT the system should do.
 
       A spec is a behavior contract, not an implementation plan.
+      Read ../../../references/writing-specs.md relative to this schema.
+      Use standard technical English, complete sentences, and enough context
+      for a reader who has not seen the code. Do not impose controlled-language
+      or sentence-length limits. Use ASCII only in diagrams and no em or en dashes.
 
       Good spec content:
       - Observable behavior users or downstream systems rely on
@@ -93,12 +104,14 @@ artifacts:
       - **RENAMED Requirements**: Name changes only - use FROM:/TO: format
 
       Format requirements:
-      - Each requirement: `### Requirement: <name>` followed by description
-      - Use SHALL/MUST for normative requirements (avoid should/may)
-      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format
+      - Each requirement: `### Requirement: <name>` followed by a `Goal: G1` line and description. Link the goal to proposal.md.
+      - Each requirement defines one observable behavior: state the actor, condition, result, and relevant limits, with no implementation detail.
+      - Use SHALL or MUST for required behavior, SHALL NOT or MUST NOT for forbidden behavior (avoid should/may).
+      - Requirement and scenario names are the stable IDs. Add no numeric IDs. Rename only through RENAMED with FROM:/TO: mappings; qualify scenario mappings with their parent requirement.
+      - Each scenario: `#### Scenario: <name>` with GIVEN, WHEN, THEN, and AND for related conditions or outcomes. Exercise the requirement with concrete inputs and results, rather than restating it. Cover important error and boundary cases.
       - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3 hashtags or bullets will fail silently.
-      - Every requirement MUST have at least one scenario.
-      - Keep each requirement's description (the text between `### Requirement:` and its first scenario) to 500 characters or fewer. Flag longer descriptions in ADDED requirements and in the main spec as a warning. Treat that warning as a failure only when the user requests strict validation. When writing a new requirement, state one behavior per requirement: move examples and edge cases into scenarios, and split a requirement that covers several behaviors into separate `### Requirement:` blocks, each with its own scenarios. Under MODIFIED, keep the existing requirement block whole; never split, trim or rewrite existing text just to meet the length. Split an existing long requirement only when the user asks for it, in a change made for that purpose: under MODIFIED, keep its header and every scenario and cut its description down to one behavior without changing its meaning, then add each behavior you removed as its own ADDED requirement with its own scenarios.
+      - Every ADDED or MODIFIED requirement MUST have at least one scenario. REMOVED uses Reason/Migration and RENAMED uses FROM:/TO:, with baseline checks rather than invented scenarios.
+      - Preserve complete updated MODIFIED blocks and all unchanged guarantees. Never trim context to meet an arbitrary length limit.
 
       New capabilities only: the delta spec's first section is `## Purpose` -
       one or two sentences (50+ characters; shorter text is too brief under
@@ -134,15 +147,19 @@ artifacts:
       ## ADDED Requirements
 
       ### Requirement: User can export data
-      The system SHALL allow users to export their data in CSV format.
+      Goal: G1 (proposal.md#goals).
+      The system SHALL allow an authenticated user to download their own data in CSV format, excluding other users' data.
 
       #### Scenario: Successful export
-      - **WHEN** user clicks "Export" button
-      - **THEN** system downloads a CSV file with all user data
+      - **GIVEN** an authenticated user with saved data
+      - **WHEN** the user selects "Export"
+      - **THEN** the system downloads a CSV file with that user's data
+      - **AND** the file contains no other user's data
 
       ## REMOVED Requirements
 
       ### Requirement: Legacy export
+      Goal: G1 (proposal.md#goals).
       **Reason**: Replaced by new export system
       **Migration**: Use new export endpoint at /api/v2/export
       ```
@@ -157,6 +174,8 @@ artifacts:
     template: design.md
     instruction: |
       Create the design document that explains HOW to implement the change.
+      Use ASD-STE100 Simplified Technical English and define necessary terms
+      at first use. Use ASCII only in diagrams and no em or en dashes.
 
       When to include design.md (create only if any apply):
       - Cross-cutting change (multiple services/modules) or new architectural pattern
@@ -168,7 +187,7 @@ artifacts:
       - **Context**: Only the current state and constraints needed to explain the approach. Reference the proposal for motivation instead of restating it (e.g., "See proposal.md - Why").
       - **Goals / Non-Goals**: What this design achieves and explicitly excludes. Don't restate the proposal's scope - add only design-level boundaries.
       - **Decisions**: Key technical choices with rationale (why X over Y?). Include alternatives considered for each decision.
-      - **Risks / Trade-offs**: Known limitations, things that could go wrong. Format: [Risk] → Mitigation
+      - **Risks / Trade-offs**: Known limitations, things that could go wrong. Format: [Risk] -> Mitigation
       - **Migration Plan**: Steps to deploy, rollback strategy (if applicable)
       - **Open Questions**: Unknowns that can safely be answered later without
         changing the specs, the approach, or the task breakdown. Omit if none.
@@ -203,11 +222,19 @@ artifacts:
       other marker, including `- [~]`, `- [-]` and an empty `- []`, reads as
       unfinished. A line with no checkbox is not tracked at all.
 
+      Read ../../../references/writing-tasks.md relative to this schema.
+      Use ASD-STE100 Simplified Technical English. Define necessary terms at
+      first use. Use ASCII only in diagrams and no em or en dashes.
+
       Guidelines:
-      - Group related tracked tasks under ## numbered headings
-      - Each tracked task MUST be a checkbox: `- [ ] X.Y Task description`
-      - Tasks should be small enough to complete in one session
-      - Order tasks by dependency (what must be done first?)
+      - Each task group has one responsibility, can be reviewed and reverted alone, and leaves the code working.
+      - Use descriptive ## group headings, without numeric IDs. Do not invent groups to fill the list or add groups that only create unused structures.
+      - Each group has a plain `Depends:` line (not a checkbox): `Depends: none` or exact prerequisite group names. Dependencies must exist and be acyclic. Order dependencies first; independent groups with disjoint files can run in parallel.
+      - Each tracked task MUST be a checkbox: `- [ ] Verb ...`. Start with a verb, use one action, name its files, and name its requirement and scenario or preservation check.
+      - Tasks should be small enough to complete in one session.
+      - Cover all requirements and scenarios, including removal/rename baseline checks. For pure refactors, link to the proposal's preservation checks. Checks cover the Definition of Done, not only local acceptance criteria.
+      - State each fact once. Link to behavior and decisions rather than copying them. Get exact verification commands from stack discovery; do not add a separate command inventory.
+      - Stay inside CHARTER.md boundaries and project instructions. Resolve material uncertainty before writing tasks; record minor assumptions in the relevant artifact.
       - Track implementation and verification work that can be completed before
         archive. If the requested workflow includes archive or work that requires
         this change to be archived, preserve those steps as plain bullets in an
@@ -222,24 +249,20 @@ artifacts:
         calls for. Do NOT collect testing or documentation into a final group -
         when a late group first exercises work from an early one, the failures
         cascade back through every group in between and force rework. A group
-        whose work calls for neither, such as scaffolding or dependency setup,
-        carries neither. A final group is for integration checks only, not for
+        whose working change calls for neither carries neither. A final group is for integration checks only, not for
         the tests and docs an earlier group owed.
 
       Example:
       ```
       # Tasks
 
-      ## 1. Setup
+      ## Data export
 
-      - [ ] 1.1 Create new module structure and verify expected files are present
-      - [ ] 1.2 Add dependencies to package.json and verify package installation succeeds
+      Depends: none
 
-      ## 2. Core Implementation
-
-      - [ ] 2.1 Implement data export function and verify the export test passes
-      - [ ] 2.2 Add CSV formatting utilities and verify unit tests cover quoting and delimiters
-      - [ ] 2.3 Document the export API in docs/export.md and verify the documented command runs as written
+      - [ ] Implement CSV export in src/export.ts for "User can export data"; check: "Successful export" passes in tests/export.test.ts.
+      - [ ] Test export isolation in tests/export.test.ts for "User can export data"; check: another user's data is excluded.
+      - [ ] Document CSV export in docs/export.md for "Successful export"; check: the example returns the specified file.
       ```
 
       When applicable, append workflow follow-up as plain bullets, for example:
@@ -259,5 +282,8 @@ apply:
   requires: [tasks]
   tracks: tasks.md
   instruction: |
-    Read context files, work through pending tasks, mark complete as you go.
-    Pause if you hit blockers or need clarification.
+    Read context files and work through pending task groups in dependency order.
+    Mark tasks complete as you go. Use build's explicit approval after each
+    group, or build-auto's independent reviewer gate when authorized.
+    Pause if you hit blockers or need clarification. Run the shared final
+    audit before declaring done.

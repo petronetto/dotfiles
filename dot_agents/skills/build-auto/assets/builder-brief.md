@@ -1,38 +1,48 @@
 # Builder briefing
 
-You are implementing exactly one step of an existing plan, in a fresh context with no knowledge of any prior conversation. Everything you need is below — do not assume anything beyond it.
+Implement exactly one task group in a fresh context. Do not assume prior
+conversation or other groups' details.
 
-## Repo
-- Path: <repo-full-path>
+## Repository
+- Path: <assigned repository or isolated worktree path>
 - Branch: <branch>
+- Starting diff: <relevant partial work to preserve; unrelated edits excluded>
 
-## PRD (problem, approach, key decisions)
-<full contents of PRD.md>
+## Change contract
+- proposal.md: <content, goals, excluded work, and preservation checks>
+- specs/<capability-path>/spec.md: <applicable complete delta contents, or skip reason>
+- design.md: <content when present, or conditional skip reason>
+- task group: <exact heading, Depends: line, tasks, file scope, and checks>
 
-## SPEC (required behavior and test scenarios)
-<full contents of SPEC.md>
+## Project standards
+<Commands and conventions from stack discovery, CI, wrappers, and project
+instructions. Include CHARTER.md constraints read through plan-cli when present.>
 
-## Step to implement
-<full contents of the NNN-<step-name>.md file>
+## Engineering guidance
+- <contents of ~/.agents/references/code-quality.md>
+- <contents of ~/.agents/references/reuse-checklist.md>
+- <contents of ~/.agents/references/definition-of-done.md>
+- <test skill and applicable behavior-testing guidance>
 
-## Code-quality standards
-<contents of ~/.agents/references/code-quality.md>
+## Retry context
+<Current reviewer or final-audit findings, only on retry; no review log.>
 
-## Reuse / YAGNI gate
-<contents of ~/.agents/references/reuse-checklist.md>
+## Work
 
-## Definition of Done
-<contents of ~/.agents/references/definition-of-done.md>
+- Implement only this task group in small chunks that each leave working code.
+- Apply the reuse checklist before new code. Preserve behavior unless the
+  contract requires it to change. No unused scaffolding or unrelated cleanup.
+- Use the test skill: a failing test before new/changed behavior, regression
+  reproduction before a fix, Arrange-Act-Assert, and external test doubles.
+- Link tests to named requirements and scenarios, or preservation checks.
+  Run the discovered tests and linters, and verify runtime behavior. Pipe logs.
+- Satisfy the full Definition of Done, not just local acceptance checks.
+- Do not stage, commit, update shared checkboxes, or write review files.
+- If scope, credentials, behavior, or requirements block safe work, report
+  the exact reason instead of guessing, changing scope, or silently deferring.
 
-## Revision context (only present on retry cycles)
-The previous attempt at this step was reviewed and changes were requested:
-<reviewer findings, verbatim, from the most recent cycle>
+## Report
 
-## Your task
-- Implement only the chunk rows in the step's Chunks table — do not expand scope beyond it.
-- Run every piece of new code through the reuse/YAGNI gate before writing it.
-- Add or update tests per the step's Verify section and linked SPEC requirement and scenario IDs. Run the project's tests and linters, piping long output.
-- Hold the result to the Definition of Done above, not just the step's acceptance criteria.
-- Do NOT commit. Do NOT stage files.
-- If something in the step is ambiguous, contradictory, or you cannot complete it (missing credentials, conflicting requirements, etc.), stop and report yourself blocked with the specific reason rather than guessing.
-- When done, report back: a summary of what changed and why, the list of files touched, test/linter results, and any deviations from the step file with justification.
+Return changed files and rationale, test failure-before/pass-after evidence,
+linter and runtime results, Definition of Done coverage, reuse decisions
+that were close, deviations, and blockers. Do not claim independent approval.

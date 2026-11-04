@@ -1,8 +1,21 @@
 # Proposal
 
+<!-- Use ASD-STE100. Define necessary terms at first use. Use ASCII only in
+     diagrams and no em or en dashes. Remove template guidance when done. -->
+
 ## Why
 
 <!-- Explain the motivation for this change. What problem does this solve? Why now? -->
+
+## Goals
+
+<!-- Concrete observable results. Words such as "fast" need a number or a check.
+     Link each goal to requirement names and paths, without repeating behavior. -->
+- G1: <observable result; requirement links or preservation check>
+
+## Excluded Work
+
+<!-- Related work not included in this change. -->
 
 ## What Changes
 
@@ -31,4 +44,7 @@
 
 ## Impact
 
-<!-- Affected code, APIs, dependencies, systems -->
+<!-- Affected code, APIs, dependencies, systems. For a pure refactor, state
+     "No behavior change", name the preserved behavior and checks that prove it,
+     and set skip_specs: true in .change.yaml. Do not create spec outputs.
+     Record minor assumptions here when needed; resolve material ambiguity. -->

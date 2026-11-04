@@ -1,9 +1,9 @@
-# Charter — <Project Title>
+# Charter: <Project Title>
 
 The project-level constitution: what this project is, the decisions that
 constrain every epic, and the provenance behind them. Written by `blueprint`
-before any epic is specified. Every epic's PRD inherits from this file and
-narrows its boundaries; it never widens them. Living document: changed
+before any epic is proposed. Every epic's change stays inside this file's
+project-wide boundaries; it never widens them or creates its own boundary tiers. Living document: changed
 decisions are superseded by new architecture decision record (ADR) entries
 in `CONTEXT.md`, never by silent edits.
 
@@ -42,19 +42,20 @@ next to this file. Link to their stable headings, not to separate ADR files.
 | S1 | <…>      | <…>    | <one line> | Q# link / [ADR-001](CONTEXT.md#adr-001) |
 
 ## Project boundaries
-Three tiers, project-wide. Each epic's PRD narrows these; it never widens them.
+Three tiers, project-wide. Every epic's change must respect these.
 - **Always do:** ... (e.g. run the test suite before each epic's handoff, follow the layout below)
 - **Ask first:** ... (e.g. new runtime dependencies, schema changes, third-party services)
 - **Never do:** ... (e.g. commit secrets, bypass CI, ship without tests)
 
 ## Layout and test strategy
 Where code lives (directory conventions, naming) and how behavior is tested,
-so every PRD writes the same Commands section instead of re-deciding.
+so every change uses the same strategy. Build and test commands come from
+stack discovery, project wrappers, and CI, not a copied command inventory.
 
 ## Research
 Sources consulted outside the repo, each with a one-line takeaway. Findings
 that informed a decision carry their traceability link in the tables above.
-- [<short title>] <url> — <takeaway>
+- [<short title>] <url>: <takeaway>
 
 ## Assumptions
 Surfaced during discovery. Each has a status so a human can see what is open.
@@ -68,4 +69,4 @@ Status values: `validated` (confirmed with the user or research), `corrected`
 assumption blocks the roadmap).
 
 ## Open questions
-What is still unknown and belongs to a later epic's spec, not to this charter.
+What is still unknown and belongs to a later epic's proposal, not to this charter.

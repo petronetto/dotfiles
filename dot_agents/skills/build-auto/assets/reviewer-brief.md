@@ -1,39 +1,44 @@
 # Reviewer briefing
 
-You are reviewing exactly one step of an existing plan, in a fresh context with no knowledge of any prior conversation or of the builder's session. Everything you need is below.
+Judge exactly one task group in a fresh context, independent of the builder's
+session. Do not fix, edit files, stage, commit, or post review comments.
 
-## Repo
-- Path: <repo-full-path>
+## Repository
+- Path: <assigned repository or isolated worktree path>
 - Branch: <branch>
+- Diff base and scope: <base commit and group file scope>
 
-## PRD (problem, approach, key decisions)
-<full contents of PRD.md>
+## Change contract
+- proposal.md: <content, goals, excluded work, and preservation checks>
+- specs/<capability-path>/spec.md: <applicable complete delta contents, or skip reason>
+- design.md: <content when present, or conditional skip reason>
+- task group: <exact heading, Depends: line, tasks, file scope, and checks>
 
-## SPEC (required behavior and test scenarios)
-<full contents of SPEC.md>
-
-## Step being reviewed (scope & acceptance criteria)
-<full contents of the NNN-<step-name>.md file>
-
-## Builder's report
-<summary the builder returned: what changed, files touched, test/lint results>
-
-## Code-quality standards
-<contents of ~/.agents/references/code-quality.md>
-
-## Reuse / YAGNI gate
-<contents of ~/.agents/references/reuse-checklist.md>
-
-## Definition of Done
-<contents of ~/.agents/references/definition-of-done.md>
+## Builder report
+<Changed files, rationale, test and lint evidence, runtime checks, deviations,
+and blockers. Treat claims as inputs to check, not proof.>
 
 ## Project standards
-<the plan's PRD.md "Commands" section (build/test/lint/dev commands), plus any linter/CI config or conventions the orchestrator found via the `test` skill's "discover the stack" step when the plan was located — gathered once per run and reused across every step's briefing, not invented per step.>
+<Commands and conventions from stack discovery, CI, wrappers, and project
+instructions. Include CHARTER.md constraints read through plan-cli when present.>
 
-## Your task
-1. Invoke the `review` skill against the current diff, at medium effort. Do not pass `--fix` or `--comment` — you only judge, you never edit files, and there is no PR to comment on.
-2. In addition to review's own findings, check the diff against the reuse/YAGNI gate, the Definition of Done, and the step's scope and acceptance criteria above — flag scope creep, an unmet acceptance criterion, or an unmet Definition of Done item even if review doesn't surface them. Check behavior and tests against the linked SPEC requirements and scenarios. Use the PRD's non-goals and key decisions to judge borderline cases, not the step file alone.
-3. Report back with a verdict as the very first line, exactly one of:
-   - `VERDICT: APPROVE`
-   - `VERDICT: CHANGES_REQUESTED`
-4. Follow with the findings (or "no findings" if approving). For each finding: what's wrong, where (file:line), why it matters, and what to do instead.
+## Engineering guidance
+- <contents of ~/.agents/references/code-quality.md>
+- <contents of ~/.agents/references/reuse-checklist.md>
+- <contents of ~/.agents/references/definition-of-done.md>
+
+## Judgment
+
+1. Run `review` at medium effort against the diff, without `--fix` or
+   `--comment`. That skill checks quality and project boundaries, not specs.
+2. Separately check this task group's contract against the delivered code:
+   named requirements and scenarios or preservation checks, proposal goals
+   and exclusions, applicable design, and the group's acceptance checks.
+3. Apply the reuse checklist and full Definition of Done. Confirm a test
+   failed before and passes after for new/changed behavior, tests and linters
+   pass, runtime evidence exists, and no unrelated work was included.
+4. Return a first-line verdict, exactly `VERDICT: APPROVE` or
+   `VERDICT: CHANGES_REQUESTED`. Missing evidence is not approval.
+5. Follow with findings or "no findings". Each finding names the problem,
+   `file:line`, concrete risk, severity, and required remedy. Return this to
+   the orchestrator; do not save a review log or change any artifact.

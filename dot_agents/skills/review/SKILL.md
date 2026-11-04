@@ -13,6 +13,7 @@ Review implementation quality and codebase health, not just correctness. Be **am
 > Find the code-judo move: a restructuring that preserves behavior but deletes complexity instead of moving it.
 > Improve abstraction, modularity, succinctness, legibility. If the real fix lives outside the diff, say so.
 > Be rigorous. Measure twice, cut once.
+> Flag YAGNI, KISS and DRY aggressively.
 
 ## Standards
 
@@ -33,19 +34,53 @@ Review implementation quality and codebase health, not just correctness. Be **am
 
 From `~/.agents/references/code-quality.md`: **depth** (interface hides implementation vs. shallow wrapper), the **deletion test** (delete the module — does complexity vanish or reappear everywhere?), **seam discipline** (one adapter isn't a real seam). Use these to judge if an abstraction earns its keep.
 
+## Design Patterns
+
+Look for places where these patterns would simplify the code:
+- Factory: Centralize object creation so callers don't depend on concrete classes.
+- Builder: Construct complex objects step by step instead of using long or optional-heavy constructors.
+- Adapter: Wrap an incompatible interface so it fits the one your code expects.
+- Strategy: Encapsulate interchangeable algorithms behind a common interface, selectable at runtime.
+- Dependency Injection: Pass dependencies in from outside rather than creating them internally, for easier testing and swapping.
+
+## Test quality
+
+Follow the guidelines for writing testing: `~/.agents/references/writing-tests.md`
+
 ## Flag Aggressively
 
-Cleaner reframing available · files past 1000 lines · conditionals bolted onto unrelated paths · feature logic leaking into shared modules · thin/identity wrappers · unnecessary casts/optionality · copy-paste over extraction · "temporary" branching · duplicated canonical helpers · avoidable sequential orchestration · non-atomic partial updates · comments that explain what the code cannot say for itself · comments citing unverifiable context.
+- cleaner reframing available
+- files past 1000 lines
+- conditionals bolted onto unrelated paths
+- feature logic leaking into shared modules
+- thin/identity wrappers
+- unnecessary casts/optionality
+- copy-paste over extraction
+- "temporary" branching
+- duplicated canonical helpers
+- avoidable sequential orchestration
+- non-atomic partial updates
+- unnecessary tests
+- comments that explain what the code cannot say for itself
+- comments citing unverifiable context.
 
 ## Preferred Remedies
 
-Delete indirection, don't polish it · reframe state so conditionals vanish · extend existing abstractions instead of adding new ones · extract helpers · split large files · replace condition chains with a typed dispatcher · separate orchestration from logic · reuse canonical helpers · parallelize independent work.
+- delete indirection, don't polish it
+- reframe state so conditionals vanish
+- extend existing abstractions instead of adding new ones
+- extract helpers
+- split large files
+- replace condition chains with a typed dispatcher
+- separate orchestration from logic
+- reuse canonical helpers
+- parallelize independent work
 
 Don't settle for "rename this" when the issue is structural.
 
 ## Tone & Output
 
-Direct, not rude. Priority: structural regressions → missed code-judo → spaghetti growth → boundary/type issues → file size → modularity → legibility. Few high-conviction findings beat many nits.
+Direct and concise. Priority: structural regressions → missed code-judo → spaghetti growth → boundary/type issues → file size → modularity → legibility. Few high-conviction findings beat many nits.
 
 ### Severity labels
 

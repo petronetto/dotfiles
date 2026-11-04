@@ -120,24 +120,18 @@ plan_files_in() {
   (cd -- "$dir" && find . -type f -print) | LC_ALL=C sort | cut -c 3-
 }
 
-# plan_parse_set_status <location> [--step <file> | --entry <id>] --status <status> [--reason <text>]
+# plan_parse_set_status <location> --entry <id> --status <status>
 # Parse and validate the set-status arguments; results land in the
 # PLAN_SS_* globals. Dies on any contract violation.
 plan_parse_set_status() {
-  PLAN_SS_LOCATION="" PLAN_SS_MODE="" PLAN_SS_STEP="" PLAN_SS_ENTRY=""
-  PLAN_SS_STATUS="" PLAN_SS_REASON=""
+  PLAN_SS_LOCATION="" PLAN_SS_ENTRY="" PLAN_SS_STATUS=""
   [[ -n "${1:-}" ]] \
-    || die "usage: plan set-status <location> (--step <file> | --entry <id>) --status <status> [--reason <text>]"
+    || die "usage: plan set-status <location> --entry <id> --status <status>"
 # shellcheck disable=SC2034
   PLAN_SS_LOCATION="$1"
   shift
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --step)
-        [[ -n "${2:-}" ]] || die "--step needs a plan file name"
-        PLAN_SS_STEP="$2"
-        shift 2
-        ;;
       --entry)
         [[ -n "${2:-}" ]] || die "--entry needs an entry ID"
         PLAN_SS_ENTRY="$2"
@@ -148,54 +142,24 @@ plan_parse_set_status() {
         PLAN_SS_STATUS="$2"
         shift 2
         ;;
-      --reason)
-        [[ -n "${2:-}" ]] || die "--reason needs a value"
-        PLAN_SS_REASON="$2"
-        shift 2
-        ;;
       *) die "unknown set-status argument: $1" ;;
     esac
   done
-  if [[ -n "$PLAN_SS_STEP" && -n "$PLAN_SS_ENTRY" ]]; then
-    die "give either --step or --entry, not both"
-  fi
-  if [[ -z "$PLAN_SS_STEP" && -z "$PLAN_SS_ENTRY" ]]; then
-    die "one of --step or --entry is required"
-  fi
-  if [[ -n "$PLAN_SS_STEP" ]]; then
-    PLAN_SS_MODE="step"
-    plan_validate_file "$PLAN_SS_STEP"
-  else
-    PLAN_SS_MODE="roadmap"
-    [[ "$PLAN_SS_ENTRY" =~ ^[A-Za-z0-9_-]+$ ]] \
-      || die "invalid entry ID: '$PLAN_SS_ENTRY'"
-  fi
+  [[ -n "$PLAN_SS_ENTRY" ]] || die "--entry is required"
+  [[ "$PLAN_SS_ENTRY" =~ ^[A-Za-z0-9_-]+$ ]] \
+    || die "invalid entry ID: '$PLAN_SS_ENTRY'"
   [[ -n "$PLAN_SS_STATUS" ]] || die "--status is required"
-  case "$PLAN_SS_MODE/$PLAN_SS_STATUS" in
-    step/pending | step/in-progress | step/done | step/blocked) ;;
-    roadmap/planned | roadmap/in-progress | roadmap/done | roadmap/deferred) ;;
-    *) die "invalid status '$PLAN_SS_STATUS' for a $PLAN_SS_MODE target" ;;
+  case "$PLAN_SS_STATUS" in
+    planned | in-progress | done | deferred) ;;
+    *) die "invalid status '$PLAN_SS_STATUS' for a roadmap target" ;;
   esac
-  if [[ "$PLAN_SS_STATUS" == "blocked" ]]; then
-    [[ -n "$PLAN_SS_REASON" ]] || die "--reason is required when --status is blocked"
-    [[ "$PLAN_SS_REASON" != *"|"* ]] || die "--reason must not contain '|'"
-    [[ "$PLAN_SS_REASON" != *$'\n'* && "$PLAN_SS_REASON" != *$'\r'* ]] \
-      || die "--reason must be a single line"
-  else
-    [[ -z "$PLAN_SS_REASON" ]] || die "--reason is only valid when --status is blocked"
-  fi
 }
 
-# The status-row rewrite, shared by every backend: the step header table's
-# Status and Blocked rows move in lockstep, and a roadmap row's Status cell
-# (the sixth column) is rewritten in place. Only the status value changes;
-# every other byte of the input is preserved.
+# The roadmap Status cell is the sixth column. Preserve the other cells.
 # shellcheck disable=SC2016
 PLAN_STATUS_AWK='
 BEGIN {
-  AWK_MODE = ENVIRON["AWK_MODE"]
   AWK_STATUS = ENVIRON["AWK_STATUS"]
-  AWK_REASON = ENVIRON["AWK_REASON"]
   AWK_ENTRY = ENVIRON["AWK_ENTRY"]
 }
 
@@ -218,63 +182,30 @@ function split_cell(s, r2) {
 
 {
   lines[++n] = $0
-  if (!si && $0 ~ /^\| Status[ \t]*\|/) si = n
-  if (!bi && $0 ~ /^\| Blocked[ \t]*\|/) bi = n
-  if (!di && $0 ~ /^\| Depends[ \t]*\|/) di = n
-  if (AWK_MODE == "roadmap" && !ri && index($0, "| " AWK_ENTRY " ") == 1) ri = n
+  if (!ri && index($0, "| " AWK_ENTRY " ") == 1) ri = n
 }
 
 END {
-  if (AWK_MODE == "step") {
-    if (si == 0) fail("no Status row found in the step file")
-    if (!match(lines[si], /^\| Status[ \t]*\|/)) fail("malformed Status row: " lines[si])
-    prefix = substr(lines[si], 1, RLENGTH)
-    split_cell(substr(lines[si], RLENGTH + 1))
-    if (CELL_VALUE !~ /^(pending|in-progress|done|blocked)$/) {
-      fail("unexpected Status value: '"'"'" CELL_VALUE "'"'"'")
-    }
-    old_status = CELL_VALUE
-    lines[si] = prefix CELL_LEAD AWK_STATUS CELL_SUFFIX
-    if (AWK_STATUS == "blocked") {
-      if (bi) {
-        if (!match(lines[bi], /^\| Blocked[ \t]*\|/)) fail("internal: Blocked row vanished")
-        bprefix = substr(lines[bi], 1, RLENGTH)
-        split_cell(substr(lines[bi], RLENGTH + 1))
-        lines[bi] = bprefix CELL_LEAD AWK_REASON CELL_SUFFIX
-      } else if (di) {
-        for (i = n; i > di; i--) lines[i + 1] = lines[i]
-        lines[di + 1] = "| Blocked | " AWK_REASON " |"
-        n++
-      } else {
-        fail("no Depends row found to anchor the Blocked row")
-      }
-    } else if (old_status == "blocked") {
-      if (bi == 0) fail("Status is blocked but the file has no Blocked row")
-      for (i = bi; i < n; i++) lines[i] = lines[i + 1]
-      n--
-    }
-  } else {
-    if (ri == 0) fail("no roadmap row for entry: " AWK_ENTRY)
-    np = split(lines[ri], c, "|")
-    if (np < 8) fail("roadmap row has fewer than six columns: " lines[ri])
-    split_cell(c[7])
-    if (CELL_VALUE !~ /^(planned|in-progress|done|deferred)$/) {
-      fail("unexpected Status column value: '"'"'" CELL_VALUE "'"'"'")
-    }
-    c[7] = CELL_LEAD AWK_STATUS CELL_SUFFIX
-    out = c[1]
-    for (i = 2; i <= np; i++) out = out "|" c[i]
-    lines[ri] = out
+  if (ri == 0) fail("no roadmap row for entry: " AWK_ENTRY)
+  np = split(lines[ri], c, "|")
+  if (np < 8) fail("roadmap row has fewer than six columns: " lines[ri])
+  split_cell(c[7])
+  if (CELL_VALUE !~ /^(planned|in-progress|done|deferred)$/) {
+    fail("unexpected Status column value: '"'"'" CELL_VALUE "'"'"'")
   }
+  c[7] = CELL_LEAD AWK_STATUS CELL_SUFFIX
+  out = c[1]
+  for (i = 2; i <= np; i++) out = out "|" c[i]
+  lines[ri] = out
   for (i = 1; i <= n; i++) print lines[i]
 }
 '
 
-# plan_apply_status <mode> <status> <reason> <entry-id>
+# plan_apply_status <status> <entry-id>
 # Filter: stdin is the file's current content, stdout its new content.
 # Dies (nonzero exit, message on stderr) on a malformed target.
 plan_apply_status() {
-  AWK_MODE="$1" AWK_STATUS="$2" AWK_REASON="${3:-}" AWK_ENTRY="${4:-}" \
+  AWK_STATUS="$1" AWK_ENTRY="$2" \
     awk "$PLAN_STATUS_AWK"
 }
 
@@ -302,15 +233,10 @@ plan_append_file() {
 # replace is an atomic rename on the same filesystem.
 plan_set_status_in() {
   local dir="$1" path tmp
-  if [[ "$PLAN_SS_MODE" == "step" ]]; then
-    path="$dir/$PLAN_SS_STEP"
-  else
-    path="$dir/ROADMAP.md"
-  fi
-  path="$(plan_file_path "$dir" "${path#"$dir/"}")" || exit 1
+  path="$(plan_file_path "$dir" ROADMAP.md)" || exit 1
   [[ -f "$path" ]] || die "plan file not found: $path"
   tmp="$(mktemp "${path%/*}/.plan-set-status.XXXXXX")"
-  if ! plan_apply_status "$PLAN_SS_MODE" "$PLAN_SS_STATUS" "$PLAN_SS_REASON" "$PLAN_SS_ENTRY" \
+  if ! plan_apply_status "$PLAN_SS_STATUS" "$PLAN_SS_ENTRY" \
     < "$path" > "$tmp"; then
     rm -f "$tmp"
     exit 1

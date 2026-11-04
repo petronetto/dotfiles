@@ -1,120 +1,143 @@
 ---
 name: blueprint
-description: Plan a whole new project from scratch before any epic exists. Interview for vision, stack, and constraints, then write CHARTER.md (project constitution) and ROADMAP.md (shallow epic table) in the roadmap plan task, and hand each epic to spec. Trigger on "blueprint", "greenfield", "new project from scratch", "plan the whole project", "roadmap". Markdown only, never code.
+description: Plan a whole new project from scratch before any epic exists. Interview for vision, stack, and constraints, then write CHARTER.md and ROADMAP.md in the roadmap location and hand each epic to propose. Trigger on "blueprint", "greenfield", "new project from scratch", "plan the whole project", or "roadmap". Markdown only, never code.
 argument-hint: "<project idea>"
 ---
 
 # Blueprint
 
-Turn a project idea into a charter and an epic roadmap, so every later `spec` → `plan` → `build` cycle stays small. Use this for greenfield work where the request spans the whole project; feature-level work goes straight to `spec`. State lives in the plan system's `roadmap` task, branch-independent by design: the roadmap spans branches and outlives any single task. Output is Markdown only; implementation is separate (`spec`, then `plan`, then `build`, one epic at a time).
+Turn a new project idea into a charter and a shallow epic roadmap. Each epic
+then goes through `/propose` and `/build` or `/build-auto`. Keep each change
+small enough to reason about alone. Project state lives in the fixed
+`roadmap` location, independent of branches.
 
-## Hard rules
+Only blueprint maintains `CHARTER.md`, `ROADMAP.md`, `DECISIONS.md`, and ADR
+entries in `CONTEXT.md`. An architecture decision record (ADR) captures a
+choice with real alternatives that constrains several epics. Do not create
+separate ADR files or change-level decision/evidence records.
 
-- Never write or edit code; output is Markdown only.
-- The roadmap is shallow: it names, bounds, and orders epics, and never designs them. Architecture lives in the charter and any architecture decision record (ADR) entries in `CONTEXT.md`; epic design lives in each PRD. Do not create separate ADR files.
-- Every epic boundary is sharp: one line of intent, explicit in/deferred scope, and something demonstrable when the epic alone is done.
-- Interview one question at a time per `~/.agents/references/question-format.md`, appending each answer to `<location>/DECISIONS.md` with an `**Evidence:**` line. Resolve every stack and architecture decision with the user before writing the charter; never proceed on a guess.
-- Prefer a reframing that deletes complexity over one that rearranges it (see `~/.agents/references/code-quality.md`).
-- Never delete a charter, roadmap, or epic row. Epic IDs are immutable once referenced; scope shifts defer work, they do not erase it.
-- A substantial existing codebase means this is not greenfield: route to `spec` instead.
+## Input
 
-## Gotchas
+A whole new project idea and the user's constraints. Route feature-level
+work or a substantial existing codebase to `/propose` instead. On an existing
+roadmap, this skill re-plans what remains; it does not overwrite history.
 
-- "Start a new blueprint" on an existing roadmap means re-planning it (refresh statuses, re-decompose what remains), not overwriting it.
-- Decompose only what the goals need (YAGNI): no v2 epics, no contingency epics. Add epics as learning grows.
-- If an epic is still too large to spec in one cycle, split it into sibling epics; do not nest roadmaps. Go as deep as the context problem requires, no deeper.
-- The roadmap task is not branch-scoped. Its task name is always `roadmap`, never a branch-derived slug.
+## Steps
 
-## Plan CLI
+### 1. Establish context and storage
 
-- `plan-cli` below means `~/.agents/plan-adapters/plan`. Every plan-file
-  operation goes through it, never through a hand-built path: `init
-  <task-name>` (prints the task's `<location>`, idempotent), `read
-  <location> <file>`, `write <location> <file>` and `append <location>
-  <file>` (content on stdin, via heredoc), `list` (one `<location>` per
-  line), `set-status <location> (--step <file> | --entry <id>) --status
-  <status> [--reason <text>]` (the step's `Blocked` row moves in lockstep
-  with `blocked`), and `path <location>` (the `<location>`'s on-disk
-  directory).
-- `PLAN_BACKEND` selects the backend (`disk` by default); its settings
-  live in `~/.agents/plans.config.md`. Every `<location>` comes from
-  `init` or `list` output.
+Get the repository path from git. For greenfield work, use the idea, user
+constraints, current stack documentation through `/find-docs`, and relevant
+prior art. Record findings for the charter's Research and Assumptions.
+Prefer a solution that removes complexity, following
+`../../references/code-quality.md`.
 
-## Procedure
+Read `../../plan-adapters/change-workflow.md` for the adapter contract.
+`plan-cli` means `~/.agents/plan-adapters/plan`. Use it for every artifact
+operation, with `PLAN_BACKEND` and `~/.agents/plans.config.md` or `$PLAN_CONFIG`.
+Get locations from `list` or `init`, never hand-built paths. Stop on backend
+errors. For authorized blueprint creation, run `plan-cli init roadmap`.
+The task name is always `roadmap`, never a branch-derived name.
 
-### 1. Establish context
-- Get the repo path from git. A fresh project has no codebase to explore; the discovery inputs are the user's idea, external research (use `/find-docs` for stack and tooling docs, plus prior art for the architecture), and the user's constraints.
-- Record findings as you go. They land in the charter's Research and Assumptions sections: the charter is the project-level provenance record that every epic's PRD inherits from.
+Read any existing `CHARTER.md` and `ROADMAP.md` through the adapter. Ask
+whether to re-plan remaining epics or start a new charter without destroying
+existing content. Never delete a charter, roadmap, or epic row.
 
-### 2. Decide the plan directory
-The roadmap task name is `roadmap`, fixed and branch-independent. Run
-`plan-cli init roadmap` (idempotent) and call the printed directory
-`<location>` for the rest of this run. Run
-`plan-cli read <location> CHARTER.md`; if the file exists, ask whether to
-re-plan the remaining epics or start a new charter (see Gotchas), per
-`~/.agents/references/question-format.md`.
+### 2. Interview
 
-### 3. Interview the user
-Cover, in order, one question at a time: vision (one paragraph in the user's terms), users and the job the project does for each, goals and non-goals, hard constraints (platform, deployment target, privacy, licenses, performance budgets), stack and architecture choices (research current docs before proposing; do not rely on training data), project layout, and test strategy. Log every answer in `<location>/DECISIONS.md`, each with an `**Evidence:**` line to the research or a note that it is a pure user preference. Never proceed with an unresolved decision.
+Ask one question at a time using `../../references/question-format.md` and
+the harness question tool. Cover vision, users and their jobs, goals and
+non-goals, platform/deployment/privacy/license/performance constraints,
+stack and architecture, project layout, and test strategy. Research current
+docs before proposing stack choices; do not rely on memory alone.
 
-### 4. Write `CHARTER.md`
-Fill `assets/charter-file.md` into `<location>/CHARTER.md`: vision, users, goals, non-goals, hard constraints, the stack-decision table with rationale and traceability, project-wide boundaries (Always / Ask first / Never), layout and test strategy, research, and assumptions.
+Append each answer to `DECISIONS.md` through `plan-cli append`, with an
+`**Evidence:**` link to research or a note that it is a user preference.
+Resolve every stack and architecture decision before drafting the charter.
+Do not proceed on a guess or leave an open assumption.
 
-Promote a decision to an ADR only when at least two real alternatives were considered and it constrains more than one epic. Read any existing `<location>/CONTEXT.md` via `plan-cli read`. If it is absent and an ADR is needed, create a short context document with the project metadata (`Task: roadmap`) and an `Architecture decision records` section. Insert entries from `../spec/assets/adr-file.md` there and save via `plan-cli write`, preserving existing content. Keep research and assumptions in the charter and link to them instead of copying them. Do not create `CONTEXT.md` solely for ADRs when no decision qualifies.
+### 3. Write the charter and project decisions
 
-Use the next free ADR number in this `CONTEXT.md`, with stable headings such as `### ADR-001`. Link from the stack table and the original `DECISIONS.md` entry with `[ADR-001](CONTEXT.md#adr-001)`; label the latter `**Promoted to:**`. Do not change an accepted decision in place. Add a replacement entry, then update only the old entry's Status and Superseded by fields. Create only the ADR entries the decisions need; do not target a fixed count.
+Fill `assets/charter-file.md` and save `CHARTER.md` through `plan-cli write`.
+Include concrete vision, users, goals, non-goals, hard constraints, stack
+choices with reasons and traceability, project-wide Always / Ask first /
+Never boundaries, layout, test strategy, research, and resolved assumptions.
 
-### 5. Decompose into epics
-- The first epic is a walking skeleton: scaffold, tooling, CI, and one thin vertical slice running end to end.
-- Then one epic per capability, each independently spec-able and each leaving something demonstrable.
-- Record real dependencies; keep them acyclic. Independent epics can be specced and built in any order (in parallel across worktrees).
-- Keep the set small; a typical project fits in a handful of epics. Split an oversized epic into siblings instead of designing it inside the roadmap.
+Promote a decision to an ADR only when at least two real alternatives were
+considered and it constrains more than one epic. Read existing `CONTEXT.md`
+through the adapter. If needed and absent, create a short document with
+project metadata (`Task: roadmap`) and an Architecture decision records
+section. Insert entries from `assets/adr-file.md`, preserving existing
+content. Keep research and assumptions in the charter and link to them.
+Do not create this document when no decision qualifies.
 
-### 6. Write `ROADMAP.md`
-Fill `assets/roadmap-file.md` into `<location>/ROADMAP.md`: one row per epic with ID (`E01`, immutable once referenced), name, intent, scope boundary (in / deferred), dependencies, status (`planned`), and PRD path (empty until `spec` runs). Include the flow graph only when dependencies branch.
+Use the next free ADR number with stable headings such as `### ADR-001`.
+Link from the stack table and the original answer using
+`[ADR-001](CONTEXT.md#adr-001)`, with `**Promoted to:**` on the answer.
+Never change an accepted decision in place. Add its replacement, then update
+only the old entry's Status and Superseded by fields. Use no target ADR count.
 
-### 7. Present and stop
-Present the roadmap table and the charter's key decisions, and list the files created (`CHARTER.md`, `ROADMAP.md`, `DECISIONS.md`, and `CONTEXT.md` if ADR entries were needed). Do not implement. Hand off to `spec` for the first epic whose dependencies are all `done` (normally the walking skeleton), pointing it at the roadmap entry.
+### 4. Decompose and write the roadmap
 
-### 8. Re-plan on request
-When invoked on an existing roadmap: refresh epic statuses from the PRDs and step files, apply scope shifts (update the roadmap first, then the affected PRDs), split or add epics as learning grows, and re-present the table. Never delete rows; defer instead.
+Use `assets/roadmap-file.md` for `ROADMAP.md`. Each epic has an immutable ID
+such as E01, one-line intent, explicit in/deferred scope, dependencies, status
+`planned`, and an empty Change column until `/propose` runs.
 
-## Rationalizations
+The first epic is a walking skeleton: tooling, CI, and one thin vertical
+slice running end to end. Each later epic owns a capability and leaves
+something demonstrable on its own. Keep dependencies real and acyclic.
+Independent epics can be proposed and built in parallel worktrees.
 
-| Excuse | Reality |
-| --- | --- |
-| "One giant PRD for the whole project is fine." | It forces every step file to reason over the whole contract and dies at context limits. A shallow roadmap plus one PRD per epic keeps every cycle small. |
-| "The roadmap should contain the architecture." | The charter and ADR entries in CONTEXT.md hold architecture; the roadmap holds boundaries and order. Designing in two places guarantees drift. |
-| "Stack decisions can wait for the first PRD." | They constrain every epic. Deciding them late forces rework across PRDs already written. |
-| "More epics is safer." | Each epic adds spec and review overhead. Decompose only as deep as the context problem requires. |
-| "Plan v2 now so the roadmap is complete." | YAGNI. Add epics when learning justifies them. |
+Keep the roadmap shallow: no schemas, endpoints, file layouts, or design
+inside rows. The charter holds project architecture; each change's optional
+`design.md` holds its design. Split oversized epics into siblings, never
+nested roadmaps. Do not create speculative future or contingency epics.
+Add an ASCII dependency graph only if dependencies branch.
 
-## Red flags
+### 5. Check, present, and stop
 
-- A roadmap row containing design detail (schemas, endpoints, file layouts).
-- Two epics sharing scope with no sharp boundary line.
-- A charter written with unresolved stack choices or `open` assumptions.
-- A first epic that is not a walking skeleton.
-- An epic sized larger than one spec/plan/build cycle.
+Before handoff, confirm:
 
-## Verification
+- The user reviewed and approved `CHARTER.md` and `ROADMAP.md`.
+- Vision, users, goals, exclusions, and hard constraints are concrete.
+- Project-wide Always / Ask first / Never boundaries are written.
+- Stack decisions have reasons and traceability. Qualifying ADRs have stable
+  heading links in `CONTEXT.md`, not separate files.
+- No open assumption remains.
+- Every epic has an immutable ID, sharp scope, one-line intent, and acyclic
+  dependencies.
+- The first epic is a walking skeleton; every epic is demonstrable alone.
+- The roadmap contains no design detail.
 
-Before handing off:
-- [ ] The user reviewed and approved `CHARTER.md` and `ROADMAP.md`.
-- [ ] Vision, users, goals, non-goals, and hard constraints are concrete.
-- [ ] Project-wide boundaries (Always / Ask first / Never) are written.
-- [ ] Stack decisions carry a one-line rationale and a traceability link. Decisions with real alternatives that constrain several epics have ADR entries in `CONTEXT.md`, with stable heading links; no separate ADR files were created.
-- [ ] No `open` assumption remains in the charter.
-- [ ] Every epic has an immutable ID, a one-line intent, a sharp scope boundary, and recorded dependencies; dependencies are acyclic.
-- [ ] The first epic is a walking skeleton, and every epic leaves something demonstrable.
-- [ ] No design detail sits in the roadmap.
+Present the charter's key decisions and roadmap. Stop without implementing.
+Hand the first epic whose dependencies are all done to `/propose`, with its
+entry ID and roadmap location. `/propose` records `roadmap_entry` in change
+metadata, sets the entry in-progress, and fills its Change column.
 
-## References
+### 6. Re-plan on request
 
-- Question format and decision log: `~/.agents/references/question-format.md`
-- Design and code-quality standards: `~/.agents/references/code-quality.md`
-- Charter template: `assets/charter-file.md`
-- Roadmap template: `assets/roadmap-file.md`
-- ADR section entry template (owned by `spec`): `../spec/assets/adr-file.md` (insert into `CONTEXT.md`, not a separate file)
-- Plan CLI: `~/.agents/plan-adapters/plan` (a bare call prints usage; backend settings: `~/.agents/plans.config.md`)
-- Per-epic pipeline: `spec` (PRD), `plan` (steps), `build` (implementation)
+Read linked changes through the adapter and inspect their actual tasks and
+verification evidence. Do not infer completion from artifact existence.
+Refresh epic statuses with
+`plan-cli set-status <roadmap-location> --entry <id> --status <status>`.
+Supported statuses are planned, in-progress, done, and deferred.
+Update the roadmap first for approved scope shifts, then the affected change
+artifacts within authorized scope. Split or add epics as needed. Preserve
+rows and referenced IDs; defer work rather than erase it.
+
+## Output
+
+Report the charter and roadmap location, decisions, epic order, approval
+status, and next epic for `/propose`. List `CHARTER.md`, `ROADMAP.md`,
+`DECISIONS.md`, and `CONTEXT.md` only when ADR entries were needed.
+
+## Guardrails
+
+- Markdown only; never implement code here.
+- Resolve project decisions before charter approval. Do not defer stack
+  choices that constrain all epics to the first change.
+- Every epic must fit one proposal/build cycle and have a sharp scope.
+- Keep project architecture in one place and epic design outside the roadmap.
+- Apply YAGNI: extra epics add work and review cost, not automatic safety.
+- Use ASD-STE100, define necessary terms, use ASCII diagrams, and use no em
+  or en dashes. Keep project decision records only in this workflow.

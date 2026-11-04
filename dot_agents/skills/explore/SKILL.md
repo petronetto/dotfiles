@@ -111,7 +111,7 @@ Transition into the requested capture:
 4. Read completed dependencies through `plan-cli read`. Choose a concrete relative output path within the selected change. If an instruction delegates creation, invoke it only if it preserves the schema format and adapter scope. Otherwise fill the template and write through `plan-cli write`. Re-read to verify the saved artifact
 5. Refresh status after each artifact. Continue until each requested artifact exists or was deliberately skipped. Dependencies are enablers, not gates: create a requested artifact when its only missing dependencies are conditional prerequisites deliberately skipped for this change. Stop and ask about any other missing prerequisite
 
-Capture what the user requested without asking them to invoke another command. If they asked only to start a change, stop after scaffolding and show status. When capture is done, stop and name where work continues: `/propose` writes the remaining planning artifacts; `/apply-change` implements when its prerequisites are satisfied. Capturing artifacts never starts implementation.
+Capture what the user requested without asking them to invoke another command. If they asked only to start a change, stop after scaffolding and show status. When capture is done, stop and name where work continues: `/propose` writes the remaining planning artifacts; `/build` implements when its prerequisites are satisfied. Capturing artifacts never starts implementation.
 
 ### When a change exists
 

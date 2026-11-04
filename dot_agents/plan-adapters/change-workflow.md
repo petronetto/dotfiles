@@ -1,9 +1,12 @@
 # Change storage adapter
 
-This reference replaces storage and CLI discovery for the five change skills.
-It does not replace their workflow. Keep `proposal.md`, `design.md`,
-`tasks.md`, and `specs/<capability-path>/spec.md`, with the bundled schema's
-original sections, delta operations, and checkbox tracking.
+The unified skill set is `blueprint`, `explore`, `propose`, `build`,
+`build-auto`, `review`, and `test`. This reference defines storage and CLI
+discovery, not their individual workflows. Changes use `proposal.md`,
+`design.md` when applicable, `tasks.md`, and `specs/<capability-path>/spec.md`,
+with the bundled schema's sections, delta operations, and checkbox tracking.
+Blueprint alone maintains project-level charter, roadmap, and decision records.
+Review reads project boundaries; test discovers commands from the stack.
 
 ## Commands and locations
 
@@ -48,11 +51,24 @@ through the adapter before authoring artifacts:
 ```yaml
 schema: spec-driven
 skip_specs: false
+# Only when the request names an epic:
+roadmap_entry: E01
 ```
+
+`roadmap_entry` is the exact ID of an existing epic in the roadmap returned
+by `plan-cli list`. Omit it for standalone changes. When proposing that epic,
+read its charter, stay inside its boundaries, run
+`plan-cli set-status <roadmap-location> --entry <id> --status in-progress`,
+and fill the roadmap's Change column with the change location through adapter
+read/write. Build workflows set the entry done only after all task groups and
+the final audit clear their gates. `set-status` updates roadmap entries only;
+valid statuses are planned, in-progress, done, and deferred.
 
 Do not overwrite existing metadata. `skip_specs: true` is only for changes
 without spec-level behavior changes, such as pure refactors or tooling.
-Do not invent a requirement to avoid this option. A change may record
+For a pure refactor, the proposal states `No behavior change`, names preserved
+behavior, and names the checks that prove it. Do not invent a requirement to
+avoid this option. A change may record
 `skipped: [design]` only after its schema's conditional design instruction
 was evaluated and found inapplicable. Do not use this to skip required work.
 
@@ -64,7 +80,7 @@ custom schema must be present under `~/.agents/plan-adapters/schemas/`;
 inspect those files to list workflows. Never silently fall back when a
 requested schema is absent or invalid. Existing change metadata selects
 its schema. A location without `.change.yaml` is not a change managed by
-these skills: do not convert another skill's plan without asking.
+these skills: do not convert or migrate it as part of this workflow.
 
 ## Project context and durable specifications
 
@@ -180,6 +196,28 @@ These are working views calculated by the agent from adapter data, not
 additional `plan` subcommands. Do not call unsupported `status`,
 `instructions`, `archive`, `show`, or JSON-list commands.
 
+## Task groups and gates
+
+In spec-driven tasks.md, each descriptive `##` heading owns one task group.
+Each group has one responsibility and leaves the code working. Its plain
+`Depends:` line is not a checkbox: use `Depends: none` or exact prerequisite
+group names. Dependencies must exist and be acyclic. Group names are references,
+not numeric IDs. Follow dependency order. Groups without dependencies between
+them and with disjoint files may run in parallel in isolated worktrees.
+
+A task starts with a verb, has one action, names files, and names its requirement
+and scenario or preservation check plus an observable check. Cover every
+requirement and scenario and the Definition of Done. Each fact appears once;
+no unused-structure groups or filler. See `../references/writing-tasks.md`.
+
+The apply state above still describes schema prerequisites and checkboxes,
+not human approval, reviewer judgment, or final-audit success. `build` stops
+after every group for explicit approval before its scoped commit. `build-auto`
+uses independent reviewers and bounded retries. It keeps blocked groups and
+dependent skips in memory only; the next run tries unresolved work again.
+Neither stores group status or review logs. Applicable `Not verified` checks
+and CRITICAL final-audit findings block done; WARNING and SUGGESTION do not.
+
 ## History and limits
 
 For removal or rename verification, use the catalog baseline. If it has
@@ -190,7 +228,7 @@ not a path in the implementation repository. History access is read-only.
 An unmatched history path is not proof that a baseline never existed.
 If usable baseline history is unavailable, mark that check not verified.
 
-The five skills do not implement archive or spec synchronization. Preserve
+These skills do not implement archive or spec synchronization. Preserve
 such follow-up in reports or untracked workflow bullets; ask the user to
 use their own archival process after verification. Do not invent a command
 or delete/move files to simulate it. Verification never implements, changes

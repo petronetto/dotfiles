@@ -1,6 +1,6 @@
 # Definition of Done
 
-A standing, project-wide bar that every change must clear before it counts as done. Unlike acceptance criteria, which vary per task and answer "did we build the right thing?", the Definition of Done is the same every time and answers "is this finished to our standard?". Use it as the final gate in `plan`, `build`, `build-auto`, and `test`.
+A standing, project-wide bar that every change must clear before it counts as done. Unlike acceptance criteria, which vary per task and answer "did we build the right thing?", the Definition of Done is the same every time and answers "is this finished to our standard?". Use it to define checks in `propose`, and as the per-group completion gate in `build`, `build-auto`, `review`, and `test`.
 
 ## Definition of Done vs. acceptance criteria
 
