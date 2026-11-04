@@ -185,10 +185,14 @@ again after entering the container.
 ## Shell and keybinding behavior
 
 Antidote and TPM are primed by provisioning (`scripts/install-packages`), never
-cloned by shell startup. Interactive Zsh and tmux startup stay offline after
-provisioning: the bundled plugin file loads directly, and a stale plugin list
-generates nothing without network access. A missing plugin cache reports a
-warning instead of downloading.
+cloned by shell startup. Provisioning clones the managers and generates the
+static Antidote bundle (`.zsh_plugins.zsh`) from `zsh_plugins.txt`. It installs
+the TPM plugins listed in `tmux.conf` after the package step provides `tmux`.
+The lifecycle script derives `ZDOTDIR` the same way `.zshenv` does, so the
+primed files land in `~/.config/zsh` even when provisioning runs without a login
+shell. Interactive Zsh and tmux startup then load the primed files directly.
+Startup only regenerates the bundle when the plugin list is newer than the
+bundle, and a missing plugin cache reports a warning instead of downloading.
 
 Linux shell behavior differs from macOS in these areas:
 

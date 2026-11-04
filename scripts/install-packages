@@ -2,26 +2,69 @@
 
 set -euo pipefail
 
-# Prime shell plugin dependencies (Antidote, TPM) so interactive startup
-# never downloads plugins. Idempotent; runs on both macOS and Ubuntu.
-prime_shell_plugins() {
-  echo "ℹ️ Priming shell plugin dependencies..."
-  local antidote_dir="${ZDOTDIR:-$HOME}/.antidote"
+# Prime shell plugin dependencies so interactive startup never downloads
+# plugins. Idempotent; runs on both macOS and Ubuntu. Antidote only needs Zsh
+# and Git, which exist before package installation. TPM needs tmux, so it is
+# primed after the platform package installer.
+prime_antidote() {
+  echo "ℹ️ Priming Antidote plugins..."
+  # Lifecycle scripts run without .zshenv, so derive ZDOTDIR the same way it does.
+  local zsh_dir="${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}"
+  local antidote_dir="$zsh_dir/.antidote"
+  local plugins_txt="$zsh_dir/zsh_plugins.txt"
+  local plugins_file="$zsh_dir/.zsh_plugins.zsh"
+
   if [[ ! -d "$antidote_dir" ]]; then
     git clone --depth=1 https://github.com/mattmc3/antidote.git "$antidote_dir" \
       || echo "⚠️ Failed to clone antidote" >&2
   fi
+
+  # Generate the static plugin bundle so shell startup never clones plugins.
+  if [[ -f "$antidote_dir/antidote.zsh" && -f "$plugins_txt" ]] &&
+     [[ ! -f "$plugins_file" || "$plugins_txt" -nt "$plugins_file" ]]; then
+    local tmp_bundle="$plugins_file.tmp.$$"
+    if ANTIDOTE_HOME="$antidote_dir" zsh -c '
+      source "$1/antidote.zsh"
+      antidote bundle < "$2" >| "$3"
+    ' _ "$antidote_dir" "$plugins_txt" "$tmp_bundle"; then
+      mv "$tmp_bundle" "$plugins_file"
+    else
+      rm -f "$tmp_bundle"
+      echo "⚠️ Failed to prime antidote plugins" >&2
+    fi
+  fi
+}
+
+prime_tpm() {
   local tpm_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/plugins/tpm"
   if [[ ! -d "$tpm_dir" ]]; then
     mkdir -p "$(dirname "$tpm_dir")"
     git clone https://github.com/tmux-plugins/tpm.git "$tpm_dir" \
       || echo "⚠️ Failed to clone TPM" >&2
   fi
+
+  # Install TPM plugins once so tmux startup never clones them.
+  local tmux_conf="${XDG_CONFIG_HOME:-$HOME/.config}/tmux/tmux.conf"
+  local plugins_root
+  plugins_root="$(dirname "$tpm_dir")"
+  if [[ -x "$tpm_dir/bin/install_plugins" && -f "$tmux_conf" ]] &&
+     command -v tmux >/dev/null 2>&1 &&
+     [[ -z "$(find "$plugins_root" -mindepth 1 -maxdepth 1 -type d ! -name tpm -print -quit 2>/dev/null)" ]]; then
+    echo "ℹ️ Priming TPM plugins..."
+    local started_server=0
+    tmux list-sessions >/dev/null 2>&1 || started_server=1
+    "$tpm_dir/bin/install_plugins" >/dev/null 2>&1 \
+      || echo "⚠️ Failed to prime TPM plugins" >&2
+    (( started_server )) && tmux kill-server >/dev/null 2>&1 || true
+  fi
 }
-prime_shell_plugins
+
+prime_antidote
 
 if [[ $(uname -s) == Linux ]]; then
-  exec zsh "${0:A:h}/install-ubuntu-packages" "$@"
+  zsh "${0:A:h}/install-ubuntu-packages" "$@"
+  prime_tpm
+  exit 0
 fi
 
 main() {
@@ -39,6 +82,7 @@ main() {
   export HOMEBREW_CASK_OPTS="--no-quarantine"
 
   brew bundle --file="$BREWFILE" || echo "⚠️ one or more packages failed to install" >&2
+  prime_tpm
   echo "ℹ️ Cleaning up Homebrew cache..."
   brew cleanup || echo "⚠️ brew cleanup failed" >&2
   echo "✅ Package installation complete"
