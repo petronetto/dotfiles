@@ -15,6 +15,7 @@ This project is my dotfiles: a chezmoi-managed collection of configuration files
 
 ## Hard Rules
 
+- **Never write tests for scripts unless explicitly asked.**
 - **Never edit deployed files directly.** Files in `$HOME` (`~/.config`, `~/.zshrc`, `~/.agents`, `~/.claude`, ...) are chezmoi targets: hand edits are overwritten by the next `apply`. Make all changes in this source directory. To adopt an out-of-band change made in `$HOME`, use `chezmoi add <file>` (new file) or `chezmoi re-add` (modified managed file).
 - **Never run `chezmoi apply` or `chezmoi update` unless asked.** `chezmoi apply --dry-run`, `chezmoi diff`, `chezmoi status`, and `chezmoi managed` are safe and preferred for verification.
 

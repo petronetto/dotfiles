@@ -24,10 +24,15 @@ main() {
 
   echo "ℹ️ Syncing private dotfiles to home directory..."
   if command -v rsync >/dev/null 2>&1; then
-    rsync -av --exclude='.git' "${TEMP_DIR}/" "${HOME}/"
+    rsync -av --exclude='.git' --exclude='/README.md' --exclude='/AGENTS.md' "${TEMP_DIR}/" "${HOME}/"
   else
-    cp -r "${TEMP_DIR}"/.[!.]* "${HOME}/" 2>/dev/null || true
-    cp -r "${TEMP_DIR}"/* "${HOME}/" 2>/dev/null || true
+    local source_path
+    for source_path in "${TEMP_DIR}"/*(DN); do
+      case "${source_path:t}" in
+        .git|README.md|AGENTS.md) continue ;;
+      esac
+      cp -r "$source_path" "${HOME}/" 2>/dev/null || true
+    done
   fi
 
   echo "ℹ️ Setting permissions..."
