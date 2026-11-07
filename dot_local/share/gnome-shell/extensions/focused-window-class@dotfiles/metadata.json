@@ -1,0 +1,6 @@
+{
+  "uuid": "focused-window-class@dotfiles",
+  "name": "Focused Window Class",
+  "description": "Writes the focused window's class to $XDG_RUNTIME_DIR/focused-window-class, for touchpad-momentum.",
+  "shell-version": ["50"]
+}

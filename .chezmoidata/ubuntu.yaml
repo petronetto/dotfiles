@@ -22,6 +22,8 @@ ubuntu:
     - libpam0g-dev
     - fprintd
     - libpam-fprintd
+    # Used by ~/.local/bin/touchpad-momentum.
+    - python3-evdev
   repositories:
     - id: onepassword
       url: https://downloads.1password.com/linux/debian/amd64

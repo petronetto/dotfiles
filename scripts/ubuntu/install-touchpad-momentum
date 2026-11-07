@@ -1,0 +1,57 @@
+#!/usr/bin/env zsh
+
+# Enable momentum scrolling for Ghostty and Zed (see dot_local/bin/touchpad-momentum).
+#
+# The daemon reads the touchpad and writes a virtual mouse wheel, so the user
+# session needs access to the touchpad event node and to /dev/uinput. A udev rule
+# grants it through logind's uaccess tag. Root is needed only for that rule.
+# Any program in your desktop session can then create virtual input devices,
+# as under X11. The touchpad rule gives read access to touchpad events only.
+#
+# Also registers the focus-tracking GNOME Shell extension (active after the
+# next login) and starts the user service. Idempotent. Skips non-Apple hardware.
+# Best-effort: a failure warns and never blocks chezmoi apply.
+
+set -euo pipefail
+
+readonly RULES_FILE=/etc/udev/rules.d/70-touchpad-momentum.rules
+readonly RULES_CONTENT='SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="uaccess"
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+'
+readonly EXTENSION=focused-window-class@dotfiles
+readonly SERVICE=touchpad-momentum.service
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+[[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
+command -v gsettings >/dev/null || exit 0
+
+install_udev_rules() {
+  if [[ ! -f "$RULES_FILE" ]] || [[ "$(<"$RULES_FILE")" != "${RULES_CONTENT%$'\n'}" ]]; then
+    print -rn -- "$RULES_CONTENT" | sudo tee "$RULES_FILE" >/dev/null
+    sudo udevadm control --reload
+  fi
+  sudo udevadm trigger --action=change --subsystem-match=input
+  sudo udevadm trigger --action=change --subsystem-match=misc --sysname-match=uinput
+}
+
+enable_extension() {
+  local enabled
+  enabled=$(gsettings get org.gnome.shell enabled-extensions)
+  [[ "$enabled" == *"$EXTENSION"* ]] && return 0
+  if [[ "$enabled" == "@as []" || "$enabled" == "[]" ]]; then
+    gsettings set org.gnome.shell enabled-extensions "['$EXTENSION']"
+  else
+    gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$EXTENSION']"
+  fi
+}
+
+main() {
+  install_udev_rules
+  enable_extension
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$SERVICE"
+  systemctl --user restart "$SERVICE"
+  echo "✅ Momentum scrolling installed. Log out and back in to load the focus extension."
+}
+
+main || echo "⚠️ Momentum scrolling setup failed. Run scripts/ubuntu/install-touchpad-momentum manually."

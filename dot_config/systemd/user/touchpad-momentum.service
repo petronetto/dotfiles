@@ -1,0 +1,12 @@
+[Unit]
+Description=Momentum scrolling for Ghostty and Zed on the touchpad
+After=graphical-session.target
+
+[Service]
+EnvironmentFile=-%h/.config/touchpad-momentum.env
+ExecStart=%h/.local/bin/touchpad-momentum
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

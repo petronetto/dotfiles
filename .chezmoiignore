@@ -18,6 +18,10 @@ private/
 
 {{ if ne .chezmoi.os "linux" -}}
 .config/mise/
+.config/systemd/
+.config/touchpad-momentum.env
+.local/bin/touchpad-momentum
+.local/share/gnome-shell/
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}
 .config/zsh/functions/ollama.zsh

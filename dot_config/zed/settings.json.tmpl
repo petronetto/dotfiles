@@ -7,7 +7,9 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "$schema": "zed://schemas/settings",
+  "$schema": "zed://schemas/settings",{{ if ne .chezmoi.os "darwin" }}
+  // Compensates the system-wide touchpad scroll factor (scripts/ubuntu/configure-scroll-speed).
+  "scroll_sensitivity": 3.0,{{ end }}
   "markdown_preview": {
     "code_font_family": ".ZedSans",
     "font_family": ".ZedSans",

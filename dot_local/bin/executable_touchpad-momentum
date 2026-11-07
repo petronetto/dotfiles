@@ -1,0 +1,236 @@
+#!/usr/bin/python3 -I
+"""Momentum (kinetic) scrolling for apps that lack it on Linux.
+
+Ghostty and Zed stop scrolling the moment the fingers leave the touchpad. This
+daemon watches the touchpad (read only, nothing is grabbed). When two fingers
+lift after a fast vertical flick, it keeps scrolling through a virtual mouse
+wheel, with exponential decay. A new touch stops it at once. It acts only while
+the focused window class matches TPM_CLASSES, because the other apps already
+coast on their own. The class comes from the focused-window-class GNOME Shell
+extension, which writes it to $XDG_RUNTIME_DIR/focused-window-class.
+
+Settings come from the environment (see ~/.config/touchpad-momentum.env):
+  TPM_GAIN       wheel units per second per mm/s of finger speed   (default 22)
+  TPM_TAU        decay time constant in seconds                    (default 0.35)
+  TPM_MIN_SPEED  slowest flick that starts momentum, in mm/s       (default 40)
+  TPM_MAX_SPEED  speed clamp, in mm/s                              (default 600)
+  TPM_DIRECTION  1, or -1 if the momentum runs the wrong way       (default 1)
+  TPM_CLASSES    regex of window classes that get momentum         (default ghostty|zed)
+"""
+
+import math
+import os
+import re
+import select
+import signal
+import sys
+import time
+from collections import deque
+from pathlib import Path
+
+import evdev
+from evdev import UInput, ecodes as e
+
+SAMPLE_WINDOW = 0.06  # seconds of finger movement used to measure the flick
+MAX_LIFT_DELAY = 0.10  # a flick must still be moving this long before the lift
+TICK = 1 / 120  # seconds between synthetic wheel updates
+STOP_SPEED = 30.0  # wheel units per second below which momentum ends
+WHEEL_DETENT = 120  # REL_WHEEL_HI_RES units per wheel notch
+FALLBACK_PAD_HEIGHT_MM = 80.0
+FOCUS_CHECK_TICKS = 12
+
+
+def env_float(name, default):
+    try:
+        return float(os.environ.get(name, default))
+    except ValueError:
+        sys.exit(f"touchpad-momentum: {name} must be a number")
+
+
+GAIN = env_float("TPM_GAIN", 22.0)
+TAU = env_float("TPM_TAU", 0.35)
+MIN_SPEED = env_float("TPM_MIN_SPEED", 40.0)
+MAX_SPEED = env_float("TPM_MAX_SPEED", 600.0)
+DIRECTION = -1 if env_float("TPM_DIRECTION", 1) < 0 else 1
+CLASSES = re.compile(os.environ.get("TPM_CLASSES", r"ghostty|zed"), re.IGNORECASE)
+FOCUS_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())) / "focused-window-class"
+
+
+def find_touchpad():
+    for path in evdev.list_devices():
+        device = evdev.InputDevice(path)
+        codes = device.capabilities(absinfo=False).get(e.EV_ABS, [])
+        if e.ABS_MT_POSITION_Y in codes and e.ABS_MT_SLOT in codes:
+            return device
+        device.close()
+    sys.exit("touchpad-momentum: no multitouch touchpad found (is the udev rule installed?)")
+
+
+def units_per_mm(device):
+    info = device.absinfo(e.ABS_MT_POSITION_Y)
+    if info.resolution > 0:
+        return float(info.resolution)
+    return (info.max - info.min) / FALLBACK_PAD_HEIGHT_MM
+
+
+def focus_matches():
+    try:
+        return bool(CLASSES.search(FOCUS_FILE.read_text()))
+    except OSError:
+        return False
+
+
+class Momentum:
+    def __init__(self, wheel):
+        self.wheel = wheel
+        self.speed = 0.0  # wheel units per second, signed
+        self.carry = 0.0
+        self.lowres_carry = 0
+        self.last = 0.0
+        self.ticks = 0
+
+    @property
+    def active(self):
+        return self.speed != 0.0
+
+    def start(self, finger_speed_mm_s):
+        magnitude = min(abs(finger_speed_mm_s), MAX_SPEED)
+        self.speed = math.copysign(magnitude * GAIN, finger_speed_mm_s) * DIRECTION
+        self.carry = 0.0
+        self.lowres_carry = 0
+        self.last = time.monotonic()
+        self.ticks = 0
+
+    def stop(self):
+        self.speed = 0.0
+
+    def step(self):
+        now = time.monotonic()
+        dt = now - self.last
+        self.last = now
+        self.ticks += 1
+        if self.ticks % FOCUS_CHECK_TICKS == 0 and not focus_matches():
+            self.stop()
+            return
+        self.carry += self.speed * dt
+        units = int(self.carry)
+        self.carry -= units
+        self.speed *= math.exp(-dt / TAU)
+        if abs(self.speed) < STOP_SPEED:
+            self.stop()
+        if units:
+            self.emit(units)
+
+    def emit(self, units):
+        self.wheel.write(e.EV_REL, e.REL_WHEEL_HI_RES, units)
+        self.lowres_carry += units
+        while abs(self.lowres_carry) >= WHEEL_DETENT:
+            step = int(math.copysign(1, self.lowres_carry))
+            self.wheel.write(e.EV_REL, e.REL_WHEEL, step)
+            self.lowres_carry -= step * WHEEL_DETENT
+        self.wheel.syn()
+
+
+class TwoFingerTracker:
+    """Turns raw multitouch events into the vertical speed of a two-finger scroll."""
+
+    def __init__(self, per_mm):
+        self.per_mm = per_mm
+        self.slot = 0
+        self.y = {}
+        self.previous_mean = None
+        self.samples = deque()
+        self.new_touch = False
+
+    def feed(self, event):
+        if event.type != e.EV_ABS:
+            return
+        if event.code == e.ABS_MT_SLOT:
+            self.slot = event.value
+        elif event.code == e.ABS_MT_TRACKING_ID and event.value == -1:
+            self.y.pop(self.slot, None)
+        elif event.code == e.ABS_MT_TRACKING_ID:
+            self.y.setdefault(self.slot, None)
+            self.new_touch = True
+        elif event.code == e.ABS_MT_POSITION_Y:
+            self.y[self.slot] = event.value
+
+    def touches(self):
+        return len(self.y)
+
+    def take_new_touch(self):
+        """True once after a finger lands. A finger that merely stays down does not count."""
+        landed, self.new_touch = self.new_touch, False
+        return landed
+
+    def sync(self, now):
+        """Record movement after a SYN_REPORT. Returns True while two fingers are down."""
+        values = [v for v in self.y.values() if v is not None]
+        if len(self.y) != 2 or len(values) != 2:
+            self.previous_mean = None
+            return False
+        mean = sum(values) / 2
+        if self.previous_mean is not None:
+            self.samples.append((now, (mean - self.previous_mean) / self.per_mm))
+        self.previous_mean = mean
+        while self.samples and now - self.samples[0][0] > SAMPLE_WINDOW:
+            self.samples.popleft()
+        return True
+
+    def flick_speed(self, now):
+        """Speed in mm/s of the last movement, or 0 if the fingers had already stopped."""
+        if not self.samples or now - self.samples[-1][0] > MAX_LIFT_DELAY:
+            return 0.0
+        return sum(delta for _, delta in self.samples) / SAMPLE_WINDOW
+
+    def reset(self):
+        self.samples.clear()
+        self.previous_mean = None
+
+
+def main():
+    touchpad = find_touchpad()
+    os.set_blocking(touchpad.fd, False)
+    tracker = TwoFingerTracker(units_per_mm(touchpad))
+    # A real-looking mouse is declared so libinput accepts the wheel events; it never moves.
+    capabilities = {
+        e.EV_KEY: [e.BTN_LEFT],
+        e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL, e.REL_WHEEL_HI_RES],
+    }
+    wheel = UInput(capabilities, name="touchpad-momentum")
+    momentum = Momentum(wheel)
+
+    def shutdown(*_):
+        wheel.close()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+
+    two_fingers_down = False
+    while True:
+        select.select([touchpad.fd], [], [], TICK if momentum.active else None)
+        try:
+            events = list(touchpad.read())
+        except BlockingIOError:
+            events = []
+        for event in events:
+            tracker.feed(event)
+            if event.type != e.EV_SYN or event.code != e.SYN_REPORT:
+                continue
+            now = time.monotonic()
+            if tracker.take_new_touch():
+                momentum.stop()
+            was_two = two_fingers_down
+            two_fingers_down = tracker.sync(now)
+            if was_two and not two_fingers_down and tracker.touches() < 2:
+                speed = tracker.flick_speed(now)
+                tracker.reset()
+                if abs(speed) >= MIN_SPEED and focus_matches():
+                    momentum.start(speed)
+        if momentum.active:
+            momentum.step()
+
+
+if __name__ == "__main__":
+    main()

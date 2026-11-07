@@ -125,6 +125,27 @@ Complete these steps on the intended machine, not through automated fixture logi
 7. Open Brave and complete any optional browser/account setup manually.
 8. Review the separate Docker service and access decisions below.
 
+## Touchpad momentum scrolling
+
+Ghostty and Zed do not coast after you lift your fingers on Linux (upstream
+requests: [Ghostty](https://github.com/ghostty-org/ghostty/discussions/4193),
+[Zed](https://github.com/zed-industries/zed/issues/14473)). This is an
+experimental workaround, not a fix. `~/.local/bin/touchpad-momentum` reads the
+touchpad and, after a fast two-finger flick, keeps scrolling through a virtual
+mouse wheel. The `focused-window-class` GNOME Shell extension tells it which app
+has focus, so only Ghostty and Zed get the extra momentum.
+
+`scripts/ubuntu/install-touchpad-momentum` installs a udev rule (needs sudo),
+registers the extension and starts the `touchpad-momentum` user service. Log out
+and back in once so GNOME loads the extension. The rule lets processes in your
+desktop session read touchpad events and create virtual input devices.
+
+Settings live in `dot_config/touchpad-momentum.env`. Raise `TPM_GAIN` or
+`TPM_TAU` for more coasting, and set `TPM_DIRECTION=-1` if it runs the wrong
+way. Restart with `systemctl --user restart touchpad-momentum`. Check it with
+`journalctl --user -u touchpad-momentum`. To remove it, run
+`systemctl --user disable --now touchpad-momentum`.
+
 ## Shell and keybinding behavior
 
 Antidote and TPM are primed by provisioning (`scripts/install-packages`), never
