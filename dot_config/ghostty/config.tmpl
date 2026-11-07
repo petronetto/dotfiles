@@ -24,6 +24,9 @@ macos-option-as-alt = left
 # Ubuntu
 font-size = 14
 gtk-titlebar = false
+# precision compensates the system-wide touchpad scroll factor (scripts/ubuntu/configure-scroll-speed).
+# discrete is one row per notch, so the momentum of touchpad-momentum is not tripled.
+mouse-scroll-multiplier = precision:2,discrete:1
 keybind = ctrl+shift+space=toggle_quick_terminal
 # keyd swaps Ctrl and Cmd on the Apple keyboard: the physical Cmd key reaches
 # Ghostty as ctrl and the physical Ctrl key as super. Mirror macOS: Cmd+C copies,
