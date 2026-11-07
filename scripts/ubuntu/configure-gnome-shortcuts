@@ -10,6 +10,10 @@
 # GNOME has no quit-application action, so physical Cmd+Q (Ctrl+Q) closes the
 # focused window. Apps that stay in the tray keep running after it closes.
 #
+# Vicinae opens on physical Cmd+Space (Ctrl+Space) through a GNOME custom
+# shortcut that runs `vicinae toggle`. The daemon starts with the session (see
+# enable-vicinae).
+#
 # Needs no root, only the user's GNOME session. Idempotent. Skips non-Apple
 # hardware and sessions without GNOME. Best-effort: a failure warns and never
 # blocks chezmoi apply.
@@ -20,6 +24,10 @@ readonly SCHEMA=org.gnome.desktop.wm.keybindings
 readonly SWITCH_APPLICATIONS="['<Primary>Tab']"
 readonly SWITCH_APPLICATIONS_BACKWARD="['<Shift><Primary>Tab']"
 readonly CLOSE_WINDOW="['<Alt>F4', '<Primary>q']"
+readonly MEDIA_KEYS_SCHEMA=org.gnome.settings-daemon.plugins.media-keys
+readonly CUSTOM_SCHEMA=org.gnome.settings-daemon.plugins.media-keys.custom-keybinding
+readonly VICINAE_PATH=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/
+readonly VICINAE_BINDING='<Primary>space'
 
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 [[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
@@ -30,11 +38,27 @@ set_shortcut() {
   [[ "$(gsettings get "$SCHEMA" "$key")" == "$value" ]] || gsettings set "$SCHEMA" "$key" "$value"
 }
 
+bind_vicinae() {
+  local current schema_path="$CUSTOM_SCHEMA:$VICINAE_PATH"
+  [[ -x "$HOME/.local/bin/vicinae" ]] || return 0
+  gsettings set "$schema_path" name 'Vicinae'
+  gsettings set "$schema_path" command "$HOME/.local/bin/vicinae toggle"
+  gsettings set "$schema_path" binding "$VICINAE_BINDING"
+  current=$(gsettings get "$MEDIA_KEYS_SCHEMA" custom-keybindings)
+  [[ "$current" == *"'$VICINAE_PATH'"* ]] && return 0
+  if [[ "$current" == "@as []" || "$current" == "[]" ]]; then
+    gsettings set "$MEDIA_KEYS_SCHEMA" custom-keybindings "['$VICINAE_PATH']"
+  else
+    gsettings set "$MEDIA_KEYS_SCHEMA" custom-keybindings "${current%]}, '$VICINAE_PATH']"
+  fi
+}
+
 main() {
   set_shortcut switch-applications "$SWITCH_APPLICATIONS"
   set_shortcut switch-applications-backward "$SWITCH_APPLICATIONS_BACKWARD"
   set_shortcut close "$CLOSE_WINDOW"
-  echo "✅ GNOME shortcuts: physical Cmd+Tab switches apps, Cmd+Q closes the window"
+  bind_vicinae
+  echo "✅ GNOME shortcuts: physical Cmd+Tab switches apps, Cmd+Q closes the window, Cmd+Space opens Vicinae"
 }
 
 main || echo "⚠️ GNOME shortcut setup failed. Run scripts/ubuntu/configure-gnome-shortcuts manually."
