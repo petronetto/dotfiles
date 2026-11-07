@@ -1,38 +1,34 @@
+# Shared
 theme = Gruvbox Custom
 font-family = JetBrainsMono NFM Light
-{{ if eq .chezmoi.os "darwin" -}}
-font-size = 20
-{{ else -}}
-font-size = 14
-{{ end -}}
 maximize = true
 mouse-hide-while-typing = true
-{{ if eq .chezmoi.os "darwin" -}}
-keybind = global:cmd+shift+space=toggle_quick_terminal
-{{ else -}}
-keybind = ctrl+shift+space=toggle_quick_terminal
-{{ end -}}
 background-opacity = 0.8
 background-blur-radius = 30
 background-opacity-cells = true
 keybind = shift+enter=text:\n
-{{ if ne .chezmoi.os "darwin" -}}
+window-inherit-working-directory = true
+window-padding-y = 20
+window-padding-x = 20
+working-directory = ~/code
+
+{{ if eq .chezmoi.os "darwin" -}}
+# macOS
+font-size = 20
+keybind = global:cmd+shift+space=toggle_quick_terminal
+macos-titlebar-style = hidden
+# Enable Option key as Alt for keybindings
+# Use 'left' so right Option key can still type special characters
+macos-option-as-alt = left
+{{ else -}}
+# Ubuntu
+font-size = 14
+gtk-titlebar = false
+keybind = ctrl+shift+space=toggle_quick_terminal
 # keyd swaps Ctrl and Cmd on the Apple keyboard: the physical Cmd key reaches
 # Ghostty as ctrl and the physical Ctrl key as super. Mirror macOS: Cmd+C copies,
 # Cmd+V pastes and Ctrl+C interrupts.
 keybind = ctrl+c=copy_to_clipboard
 keybind = ctrl+v=paste_from_clipboard
 keybind = super+c=text:\x03
-{{ end -}}
-window-inherit-working-directory = true
-{{ if eq .chezmoi.os "darwin" -}}
-macos-titlebar-style = hidden
-{{ end -}}
-window-padding-y = 20
-window-padding-x = 20
-working-directory = ~/code
-{{ if eq .chezmoi.os "darwin" -}}
-# Enable Option key as Alt for keybindings
-# Use 'left' so right Option key can still type special characters
-macos-option-as-alt = left
 {{ end -}}
