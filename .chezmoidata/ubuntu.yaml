@@ -208,6 +208,16 @@ ubuntu:
       sha256: cc42a4f3eacdcb25ec31f0016b1272acb003145ab30484db8965450e20c72cd2
       verification: sha256
       provenance: https://api.github.com/repos/localsend/localsend/releases/tags/v1.18.2
+    - id: wayland-scroll-factor
+      owner: upstream
+      commands: [wsf]
+      package: wayland-scroll-factor
+      version: "1.0.0"
+      format: deb
+      url: https://github.com/daniel-g-carrasco/wayland-scroll-factor/releases/download/v1.0.0/wayland-scroll-factor_1.0.0-1_amd64.deb
+      sha256: 208994120f93f1ff96536e15cee4f5630d7d2c86e94d4bf4a90e1575b929b8d4
+      verification: sha256
+      provenance: https://api.github.com/repos/daniel-g-carrasco/wayland-scroll-factor/releases/tags/v1.0.0
     - id: agent-browser
       owner: npm
       commands: [agent-browser]

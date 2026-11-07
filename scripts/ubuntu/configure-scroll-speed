@@ -1,0 +1,30 @@
+#!/usr/bin/env zsh
+
+# Slow down touchpad scrolling on GNOME Wayland for an Apple trackpad.
+#
+# GNOME has no scroll-speed setting, and the Apple trackpad scrolls far for a
+# small finger movement. Wayland Scroll Factor (wsf) scales the scroll distance
+# inside gnome-shell through an LD_PRELOAD library that wsf enable registers in
+# ~/.config/environment.d. It needs no root.
+#
+# The default factor is set only when no config exists, so a factor you chose
+# later with `wsf set` or the wsf-gui app is kept. Lower values scroll less.
+# Enabling needs a logout and login. Idempotent. Skips non-Apple hardware.
+# Best-effort: a failure warns and never blocks chezmoi apply.
+
+set -euo pipefail
+
+readonly DEFAULT_FACTOR=0.30
+readonly CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/wayland-scroll-factor/config"
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+[[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
+command -v wsf >/dev/null || exit 0
+
+main() {
+  [[ -f "$CONFIG" ]] || wsf set "$DEFAULT_FACTOR"
+  wsf enable
+  echo "✅ Scroll factor: $(wsf get). Log out and back in to apply it."
+}
+
+main || echo "⚠️ Scroll speed setup failed. Run scripts/ubuntu/configure-scroll-speed manually."
