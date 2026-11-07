@@ -220,6 +220,16 @@ ubuntu:
       sha256: 208994120f93f1ff96536e15cee4f5630d7d2c86e94d4bf4a90e1575b929b8d4
       verification: sha256
       provenance: https://api.github.com/repos/daniel-g-carrasco/wayland-scroll-factor/releases/tags/v1.0.0
+    - id: vicinae
+      owner: upstream
+      commands: [vicinae]
+      version_command: vicinae version
+      version: "0.29.2"
+      format: appimage
+      url: https://github.com/vicinaehq/vicinae/releases/download/v0.29.2/Vicinae-x86_64.AppImage
+      sha256: 2c7f222b09355186a3b047e8018fed3e2f5438778c039214ad47af878ac453fc
+      verification: sha256
+      provenance: https://api.github.com/repos/vicinaehq/vicinae/releases/tags/v0.29.2
     - id: agent-browser
       owner: npm
       commands: [agent-browser]

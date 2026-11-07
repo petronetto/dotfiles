@@ -41,7 +41,9 @@ Download metadata and archives remain under
 - Bootstrap installs official chezmoi (`chezmoi`). Official release artifacts
   install mise (`mise`), Starship (`starship`), Herdr (`herdr`), ast-grep
   (`ast-grep`), tlrc (`tldr`), Worktrunk (`wt`), and the LocalSend `.deb`
-  (`localsend_app`). These tools are not mise backends.
+  (`localsend_app`). Vicinae (`vicinae`) installs from its AppImage (extracted, with its own libraries) under
+  `~/.local/share/vicinae/<version>`; a user service starts its daemon. These
+  tools are not mise backends.
 - Mise owns only Node (`node`) and its bundled `npm` and `npx`. The tested
   selection is Node **24.22.1**, with npm **11.19.1**. Fresh login shells use
   mise shims. The npm prefix is `~/.local`, without privileged npm installation.

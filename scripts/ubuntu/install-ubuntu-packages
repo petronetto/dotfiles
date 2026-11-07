@@ -200,6 +200,27 @@ install_zed() {
     "$HOME/.local/bin/zed" "$HOME/.local/zed.app/share/icons/hicolor/512x512/apps/zed.png" > "$desktop"
 }
 
+install_vicinae() {
+  local version destination applications icons
+  download_release
+  version=$(jq -r '.version' <<< "$tool")
+  destination="$HOME/.local/share/vicinae/$version"
+  applications="$HOME/.local/share/applications"
+  icons="$HOME/.local/share/icons/hicolor/512x512/apps"
+  # The release tarball needs a newer libstdc++ than Ubuntu ships. The AppImage
+  # bundles its own libraries and the binary finds them through its RUNPATH.
+  rm -rf -- "$destination"
+  mkdir -p "$destination" "$HOME/.local/bin" "$applications" "$icons"
+  7z x -y "-o$destination" "$asset" >/dev/null
+  chmod -R u=rwX,go=rX "$destination"
+  [[ -x "$destination/usr/bin/vicinae" && -x "$destination/usr/bin/vicinae-server" ]] ||
+    fail "vicinae: extracted application is incomplete"
+  check_shared_libraries "$destination/usr/bin/vicinae"
+  link_application "$destination/usr/bin/vicinae" "$HOME/.local/bin/vicinae"
+  install -m 0644 "$destination"/usr/share/applications/vicinae*.desktop "$applications/"
+  install -m 0644 "$destination/usr/share/icons/hicolor/512x512/apps/vicinae.png" "$icons/"
+}
+
 install_todoist() {
   local version destination launcher desktop
   install_dependencies
@@ -234,6 +255,7 @@ install_upstream_tool() {
     obsidian) install_obsidian; return ;;
     zed) install_zed; return ;;
     todoist) install_todoist; return ;;
+    vicinae) install_vicinae; return ;;
   esac
   local format extracted binary binary_path
   format=$(jq -r '.format' <<< "$tool")
@@ -309,6 +331,13 @@ installed_version() {
       jq -er '.version' "$HOME/.local/lib/node_modules/$package/package.json"
       ;;
     *)
+      local version_command
+      version_command=$(jq -r '.version_command // empty' <<< "$tool")
+      if [[ -n "$version_command" ]]; then
+        local -a version_words=(${(z)version_command})
+        "${version_words[@]}"
+        return
+      fi
       if [[ $(jq -r '.format // empty' <<< "$tool") == deb ]]; then
         dpkg-query --show --showformat '${Version}\n' "$(jq -r '.package' <<< "$tool")"
         return

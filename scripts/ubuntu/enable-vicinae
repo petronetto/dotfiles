@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+
+# Start the Vicinae launcher daemon with the desktop session.
+#
+# Vicinae is installed by scripts/ubuntu/install-ubuntu-packages. The user
+# service comes from dot_config/systemd/user/vicinae.service. Needs no root.
+# Idempotent. Skips machines where Vicinae is not installed. Best-effort: a
+# failure warns and never blocks chezmoi apply.
+
+set -euo pipefail
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+[[ -x "$HOME/.local/bin/vicinae" ]] || exit 0
+command -v systemctl >/dev/null || exit 0
+
+main() {
+  systemctl --user daemon-reload
+  systemctl --user enable --now vicinae.service
+  echo "✅ Vicinae launcher daemon enabled"
+}
+
+main || echo "⚠️ Vicinae service setup failed. Run scripts/ubuntu/enable-vicinae manually."
