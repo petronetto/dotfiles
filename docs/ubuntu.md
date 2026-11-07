@@ -197,6 +197,13 @@ integration, real-account sign-in, vault selection, SSH-agent use, real Git
 signing, and host Docker daemon/container execution. The acceptance report must
 list these separately from executed CLI results.
 
-Touch ID is deferred on the Ubuntu-only T2 machine. Provisioning does not add T2
-kernel repositories, enroll fingerprints, change PAM or encrypted disks, restore
-macOS, or enable passwordless sudo. Existing password authentication is retained.
+Touch ID on the T2 Mac uses [t2touch](https://github.com/macintog/t2touch), an
+experimental fprintd service that can enroll fingers from Linux on a Mac without
+macOS. It is opt-in: provisioning never installs it. Run
+`scripts/ubuntu/install-t2touch` yourself. The script builds a DKMS kernel module
+and installs root services from a reviewed, pinned commit. It does not edit PAM:
+enable fingerprints with `sudo pam-auth-update --enable fprintd` only after
+`fprintd-verify` matches. Upstream verified it on one MacBookPro16,1 and says
+macOS may remove the fingerprints and keychain if the Mac also boots macOS.
+Provisioning does not add T2 kernel repositories, change encrypted disks,
+restore macOS, or enable passwordless sudo. Password authentication is retained.

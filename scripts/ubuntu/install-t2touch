@@ -1,0 +1,116 @@
+#!/usr/bin/env zsh
+
+# Install t2touch (https://github.com/macintog/t2touch): Touch ID for Intel
+# T2 Macs through fprintd, including enrolling fingers from Linux on a Mac
+# that no longer runs macOS.
+#
+# Manual and opt-in: chezmoi never runs this script. It builds a kernel module
+# (DKMS), installs root services and changes Secure Enclave state when you
+# enroll. t2touch is an early proof of concept, verified upstream on one
+# MacBookPro16,1 only. Never use it on a Mac that also boots macOS: upstream
+# reports that macOS then removed the fingerprints and replaced the login
+# keychain.
+#
+# The source is pinned to a reviewed commit. Update PINNED_COMMIT only after
+# reading the upstream changes.
+#
+# Usage: scripts/ubuntu/install-t2touch
+# After it succeeds, follow the printed steps. PAM is not changed here.
+
+set -euo pipefail
+
+readonly REPO_URL=https://github.com/macintog/t2touch.git
+readonly PINNED_COMMIT=5934b05a98ad38b6ecead152c1fabfc4df0486b0
+readonly SOURCE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/t2touch"
+readonly REBOOT_EXIT_CODE=3
+
+fail() {
+  print -u2 -r -- "install-t2touch: $*"
+  exit 1
+}
+
+check_machine() {
+  [[ "$(uname -s)" == Linux ]] || fail "Linux is required"
+  (( EUID != 0 )) || fail "run as your desktop user, not root (sudo is used where needed)"
+  [[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || fail "Apple hardware is required"
+  lsmod | grep -q '^t2bce_core' || fail "the T2 kernel modules (t2bce) are not loaded"
+}
+
+confirm() {
+  print -r -- "This installs an experimental kernel module and root services for Touch ID."
+  print -r -- "Use it only on a Mac that does not run macOS. Password login stays available."
+  read -q "?Continue? [y/N] " || { print; fail "cancelled"; }
+  print
+}
+
+install_kernel_headers() {
+  local tool
+  for tool in dkms make gcc; do
+    command -v "$tool" >/dev/null || fail "$tool is missing; run chezmoi apply to install the build dependencies"
+  done
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "linux-headers-$(uname -r)"
+}
+
+fetch_source() {
+  if [[ ! -d "$SOURCE_DIR/.git" ]]; then
+    mkdir -p "${SOURCE_DIR:h}"
+    git clone --quiet "$REPO_URL" "$SOURCE_DIR"
+  fi
+  git -C "$SOURCE_DIR" fetch --quiet origin
+  git -C "$SOURCE_DIR" checkout --quiet --detach "$PINNED_COMMIT"
+  [[ "$(git -C "$SOURCE_DIR" rev-parse HEAD)" == "$PINNED_COMMIT" ]] || fail "source is not at the pinned commit"
+  # Untracked files are build outputs; modified tracked files mean the source is not the reviewed code.
+  [[ -z "$(git -C "$SOURCE_DIR" status --porcelain --untracked-files=no)" ]] || fail "$SOURCE_DIR has local changes"
+}
+
+# t2touch rebuilds boot images with Arch's `mkinitcpio -P`. Ubuntu uses
+# initramfs-tools, so give the installer a stand-in that rebuilds only the
+# running kernel's initramfs. Other kernels, the fallback included, stay as
+# they are.
+make_mkinitcpio_stand_in() {
+  local directory=$1
+  cat >"$directory/mkinitcpio" <<'STAND_IN'
+#!/bin/sh
+[ "$1" = "-P" ] || { echo "mkinitcpio stand-in supports only -P" >&2; exit 2; }
+exec update-initramfs -u -k "$(uname -r)"
+STAND_IN
+  chmod 0755 "$directory/mkinitcpio"
+}
+
+run_installer() {
+  local code=0 stand_in_dir
+  stand_in_dir=$(mktemp -d)
+  trap "rm -rf -- ${(q)stand_in_dir}" EXIT
+  make_mkinitcpio_stand_in "$stand_in_dir"
+  (cd "$SOURCE_DIR" && sudo env "PATH=$stand_in_dir:$PATH" ./install.sh) || code=$?
+  if (( code == REBOOT_EXIT_CODE )); then
+    print -r -- "A reboot is required. Reboot, then run this script again."
+    exit 0
+  fi
+  (( code == 0 )) || fail "t2touch installer failed with exit code $code"
+}
+
+print_next_steps() {
+  cat <<'NEXT'
+
+t2touch is installed. Next steps:
+  1. Log out and back in (or reboot).
+  2. Enroll a finger in your desktop session:  t2-touchid-enroll
+  3. Check it:  t2-touchid-status  and  fprintd-verify
+  4. Only after a match works, enable fingerprints in PAM:
+       sudo pam-auth-update --enable fprintd
+     Keep a root shell open while you test sudo.
+  5. If something fails, run:  sudo t2-touchid-doctor
+NEXT
+}
+
+main() {
+  check_machine
+  confirm
+  install_kernel_headers
+  fetch_source
+  run_installer
+  print_next_steps
+}
+
+main "$@"
