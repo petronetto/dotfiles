@@ -1,9 +1,7 @@
 # Ubuntu secondary workstation
 
 Status: in development. Package installation has been exercised in an AMD64
-Ubuntu 26.04 fixture. The retained Docker fixture and the full CLI acceptance
-gate are not complete. Do not deploy to a workstation until
-that gate passes. No primary-machine apply is part of this work.
+Ubuntu 26.04 fixture.
 
 ## Bootstrap and ownership
 
@@ -124,64 +122,6 @@ Complete these steps on the intended machine, not through automated fixture logi
 7. Open Brave and complete any optional browser/account setup manually.
 8. Review the separate Docker service and access decisions below.
 
-## Retained Docker test fixture
-
-`scripts/ubuntu-test` manages `ubuntu-dotfiles-test`. The host needs Docker
-with Compose, Git, jq, Zsh, tar, and shasum. No lifecycle operation removes,
-resets, rebuilds, or replaces an existing container. There is no SSH server,
-public-key input, published port, host-home mount, or Docker socket mount.
-
-```sh
-scripts/ubuntu-test prepare
-scripts/ubuntu-test status
-scripts/ubuntu-test shell
-# Equivalent interactive entry:
-docker exec -it --user tester ubuntu-dotfiles-test zsh -l
-scripts/ubuntu-test logs
-scripts/ubuntu-test stop
-scripts/ubuntu-test start
-```
-
-`prepare` builds the AMD64 image, starts it, and copies an allowlisted snapshot
-of the current public Git working tree, including uncommitted implementation
-files, into `/home/tester/.local/share/chezmoi`. Git-ignored files, private
-trees, caches, and filesystem symlinks are excluded. Archives strip host extended
-attributes and ACLs and use neutral root ownership. Chezmoi's regular
-`symlink_` source instructions are included. Preparation alone does not prove
-package installation or CLI acceptance. After provisioning, `check` runs the
-catalog-linked smoke gate as `tester` and copies its JSON report to the host.
-Missing smoke implementations fail the gate; they are not passing tests.
-
-```sh
-scripts/ubuntu-test check
-scripts/ubuntu-test check --only jq
-```
-
-A focused run records other catalog commands as `unexecuted`, so it cannot pass
-full acceptance. Reports contain the source digest, immutable image ID, actual
-runtime architecture and UID, installed versions, and each command's status,
-exit code, bounded output, and duration. A missing command/check, skip, failure,
-timeout, invalid evidence, root execution, or wrong architecture blocks the gate.
-Machine-only checks remain explicitly pending even after all CLI checks pass.
-
-`prepare`, `start`, and `shell` compare the current source content digest and
-immutable local image ID with the retained container, even when it is stopped.
-A mismatch fails without replacing it. Replacement needs separate approval;
-there is no `--yes` bypass. Evidence is stored under
-`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/ubuntu-test/`.
-
-Shell entry uses the non-root `tester` account without a password. Docker
-access itself is a privileged host capability. The account belongs to the sudo
-group but has no passwordless-sudo exemption. To set a manual sudo password:
-
-```sh
-docker exec -it --user root ubuntu-dotfiles-test passwd tester
-```
-
-Stop/start preserves installed packages, configuration, and manual files.
-Running processes and live Herdr sessions do not survive a restart. Start them
-again after entering the container.
-
 ## Shell and keybinding behavior
 
 Antidote and TPM are primed by provisioning (`scripts/install-packages`), never
@@ -220,9 +160,13 @@ Keybinding notes:
 - Ghostty quick-terminal shortcut is `ctrl+shift+space` on Ubuntu and
   `cmd+shift+space` on macOS. The macOS option-as-alt remap does not run on
   Linux.
-- Herdr keeps the shared F4 prefix on both platforms. The physical Fn/F4 key
-  mapping on the T2 Mac is a separate machine check; the macOS remap installer
-  does not run on Ubuntu.
+- Herdr keeps the shared F4 prefix on both platforms. On Apple hardware,
+  `scripts/ubuntu/configure-apple-keyboard` installs keyd and maps Fn to F4. It also
+  swaps Ctrl and Cmd. The macOS remap installer does not run on Ubuntu. Check
+  that the Fn key emits an event on the T2 Mac (`sudo keyd monitor`).
+- Provisioning sets Zsh as the login shell (`scripts/ubuntu/set-default-shell`). It
+  applies at the next login.
+- Ghostty uses `font-size = 14` on Linux (20 on macOS).
 - Core aliases (`vim`, `cat`, `dc`, and navigation helpers) resolve to installed
   Ubuntu tools with the same names as macOS.
 

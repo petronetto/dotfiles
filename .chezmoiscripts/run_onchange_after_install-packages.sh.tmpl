@@ -8,7 +8,7 @@ BREWFILE={{ joinPath .chezmoi.sourceDir "Brewfile" | quote }} "{{ .chezmoi.sourc
 {{ else if eq .chezmoi.os "linux" -}}
 # Ubuntu catalog hash: {{ include ".chezmoidata/ubuntu.yaml" | sha256sum }}
 # Ubuntu runtime hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
-# Ubuntu installer hash: {{ include "scripts/install-ubuntu-packages" | sha256sum }}
+# Ubuntu installer hash: {{ include "scripts/ubuntu/install-ubuntu-packages" | sha256sum }}
 # Package dispatch hash: {{ include "scripts/install-packages" | sha256sum }}
 "{{ .chezmoi.sourceDir }}/scripts/install-packages" --profile {{ get . "profile" | default "workstation" | quote }} <<'UBUNTU_CATALOG'
 {{ .ubuntu | toJson }}

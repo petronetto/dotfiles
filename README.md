@@ -100,11 +100,9 @@ bootstrap with a nonzero exit status and a named stage. Ubuntu does not use
 `--keep-going`. Existing prerequisites are reused, with no automatic reset or
 package removal. Review the managed diff before any later workstation apply.
 
-Local regression checks require Python 3, chezmoi, Bash, and ShellCheck:
+Local checks require Bash and ShellCheck:
 
 ```bash
-python3 scripts/test-bootstrap.py
-python3 scripts/test-plan-adapters.py
 bash -n bootstrap.sh
 shellcheck --shell=bash bootstrap.sh
 ```

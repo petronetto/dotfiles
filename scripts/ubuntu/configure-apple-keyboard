@@ -1,0 +1,40 @@
+#!/usr/bin/env zsh
+
+# Remap the keyboard of an Apple machine running Linux, with keyd:
+#   - swap Ctrl and Cmd (Super), so Cmd acts as Ctrl like on macOS
+#   - map fn to F4, the Herdr prefix (the Linux counterpart of install-fn-f4-remap)
+#
+# Idempotent. Skips non-Apple hardware. Best-effort: a failure warns and
+# never blocks chezmoi apply.
+
+set -euo pipefail
+
+KEYD_CONFIG=/etc/keyd/default.conf
+KEYD_CONFIG_CONTENT='[ids]
+*
+
+[main]
+leftcontrol = leftmeta
+leftmeta = leftcontrol
+rightcontrol = rightmeta
+rightmeta = rightcontrol
+fn = f4
+'
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+[[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
+
+main() {
+  command -v keyd >/dev/null || sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y keyd
+
+  if [[ ! -f "$KEYD_CONFIG" ]] || [[ "$(<"$KEYD_CONFIG")" != "${KEYD_CONFIG_CONTENT%$'\n'}" ]]; then
+    sudo install -d /etc/keyd
+    print -rn -- "$KEYD_CONFIG_CONTENT" | sudo tee "$KEYD_CONFIG" >/dev/null
+  fi
+
+  sudo systemctl enable --now keyd
+  sudo keyd reload
+  echo "✅ keyd configured: Ctrl/Cmd swapped, fn -> F4"
+}
+
+main || echo "⚠️ Apple keyboard remap failed. Run scripts/ubuntu/configure-apple-keyboard manually."

@@ -1,6 +1,10 @@
 theme = Gruvbox Custom
 font-family = JetBrainsMono NFM Light
+{{ if eq .chezmoi.os "darwin" -}}
 font-size = 20
+{{ else -}}
+font-size = 14
+{{ end -}}
 maximize = true
 mouse-hide-while-typing = true
 {{ if eq .chezmoi.os "darwin" -}}

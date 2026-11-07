@@ -11,7 +11,6 @@ key.txt.age
 # Local assets/scripts, not deployed to $HOME
 images/
 scripts/
-tests/
 docs/
 
 # Private folders

@@ -266,11 +266,11 @@ scroll_exits = false
 
 [daemon]
 ## Enables using the daemon to sync.
-enabled = true
+enabled = {{ if eq .chezmoi.os "linux" }}false{{ else }}true{{ end }}
 
 ## Automatically start and manage the daemon when needed.
 ## Not compatible with `systemd_socket = true`.
-autostart = true
+autostart = {{ if eq .chezmoi.os "linux" }}false{{ else }}true{{ end }}
 
 ## How often the daemon should sync in seconds
 # sync_frequency = 300

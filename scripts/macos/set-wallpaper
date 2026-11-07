@@ -2,10 +2,10 @@
 
 set -eufo pipefail
 
-# Resolve the chezmoi source root (parent of this script's directory) so the
+# Resolve the chezmoi source root (two levels above this script) so the
 # default wallpaper path works regardless of the caller's working directory.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SOURCE_ROOT="$(dirname "$SCRIPT_DIR")"
+SOURCE_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 DEFAULT_WALLPAPER="$SOURCE_ROOT/images/wallpaper.jpg"
 
 # macOS Sonoma+ (incl. Tahoe / macOS 26) stores wallpaper config here. Each

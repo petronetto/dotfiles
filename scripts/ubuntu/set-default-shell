@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+
+# Make Zsh the login shell of the current user (Linux).
+# Idempotent: does nothing when Zsh is already the login shell.
+# Best-effort: a failure warns and never blocks chezmoi apply.
+
+set -euo pipefail
+
+zsh_path=$(command -v zsh) || { echo "⚠️ zsh is not installed, skipping default shell"; exit 0; }
+current_shell=$(getent passwd "$USER" | cut -d: -f7)
+
+if [[ "$current_shell" == "$zsh_path" ]]; then
+  echo "✅ Default shell is already $zsh_path"
+  exit 0
+fi
+
+echo "ℹ️ Setting default shell to $zsh_path..."
+if sudo chsh -s "$zsh_path" "$USER"; then
+  echo "✅ Default shell set. It applies at the next login."
+else
+  echo "⚠️ Could not set the default shell. Run: sudo chsh -s $zsh_path $USER"
+fi

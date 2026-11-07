@@ -3,6 +3,9 @@
 set -euo pipefail
 
 {{ if eq .chezmoi.os "darwin" -}}
-"{{ .chezmoi.sourceDir }}/scripts/enable-touchid-sudo"
-"{{ .chezmoi.sourceDir }}/scripts/install-fn-f4-remap"
+"{{ .chezmoi.sourceDir }}/scripts/macos/enable-touchid-sudo"
+"{{ .chezmoi.sourceDir }}/scripts/macos/install-fn-f4-remap"
+{{ else if eq .chezmoi.os "linux" -}}
+"{{ .chezmoi.sourceDir }}/scripts/ubuntu/set-default-shell"
+"{{ .chezmoi.sourceDir }}/scripts/ubuntu/configure-apple-keyboard"
 {{ end -}}

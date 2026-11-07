@@ -3,6 +3,6 @@
 set -euo pipefail
 
 {{ if eq .chezmoi.os "darwin" -}}
-# macos-defaults hash: {{ include "scripts/macos-defaults" | sha256sum }}
-"{{ .chezmoi.sourceDir }}/scripts/macos-defaults"
+# macos-defaults hash: {{ include "scripts/macos/macos-defaults" | sha256sum }}
+"{{ .chezmoi.sourceDir }}/scripts/macos/macos-defaults"
 {{ end -}}

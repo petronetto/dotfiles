@@ -62,7 +62,7 @@ prime_tpm() {
 prime_antidote
 
 if [[ $(uname -s) == Linux ]]; then
-  zsh "${0:A:h}/install-ubuntu-packages" "$@"
+  zsh "${0:A:h}/ubuntu/install-ubuntu-packages" "$@"
   prime_tpm
   exit 0
 fi
