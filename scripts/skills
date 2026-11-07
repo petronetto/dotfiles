@@ -223,9 +223,8 @@ do_update() {
 	done
 }
 
-# `sync` is what the chezmoi run_after script calls on every apply: prune
-# third-party skills dropped from the manifest, then install/update every
-# manifest entry, then regenerate the .gitignore.
+# `sync` is run manually: prune third-party skills dropped from the manifest,
+# then install/update every manifest entry, then regenerate the .gitignore.
 do_sync() {
 	prune_orphans
 	if [[ -s "$MANIFEST" ]]; then

@@ -37,7 +37,7 @@ Skills live in `~/.agents/skills/` and are shared across agent tools (pi and Zed
 - **Custom skills**: versioned in this repo under `dot_agents/exact_skills/<name>/SKILL.md`. Edit them here.
 - **Third-party skills**: never committed. Tracked only by the manifest `dot_agents/exact_skills/skills.txt` (one `owner/repo/skill` entry per line) and gitignored by `dot_agents/exact_skills/.gitignore`, which `scripts/skills` regenerates from the manifest.
 
-A `run_after` script runs `scripts/skills sync` on every apply: it prunes skills removed from the manifest, installs missing ones, and updates all tracked ones, all inside `dot_agents/exact_skills/`. chezmoi deploys that folder; the script never writes to `~/.agents/skills/`. Because chezmoi reads the source state before running scripts, skills synced during an apply are deployed by the next apply. To change third-party skills permanently, edit the manifest in this repo. To add or drop a skill on this machine only, use the `scripts/skills add|remove` commands.
+Skills are not synced on `chezmoi apply`. Run `scripts/skills sync` manually when needed: it prunes skills removed from the manifest, installs missing ones, and updates all tracked ones, all inside `dot_agents/exact_skills/`. chezmoi deploys that folder on the next apply; the script never writes to `~/.agents/skills/`. To change third-party skills permanently, edit the manifest in this repo. To add or drop a skill on this machine only, use the `scripts/skills add|remove` commands.
 
 ## Code Style and Structure
 
