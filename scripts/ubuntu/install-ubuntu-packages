@@ -202,6 +202,7 @@ install_zed() {
 
 install_vicinae() {
   local version destination applications icons
+  install_dependencies
   download_release
   version=$(jq -r '.version' <<< "$tool")
   destination="$HOME/.local/share/vicinae/$version"
@@ -216,6 +217,7 @@ install_vicinae() {
   [[ -x "$destination/usr/bin/vicinae" && -x "$destination/usr/bin/vicinae-server" ]] ||
     fail "vicinae: extracted application is incomplete"
   check_shared_libraries "$destination/usr/bin/vicinae"
+  check_shared_libraries "$destination/usr/bin/vicinae-server"
   link_application "$destination/usr/bin/vicinae" "$HOME/.local/bin/vicinae"
   install -m 0644 "$destination"/usr/share/applications/vicinae*.desktop "$applications/"
   install -m 0644 "$destination/usr/share/icons/hicolor/512x512/apps/vicinae.png" "$icons/"
