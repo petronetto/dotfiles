@@ -16,6 +16,7 @@ Settings come from the environment (see ~/.config/touchpad-momentum.env):
   TPM_MAX_SPEED  speed clamp, in mm/s                              (default 600)
   TPM_DIRECTION  1, or -1 if the momentum runs the wrong way       (default 1)
   TPM_CLASSES    regex of window classes that get momentum         (default ghostty|zed)
+  TPM_DEBUG      1 logs every flick and every momentum run         (default 0)
 """
 
 import math
@@ -53,6 +54,7 @@ MIN_SPEED = env_float("TPM_MIN_SPEED", 40.0)
 MAX_SPEED = env_float("TPM_MAX_SPEED", 600.0)
 DIRECTION = -1 if env_float("TPM_DIRECTION", 1) < 0 else 1
 CLASSES = re.compile(os.environ.get("TPM_CLASSES", r"ghostty|zed"), re.IGNORECASE)
+DEBUG = os.environ.get("TPM_DEBUG", "0") == "1"
 FOCUS_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())) / "focused-window-class"
 
 
@@ -73,6 +75,18 @@ def units_per_mm(device):
     return (info.max - info.min) / FALLBACK_PAD_HEIGHT_MM
 
 
+def log(message):
+    if DEBUG:
+        print(f"touchpad-momentum: {message}", flush=True)
+
+
+def focused_class():
+    try:
+        return FOCUS_FILE.read_text().strip()
+    except OSError:
+        return ""
+
+
 def focus_matches():
     try:
         return bool(CLASSES.search(FOCUS_FILE.read_text()))
@@ -88,6 +102,9 @@ class Momentum:
         self.lowres_carry = 0
         self.last = 0.0
         self.ticks = 0
+        self.started = 0.0
+        self.total = 0
+        self.events = 0
 
     @property
     def active(self):
@@ -100,8 +117,15 @@ class Momentum:
         self.lowres_carry = 0
         self.last = time.monotonic()
         self.ticks = 0
+        self.started = self.last
+        self.total = 0
+        self.events = 0
+        log(f"start class={focused_class()!r} finger={finger_speed_mm_s:.0f} mm/s wheel={self.speed:.0f} units/s")
 
-    def stop(self):
+    def stop(self, reason="decayed"):
+        if self.active:
+            log(f"stop reason={reason} after {time.monotonic() - self.started:.2f}s, "
+                f"{self.events} wheel events, {self.total} hi-res units ({self.total / WHEEL_DETENT:.1f} notches)")
         self.speed = 0.0
 
     def step(self):
@@ -110,18 +134,20 @@ class Momentum:
         self.last = now
         self.ticks += 1
         if self.ticks % FOCUS_CHECK_TICKS == 0 and not focus_matches():
-            self.stop()
+            self.stop("focus changed")
             return
         self.carry += self.speed * dt
         units = int(self.carry)
         self.carry -= units
         self.speed *= math.exp(-dt / TAU)
-        if abs(self.speed) < STOP_SPEED:
-            self.stop()
         if units:
             self.emit(units)
+        if abs(self.speed) < STOP_SPEED:
+            self.stop()
 
     def emit(self, units):
+        self.total += units
+        self.events += 1
         self.wheel.write(e.EV_REL, e.REL_WHEEL_HI_RES, units)
         self.lowres_carry += units
         while abs(self.lowres_carry) >= WHEEL_DETENT:
@@ -220,13 +246,16 @@ def main():
                 continue
             now = time.monotonic()
             if tracker.take_new_touch():
-                momentum.stop()
+                momentum.stop("new touch")
             was_two = two_fingers_down
             two_fingers_down = tracker.sync(now)
             if was_two and not two_fingers_down and tracker.touches() < 2:
                 speed = tracker.flick_speed(now)
                 tracker.reset()
-                if abs(speed) >= MIN_SPEED and focus_matches():
+                matches = focus_matches()
+                log(f"lift class={focused_class()!r} speed={speed:.0f} mm/s matches={matches} "
+                    f"momentum={abs(speed) >= MIN_SPEED and matches}")
+                if abs(speed) >= MIN_SPEED and matches:
                     momentum.start(speed)
         if momentum.active:
             momentum.step()
