@@ -1,0 +1,35 @@
+#!/usr/bin/env zsh
+
+# Mac-style window switching on GNOME for an Apple keyboard.
+#
+# keyd (see configure-apple-keyboard) swaps Ctrl and Cmd, so GNOME receives the
+# physical Cmd key as Ctrl. GNOME binds the application switcher to Super+Tab,
+# which is therefore the physical Ctrl key. Bind it to Ctrl+Tab instead, so the
+# physical Cmd+Tab switches applications as on macOS.
+#
+# Needs no root, only the user's GNOME session. Idempotent. Skips non-Apple
+# hardware and sessions without GNOME. Best-effort: a failure warns and never
+# blocks chezmoi apply.
+
+set -euo pipefail
+
+readonly SCHEMA=org.gnome.desktop.wm.keybindings
+readonly SWITCH_APPLICATIONS="['<Primary>Tab']"
+readonly SWITCH_APPLICATIONS_BACKWARD="['<Shift><Primary>Tab']"
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+[[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
+command -v gsettings >/dev/null || exit 0
+
+set_shortcut() {
+  local key=$1 value=$2
+  [[ "$(gsettings get "$SCHEMA" "$key")" == "$value" ]] || gsettings set "$SCHEMA" "$key" "$value"
+}
+
+main() {
+  set_shortcut switch-applications "$SWITCH_APPLICATIONS"
+  set_shortcut switch-applications-backward "$SWITCH_APPLICATIONS_BACKWARD"
+  echo "✅ GNOME app switcher: physical Cmd+Tab"
+}
+
+main || echo "⚠️ GNOME shortcut setup failed. Run scripts/ubuntu/configure-gnome-shortcuts manually."

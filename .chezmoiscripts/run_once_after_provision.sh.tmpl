@@ -8,4 +8,5 @@ set -euo pipefail
 {{ else if eq .chezmoi.os "linux" -}}
 "{{ .chezmoi.sourceDir }}/scripts/ubuntu/set-default-shell"
 "{{ .chezmoi.sourceDir }}/scripts/ubuntu/configure-apple-keyboard"
+"{{ .chezmoi.sourceDir }}/scripts/ubuntu/configure-gnome-shortcuts"
 {{ end -}}
