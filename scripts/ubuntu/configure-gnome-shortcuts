@@ -1,11 +1,14 @@
 #!/usr/bin/env zsh
 
-# Mac-style window switching on GNOME for an Apple keyboard.
+# Mac-style window shortcuts on GNOME for an Apple keyboard.
 #
 # keyd (see configure-apple-keyboard) swaps Ctrl and Cmd, so GNOME receives the
 # physical Cmd key as Ctrl. GNOME binds the application switcher to Super+Tab,
 # which is therefore the physical Ctrl key. Bind it to Ctrl+Tab instead, so the
 # physical Cmd+Tab switches applications as on macOS.
+#
+# GNOME has no quit-application action, so physical Cmd+Q (Ctrl+Q) closes the
+# focused window. Apps that stay in the tray keep running after it closes.
 #
 # Needs no root, only the user's GNOME session. Idempotent. Skips non-Apple
 # hardware and sessions without GNOME. Best-effort: a failure warns and never
@@ -16,6 +19,7 @@ set -euo pipefail
 readonly SCHEMA=org.gnome.desktop.wm.keybindings
 readonly SWITCH_APPLICATIONS="['<Primary>Tab']"
 readonly SWITCH_APPLICATIONS_BACKWARD="['<Shift><Primary>Tab']"
+readonly CLOSE_WINDOW="['<Alt>F4', '<Primary>q']"
 
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 [[ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" == "Apple Inc." ]] || exit 0
@@ -29,7 +33,8 @@ set_shortcut() {
 main() {
   set_shortcut switch-applications "$SWITCH_APPLICATIONS"
   set_shortcut switch-applications-backward "$SWITCH_APPLICATIONS_BACKWARD"
-  echo "✅ GNOME app switcher: physical Cmd+Tab"
+  set_shortcut close "$CLOSE_WINDOW"
+  echo "✅ GNOME shortcuts: physical Cmd+Tab switches apps, Cmd+Q closes the window"
 }
 
 main || echo "⚠️ GNOME shortcut setup failed. Run scripts/ubuntu/configure-gnome-shortcuts manually."
