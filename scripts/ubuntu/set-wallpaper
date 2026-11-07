@@ -1,0 +1,35 @@
+#!/usr/bin/env zsh
+
+# Set the desktop wallpaper on GNOME (Ubuntu), the counterpart of
+# scripts/macos/set-wallpaper.
+#
+# Copies the repo image to ~/.local/share/backgrounds so the wallpaper keeps
+# working if the repo moves, then points GNOME at it for both the light and
+# dark themes. Needs no root. Idempotent. Skips machines without gsettings.
+# Best-effort: a failure warns and never blocks chezmoi apply.
+
+set -euo pipefail
+
+readonly SOURCE_ROOT="${0:A:h:h:h}"
+readonly SOURCE_IMAGE="${1:-$SOURCE_ROOT/images/wallpaper.jpg}"
+readonly TARGET_IMAGE="${XDG_DATA_HOME:-$HOME/.local/share}/backgrounds/wallpaper.jpg"
+readonly SCHEMA=org.gnome.desktop.background
+
+[[ "$(uname -s)" == "Linux" ]] || exit 0
+command -v gsettings >/dev/null || exit 0
+
+set_setting() {
+  local key=$1 value=$2
+  [[ "$(gsettings get "$SCHEMA" "$key")" == "$value" ]] || gsettings set "$SCHEMA" "$key" "$value"
+}
+
+main() {
+  [[ -f "$SOURCE_IMAGE" ]] || { echo "❌ Wallpaper not found: $SOURCE_IMAGE" >&2; return 1; }
+  cmp -s "$SOURCE_IMAGE" "$TARGET_IMAGE" || install -D -m 0644 "$SOURCE_IMAGE" "$TARGET_IMAGE"
+  set_setting picture-uri "'file://$TARGET_IMAGE'"
+  set_setting picture-uri-dark "'file://$TARGET_IMAGE'"
+  set_setting picture-options "'zoom'"
+  echo "✅ Wallpaper set"
+}
+
+main || echo "⚠️ Wallpaper setup failed. Run scripts/ubuntu/set-wallpaper manually."

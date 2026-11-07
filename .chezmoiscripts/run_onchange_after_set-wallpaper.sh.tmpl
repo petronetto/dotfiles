@@ -6,4 +6,8 @@ set -euo pipefail
 # set-wallpaper hash: {{ include "scripts/macos/set-wallpaper" | sha256sum }}
 # wallpaper image hash: {{ include "images/wallpaper.jpg" | sha256sum }}
 "{{ .chezmoi.sourceDir }}/scripts/macos/set-wallpaper"
+{{ else if eq .chezmoi.os "linux" -}}
+# set-wallpaper hash: {{ include "scripts/ubuntu/set-wallpaper" | sha256sum }}
+# wallpaper image hash: {{ include "images/wallpaper.jpg" | sha256sum }}
+"{{ .chezmoi.sourceDir }}/scripts/ubuntu/set-wallpaper"
 {{ end -}}
