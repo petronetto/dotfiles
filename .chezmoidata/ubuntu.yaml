@@ -96,6 +96,22 @@ ubuntu:
       owner: apt
       packages: [git-delta]
       commands: [delta]
+    - id: gh
+      owner: apt
+      packages: [gh]
+      commands: [gh]
+    - id: procs
+      owner: apt
+      packages: [procs]
+      commands: [procs]
+    - id: gum
+      owner: apt
+      packages: [gum]
+      commands: [gum]
+    - id: httpie
+      owner: apt
+      packages: [httpie]
+      commands: [http]
     - id: atuin
       owner: apt
       packages: [atuin]
@@ -155,6 +171,43 @@ ubuntu:
       sha256: a7eead5552d3a8daad70f5d50d935da44bd0c138e946b5b0a96b1d38169fa639
       verification: sha256
       provenance: https://api.github.com/repos/ast-grep/ast-grep/releases/tags/0.51.0
+    - id: tlrc
+      owner: upstream
+      commands: [tldr]
+      binary: tldr
+      version: "1.13.1"
+      format: tar.gz
+      url: https://github.com/tldr-pages/tlrc/releases/download/v1.13.1/tlrc-v1.13.1-x86_64-unknown-linux-musl.tar.gz
+      sha256: e63b80e180b956ae2114c39d7fb10e607ffaa46b6d8c370d90868389a228584d
+      verification: sha256
+      provenance: https://api.github.com/repos/tldr-pages/tlrc/releases/tags/v1.13.1
+    - id: worktrunk
+      owner: upstream
+      commands: [wt]
+      binary: worktrunk-x86_64-unknown-linux-musl/wt
+      version: "0.81.0"
+      format: tar.xz
+      url: https://github.com/max-sixty/worktrunk/releases/download/v0.81.0/worktrunk-x86_64-unknown-linux-musl.tar.xz
+      sha256: 0c253f216985ce9cd7b202a11606b5ce6aa934b1019fd1fbb9b7ce2b47b1c74a
+      verification: sha256
+      provenance: https://api.github.com/repos/max-sixty/worktrunk/releases/tags/v0.81.0
+    - id: localsend
+      owner: upstream
+      commands: [localsend_app]
+      package: localsend
+      version: "1.18.2"
+      format: deb
+      url: https://github.com/localsend/localsend/releases/download/v1.18.2/LocalSend-1.18.2-linux-x86-64.deb
+      sha256: cc42a4f3eacdcb25ec31f0016b1272acb003145ab30484db8965450e20c72cd2
+      verification: sha256
+      provenance: https://api.github.com/repos/localsend/localsend/releases/tags/v1.18.2
+    - id: agent-browser
+      owner: npm
+      commands: [agent-browser]
+      package: agent-browser
+      version: "0.41.2"
+      source: https://www.npmjs.com/package/agent-browser
+      verification: npm-integrity
     - id: pi
       owner: npm
       commands: [pi]

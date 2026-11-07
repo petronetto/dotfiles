@@ -34,18 +34,21 @@ Download metadata and archives remain under
 
 - Ubuntu apt owns Zsh (`zsh`), Git (`git`), curl (`curl`), jq (`jq`), Ghostty
   (`ghostty`), ripgrep (`rg`), fd (`fd`), bat (`bat`), fzf (`fzf`), zoxide
-  (`zoxide`), lsd (`lsd`), delta (`delta`), Atuin (`atuin`), tmux (`tmux`), and
+  (`zoxide`), lsd (`lsd`), delta (`delta`), GitHub CLI (`gh`), procs (`procs`),
+  gum (`gum`), HTTPie (`http`), Atuin (`atuin`), tmux (`tmux`), and
   Neovim (`nvim`). User-local links normalize Ubuntu's `fdfind` and `batcat`
   names when needed. Distribution binaries are not replaced.
 - Bootstrap installs official chezmoi (`chezmoi`). Official release artifacts
-  install mise (`mise`), Starship (`starship`), Herdr (`herdr`), and ast-grep
-  (`ast-grep`). These tools are not mise backends.
+  install mise (`mise`), Starship (`starship`), Herdr (`herdr`), ast-grep
+  (`ast-grep`), tlrc (`tldr`), Worktrunk (`wt`), and the LocalSend `.deb`
+  (`localsend_app`). These tools are not mise backends.
 - Mise owns only Node (`node`) and its bundled `npm` and `npx`. The tested
   selection is Node **24.22.1**, with npm **11.19.1**. Fresh login shells use
   mise shims. The npm prefix is `~/.local`, without privileged npm installation.
-- Official npm packages install Pi (`pi`), selected version **1.4.0**, and
-  Todoist CLI (`td`), selected version **5.8.0**. The package names are
-  `@earendil-works/pi-coding-agent` and `@doist/todoist-cli`. Installation uses
+- Official npm packages install Pi (`pi`), selected version **1.4.0**,
+  Todoist CLI (`td`), selected version **5.8.0**, and agent-browser
+  (`agent-browser`), selected version **0.41.2**. The package names are
+  `@earendil-works/pi-coding-agent`, `@doist/todoist-cli`, and `agent-browser`. Installation uses
   pinned package versions, registry integrity checks, and `--ignore-scripts`.
   Transitive npm dependencies are not a hermetic lock of future installations.
 - Vendor apt repositories own native 1Password (`1password`), 1Password CLI

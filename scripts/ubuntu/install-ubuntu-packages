@@ -235,28 +235,33 @@ install_upstream_tool() {
     zed) install_zed; return ;;
     todoist) install_todoist; return ;;
   esac
-  local format extracted binary
+  local format extracted binary binary_path
   format=$(jq -r '.format' <<< "$tool")
   case "$format" in
-    binary|tar.gz|zip) ;;
+    binary|tar.gz|tar.xz|zip|deb) ;;
     *) fail "$current_tool: unsupported release format $format" ;;
   esac
   download_release
+  if [[ "$format" == deb ]]; then
+    elevate env DEBIAN_FRONTEND=noninteractive apt-get install -y "$asset"
+    return
+  fi
+  binary_path=$(jq -r --arg id "$current_tool" '.binary // $id' <<< "$tool")
   extracted="$work_dir/$current_tool"
   mkdir -p "$extracted" "$HOME/.local/bin"
   case "$format" in
     binary) binary="$asset" ;;
-    tar.gz)
-      bsdtar -xzf "$asset" -C "$extracted"
-      binary="$extracted/$current_tool"
+    tar.gz|tar.xz)
+      bsdtar -xf "$asset" -C "$extracted"
+      binary="$extracted/$binary_path"
       ;;
     zip)
       unzip -o -q "$asset" -d "$extracted"
-      binary="$extracted/$current_tool"
+      binary="$extracted/$binary_path"
       ;;
   esac
   [[ -f "$binary" ]] || fail "$current_tool: declared release command is missing"
-  install -m 0755 "$binary" "$HOME/.local/bin/$current_tool"
+  install -m 0755 "$binary" "$HOME/.local/bin/${binary_path:t}"
 }
 
 install_node_runtime() {
@@ -303,7 +308,13 @@ installed_version() {
       package=$(jq -r '.package' <<< "$tool")
       jq -er '.version' "$HOME/.local/lib/node_modules/$package/package.json"
       ;;
-    *) "$current_tool" --version ;;
+    *)
+      if [[ $(jq -r '.format // empty' <<< "$tool") == deb ]]; then
+        dpkg-query --show --showformat '${Version}\n' "$(jq -r '.package' <<< "$tool")"
+        return
+      fi
+      "$(jq -r '.commands[0]' <<< "$tool")" --version
+      ;;
   esac
 }
 
