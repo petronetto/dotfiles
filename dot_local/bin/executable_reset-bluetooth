@@ -1,0 +1,73 @@
+#!/usr/bin/env zsh
+
+# Recover the T2 Mac Bluetooth controller (Broadcom BCM4377) after its
+# firmware stops answering (kernel log: "command 0x0c01 tx timeout").
+#
+# Escalates: reload the driver first; if the controller is still down,
+# remove and rescan its PCI device. Run manually, needs sudo. Idempotent.
+
+set -euo pipefail
+
+[[ "$(uname -s)" == "Linux" ]] || { echo "Linux only" >&2; exit 1; }
+
+readonly DRIVER="hci_bcm4377"
+readonly SETTLE_SECONDS=3
+
+pci_address() {
+  local dev
+  for dev in /sys/bus/pci/drivers/$DRIVER/0000:*(N); do
+    echo "${dev:t}"
+    return 0
+  done
+  return 1
+}
+
+controller_works() {
+  sleep "$SETTLE_SECONDS"
+  bluetoothctl list | grep -q Controller || return 1
+  bluetoothctl power on 2>&1 | grep -q "succeeded"
+}
+
+reload_driver() {
+  echo "-> Reloading $DRIVER"
+  sudo systemctl stop bluetooth
+  sudo modprobe -r "$DRIVER"
+  sleep 2
+  sudo modprobe "$DRIVER"
+  sudo systemctl start bluetooth
+}
+
+rescan_pci() {
+  local addr="$1"
+  echo "-> Removing and rescanning PCI device $addr"
+  sudo systemctl stop bluetooth
+  echo 1 | sudo tee "/sys/bus/pci/devices/$addr/remove" >/dev/null
+  sleep 2
+  echo 1 | sudo tee /sys/bus/pci/rescan >/dev/null
+  sudo modprobe "$DRIVER"
+  sudo systemctl start bluetooth
+}
+
+main() {
+  local addr
+  addr="$(pci_address)" || addr="0000:01:00.1"
+
+  sudo rfkill unblock bluetooth
+  reload_driver
+  if controller_works; then
+    echo "✅ Bluetooth recovered after driver reload"
+    return 0
+  fi
+
+  rescan_pci "$addr"
+  if controller_works; then
+    echo "✅ Bluetooth recovered after PCI rescan"
+    return 0
+  fi
+
+  echo "❌ Still down. Power off fully for ~10 seconds, then boot." >&2
+  echo "   Logs: journalctl -k -b | grep -i -E 'bluetooth|bcm4377'" >&2
+  return 1
+}
+
+main "$@"

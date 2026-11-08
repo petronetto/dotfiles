@@ -21,6 +21,8 @@ private/
 .config/systemd/
 .config/touchpad-momentum.env
 .local/bin/touchpad-momentum
+.local/bin/reset-bluetooth
+.local/bin/reset-wifi
 .local/share/gnome-shell/
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}

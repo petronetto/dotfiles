@@ -1,0 +1,82 @@
+#!/usr/bin/env zsh
+
+# Recover the T2 Mac Wi-Fi controller (Broadcom BCM4377b) when the interface
+# disappears or stops associating after suspend/resume.
+#
+# Escalates: reload the driver; if no wireless device appears, remove and
+# rescan its PCI device. Run manually, needs sudo. Idempotent.
+# Note: the Bluetooth chip shares this card, so Bluetooth restarts too.
+
+set -euo pipefail
+
+[[ "$(uname -s)" == "Linux" ]] || { echo "Linux only" >&2; exit 1; }
+
+readonly DRIVERS=(brcmfmac_wcc brcmfmac)
+readonly DEFAULT_PCI_ADDRESS="0000:01:00.0"
+readonly SETTLE_SECONDS=5
+
+pci_address() {
+  local dev
+  for dev in /sys/bus/pci/drivers/brcmfmac/0000:*(N); do
+    echo "${dev:t}"
+    return 0
+  done
+  echo "$DEFAULT_PCI_ADDRESS"
+}
+
+wifi_works() {
+  sleep "$SETTLE_SECONDS"
+  nmcli -t -f TYPE,STATE device | grep -q '^wifi:'
+}
+
+unload_drivers() {
+  local drv
+  for drv in "${DRIVERS[@]}"; do
+    sudo modprobe -r "$drv" 2>/dev/null || true
+  done
+}
+
+reload_driver() {
+  echo "-> Reloading Wi-Fi driver"
+  sudo systemctl stop NetworkManager
+  unload_drivers
+  sleep 2
+  sudo modprobe brcmfmac
+  sudo systemctl start NetworkManager
+}
+
+rescan_pci() {
+  local addr="$1"
+  echo "-> Removing and rescanning PCI device $addr"
+  sudo systemctl stop NetworkManager
+  unload_drivers
+  echo 1 | sudo tee "/sys/bus/pci/devices/$addr/remove" >/dev/null
+  sleep 2
+  echo 1 | sudo tee /sys/bus/pci/rescan >/dev/null
+  sudo modprobe brcmfmac
+  sudo systemctl start NetworkManager
+}
+
+main() {
+  local addr
+  addr="$(pci_address)"
+
+  sudo rfkill unblock wifi
+  reload_driver
+  if wifi_works; then
+    echo "✅ Wi-Fi recovered after driver reload"
+    return 0
+  fi
+
+  rescan_pci "$addr"
+  if wifi_works; then
+    echo "✅ Wi-Fi recovered after PCI rescan"
+    return 0
+  fi
+
+  echo "❌ Still down. Power off fully for ~10 seconds, then boot." >&2
+  echo "   Logs: journalctl -k -b | grep -i brcmfmac" >&2
+  return 1
+}
+
+main "$@"
