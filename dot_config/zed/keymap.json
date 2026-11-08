@@ -13,12 +13,6 @@
     },
   },
   {
-    "context": "Editor",
-    "bindings": {
-      "cmd-shift-d": "editor::DuplicateLineDown"
-    }
-  },
-  {
     "bindings": {
       "cmd-+": "zed::IncreaseUiFontSize"
     }
@@ -27,5 +21,65 @@
     "bindings": {
       "cmd-_": "zed::DecreaseUiFontSize"
     }
-  }
+  },
+  {
+    "bindings": {
+      "cmd-=": [
+        "zed::IncreaseBufferFontSize",
+        {
+          "persist": false
+        }
+      ]
+    }
+  },
+  {
+    "bindings": {
+      "cmd--": [
+        "zed::DecreaseBufferFontSize",
+        {
+          "persist": false
+        }
+      ]
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "cmd-shift-d": "editor::DuplicateLineDown"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-cmd-up": [
+        "editor::AddSelectionAbove",
+        {
+          "skip_soft_wrap": true
+        }
+      ]
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-cmd-down": [
+        "editor::AddSelectionBelow",
+        {
+          "skip_soft_wrap": true
+        }
+      ]
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-up": "editor::MoveLineUp"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-down": "editor::MoveLineDown"
+    }
+  },
 ]
