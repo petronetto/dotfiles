@@ -30,9 +30,10 @@ mouse-scroll-multiplier = precision:2,discrete:1
 keybind = ctrl+shift+space=toggle_quick_terminal
 # keyd swaps Ctrl and Cmd on the Apple keyboard: the physical Cmd key reaches
 # Ghostty as ctrl and the physical Ctrl key as super. Cmd+V pastes and Ctrl+C
-# always interrupts. Cmd+C copies a Ghostty selection; with none it passes through,
-# so Herdr copies its own selection, and any other program sees an interrupt.
-keybind = performable:ctrl+c=copy_to_clipboard
+# always interrupts. Cmd+C is forwarded as super+c (kitty CSI-u), the only key
+# Herdr treats as copy besides a raw Ctrl+C. Use ctrl+shift+c to copy outside Herdr.
+keybind = ctrl+c=text:\x1b[99;9u
+keybind = ctrl+shift+c=copy_to_clipboard
 keybind = ctrl+v=paste_from_clipboard
 keybind = super+c=text:\x03
 {{ end -}}
